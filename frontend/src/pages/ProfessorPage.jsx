@@ -1,0 +1,724 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Camera, Check, ChevronDown, ChevronUp, Plus, Save, Trophy, UserPlus, X } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import {
+  adicionarConfraternizacao,
+  adicionarEstudoBiblico,
+  criarAluno,
+  criarCartaoAluno,
+  getCartoesAluno,
+  getColetaSemanal,
+  getColetaSemanalProfessor,
+  getProfessorCard,
+  getUnidades,
+  salvarCartaoProfessor,
+  salvarColetaSemanal,
+  salvarColetaSemanalProfessor,
+  salvarPerguntasAluno,
+  salvarPresencaProfessor
+} from "../api/services";
+import { ProgressRing } from "../components/ProgressRing";
+import { StatusPill } from "../components/StatusPill";
+import { Card } from "../components/Card";
+import { ModalInput } from "../components/ModalInput";
+
+const anoAtual = new Date().getFullYear();
+
+const alunoInicial = {
+  nome: "",
+  sexo: "MASCULINO",
+  foto: null,
+  dataNascimento: "",
+  dataBatismo: "",
+  endereco: "",
+  email: "",
+  whatsapp: ""
+};
+
+function inputDate(value) {
+  if (!value) return "";
+  return String(value).slice(0, 10);
+}
+
+function alunoQuestionarioVazio(aluno) {
+  return {
+    alunoId: aluno.id,
+    alunoNome: aluno.nome,
+    pequenoGrupo: false,
+    acaoSolidaria: false,
+    acaoSolidariaDescricao: "",
+    acaoSolidariaTipo: "",
+    ministrouEstudoBiblico: false
+  };
+}
+
+
+function calcularDataSabado(ano, semana) {
+  const data = new Date(ano, 0, 1, 12, 0, 0);
+  const diaSemana = data.getDay();
+  const diasParaPrimeiroSabado = (6 - diaSemana + 7) % 7;
+  data.setDate(data.getDate() + diasParaPrimeiroSabado + (semana - 1) * 7);
+  
+  const d = String(data.getDate()).padStart(2, '0');
+  const m = String(data.getMonth() + 1).padStart(2, '0');
+  const y = data.getFullYear();
+  return `${d}/${m}/${y}`;
+}
+
+export function ProfessorPage() {
+  const { aba } = useParams();
+  const [ano, setAno] = useState(anoAtual);
+  const [trimestre, setTrimestre] = useState(1);
+  const [semana, setSemana] = useState(1);
+  const [unidades, setUnidades] = useState([]);
+  const [unidadeId, setUnidadeId] = useState("");
+  const [card, setCard] = useState(null);
+  const [coleta, setColeta] = useState(null);
+    const [open, setOpen] = useState("Coleta semanal");
+  const [form, setForm] = useState({});
+  const [presencas, setPresencas] = useState([]);
+  const [questionariosAlunos, setQuestionariosAlunos] = useState([]);
+  const [novoAluno, setNovoAluno] = useState(alunoInicial);
+  const [novoEstudo, setNovoEstudo] = useState({ alunoNome: "", interessadoNome: "" });
+  const [modalAcaoAluno, setModalAcaoAluno] = useState(null);
+  const [modalEstudoAluno, setModalEstudoAluno] = useState(null);
+  const [novaConfrat, setNovaConfrat] = useState({ descricao: "", data: "" });
+  const [saving, setSaving] = useState(false);
+  const [headerCheckboxes, setHeaderCheckboxes] = useState({ estudouLicao: false, foiPontual: false, pequenoGrupo: false, acaoSolidaria: false, estudosBiblicos: false });
+
+  const fotoPreviewAluno = useMemo(() => (
+    novoAluno.foto ? URL.createObjectURL(novoAluno.foto) : ""
+  ), [novoAluno.foto]);
+
+  useEffect(() => () => {
+    if (fotoPreviewAluno) URL.revokeObjectURL(fotoPreviewAluno);
+  }, [fotoPreviewAluno]);
+
+  useEffect(() => {
+    getUnidades({ igrejaAtual: true }).then((lista) => {
+      setUnidades(lista);
+      setUnidadeId((atual) => atual || lista[0]?.id || "");
+    }).catch(() => setUnidades([]));
+  }, []);
+
+  async function carregar() {
+    const params = { ano, trimestre, ...(unidadeId ? { unidadeId } : {}) };
+    const data = await getProfessorCard(params);
+    setCard(data);
+    setPresencas(data.cartao?.presencas || []);
+    setForm({
+      incentivaEstudo: Boolean(data.cartao?.incentivaEstudo),
+        visitouAlunos: Boolean(data.cartao?.visitouAlunos),
+        promoveuConfraternizacao: Boolean(data.cartao?.promoveuConfraternizacao),
+      incentivaPontualidade: Boolean(data.cartao?.incentivaPontualidade),
+      primeiraVisita: inputDate(data.cartao?.primeiraVisita),
+      ultimaVisita: inputDate(data.cartao?.ultimaVisita),
+      pequenoGrupoResponsavel: data.cartao?.pequenoGrupoResponsavel || "",
+      pequenoGrupoEndereco: data.cartao?.pequenoGrupoEndereco || "",
+      pequenoGrupoDia: data.cartao?.pequenoGrupoDia || "",
+      pequenoGrupoHorario: data.cartao?.pequenoGrupoHorario || "",
+      acaoSocialDescricao: data.cartao?.acaoSocialDescricao || "",
+      acaoSocialTipo: data.cartao?.acaoSocialTipo || "",
+      acaoSocialData: inputDate(data.cartao?.acaoSocialData),
+      acaoSocialLocal: data.cartao?.acaoSocialLocal || "",
+      pessoasAlcancadas: Number(data.cartao?.pessoasAlcancadas || 0),
+      interessadosAlcancados: Number(data.cartao?.interessadosAlcancados || 0),
+      batismos: Number(data.cartao?.batismos || 0),
+      batismosNomes: data.cartao?.batismosNomes || "",
+      planejamentoTrimestral: Boolean(data.cartao?.planejamentoTrimestral)
+    });
+    await carregarQuestionariosAlunos(data);
+  }
+
+  async function carregarQuestionariosAlunos(cardAtual = card) {
+    const alunos = cardAtual?.alunos || [];
+    if (!alunos.length) {
+      setQuestionariosAlunos([]);
+      return;
+    }
+
+    const cartoes = await getCartoesAluno({ ano, trimestre });
+    const porAluno = new Map(cartoes.map((cartao) => [cartao.alunoId, cartao]));
+    setQuestionariosAlunos(alunos.map((aluno) => {
+      const cartao = porAluno.get(aluno.id);
+      return cartao ? {
+        id: cartao.id,
+        alunoId: aluno.id,
+        alunoNome: aluno.nome,
+        pequenoGrupo: Boolean(cartao.pequenoGrupo),
+        acaoSolidaria: Boolean(cartao.acaoSolidaria),
+        acaoSolidariaDescricao: cartao.acaoSolidariaDescricao || "",
+        acaoSolidariaTipo: cartao.acaoSolidariaTipo || "",
+        ministrouEstudoBiblico: Boolean(cartao.ministrouEstudoBiblico)
+      } : alunoQuestionarioVazio(aluno);
+    }));
+  }
+
+  async function carregarColeta() {
+    if (!unidadeId) return;
+    const data = await getColetaSemanal({ ano, semana, unidadeId });
+    setColeta({
+      ...data,
+      alunos: data.alunos.map((item) => ({
+        ...item,
+        coleta: {
+          ...item.coleta,
+          estudouLicao: Boolean(item.coleta?.estudouLicao),
+          foiPontual: Boolean(item.coleta?.foiPontual)
+        }
+      }))
+    });
+  }
+
+  
+  useEffect(() => {
+    if (!unidadeId) return;
+    carregar().catch(() => setCard(null));
+  }, [ano, trimestre, unidadeId]);
+
+  useEffect(() => {
+    carregarColeta().catch(() => setColeta(null));
+      }, [ano, semana, unidadeId]);
+
+  const semanas = useMemo(() => Array.from({ length: 13 }, (_, index) => ((trimestre - 1) * 13) + index + 1), [trimestre]);
+
+  function atualizarColeta(alunoId, campo, valor) {
+    setColeta((atual) => ({
+      ...atual,
+      alunos: atual.alunos.map((item) => item.aluno.id === alunoId
+        ? { ...item, coleta: { ...item.coleta, [campo]: valor } }
+        : item)
+    }));
+  }
+
+  
+  function marcarTodosColeta(campo, valor) {
+    setHeaderCheckboxes((prev) => ({ ...prev, [campo]: valor }));
+    setColeta((atual) => ({
+      ...atual,
+      alunos: atual.alunos.map((item) => ({
+        ...item,
+        coleta: { ...item.coleta, [campo]: valor }
+      }))
+    }));
+  }
+
+  
+  
+  async function salvarTudoSemana() {
+    setSaving(true);
+    try {
+      if (unidadeId) {
+        
+      }
+      if (coleta) {
+        await salvarColetaSemanal({
+          ano,
+          numeroSemana: semana,
+          unidadeId,
+          respostas: coleta.alunos.map((item) => ({
+            alunoId: item.aluno.id,
+            estudouLicao: Boolean(item.coleta.estudouLicao),
+            foiPontual: Boolean(item.coleta.foiPontual),
+            pequenoGrupo: item.coleta.pequenoGrupo ?? null,
+              acaoSolidaria: item.coleta.acaoSolidaria ?? null,
+              acaoSolidariaDescricao: item.coleta.acaoSolidariaDescricao || "",
+              acaoSolidariaTipo: item.coleta.acaoSolidariaTipo || "",
+              estudosBiblicos: item.coleta.estudosBiblicos ?? null,
+            observacao: item.coleta.observacao || ""
+          }))
+        });
+      }
+      toast.success("Respostas da semana salvas com sucesso!");
+      setHeaderCheckboxes({ estudouLicao: false, foiPontual: false, pequenoGrupo: false, acaoSolidaria: false, estudosBiblicos: false });
+      await Promise.all([carregar(), carregarColeta()]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Não foi possível salvar a semana.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function salvarQuestionario() {
+    if (!card?.cartao?.id) return;
+    setSaving(true);
+    try {
+      await salvarCartaoProfessor(card.cartao.id, {
+        ...form,
+        pessoasAlcancadas: Number(form.pessoasAlcancadas || 0),
+        interessadosAlcancados: Number(form.interessadosAlcancados || 0),
+        batismos: Number(form.batismos || 0)
+      });
+      for (const presenca of presencas) {
+        await salvarPresencaProfessor(card.cartao.id, presenca.numeroSabado, Boolean(presenca.presente));
+      }
+      toast.success("Questionario do professor salvo.");
+      await carregar();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Nao foi possivel salvar o questionario.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function adicionarEstudo() {
+    if (!novoEstudo.alunoNome.trim() || !novoEstudo.interessadoNome.trim()) {
+      toast.error("Informe o aluno e a pessoa que recebe o estudo.");
+      return;
+    }
+    await adicionarEstudoBiblico(card.cartao.id, novoEstudo);
+    setNovoEstudo({ alunoNome: "", interessadoNome: "" });
+    toast.success("Estudo biblico adicionado.");
+    await carregar();
+  }
+
+  async function adicionarConfrat() {
+    if (!novaConfrat.descricao.trim() || !novaConfrat.data) {
+      toast.error("Informe a acao e a data.");
+      return;
+    }
+    await adicionarConfraternizacao(card.cartao.id, novaConfrat);
+    setNovaConfrat({ descricao: "", data: "" });
+    toast.success("Confraternizacao adicionada.");
+    await carregar();
+  }
+
+  async function cadastrarAluno() {
+    const nome = novoAluno.nome.trim();
+    if (!nome) {
+      toast.error("Informe o nome do aluno.");
+      return;
+    }
+    if (!novoAluno.whatsapp.trim()) {
+      toast.error("Informe o WhatsApp do aluno.");
+      return;
+    }
+    if (!unidadeId) {
+      toast.error("Selecione uma Unidade de Ação.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const dados = new FormData();
+      dados.append("nome", nome);
+      dados.append("sexo", novoAluno.sexo);
+      dados.append("whatsapp", novoAluno.whatsapp.trim());
+      dados.append("unidadeId", unidadeId);
+      dados.append("dataNascimento", novoAluno.dataNascimento);
+      dados.append("dataBatismo", novoAluno.dataBatismo);
+      dados.append("endereço", novoAluno.endereco.trim());
+      dados.append("email", novoAluno.email.trim());
+      if (novoAluno.foto) dados.append("foto", novoAluno.foto);
+
+      await criarAluno(dados);
+      toast.success("Aluno cadastrado na Unidade de Ação selecionada.");
+      setNovoAluno(alunoInicial);
+      await Promise.all([carregar(), carregarColeta()]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Nao foi possivel cadastrar o aluno.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!card) return <div className="p-10 bg-white rounded-xl shadow-sm text-muted text-center max-w-sm mx-auto mt-10">Carregando metas...</div>;
+
+  return (
+    <section className="grid grid-cols-1 gap-5 items-start">
+      
+
+        {(!aba || aba === "semanais") && (
+<>
+<div className="mb-[2px]">
+          <h2 className="m-0 font-outfit tracking-tight text-[26px]">Painel do Professor</h2>
+          <p className="m-0 mt-1.5 text-muted">Gerencie sua unidade, preencha a coleta semanal e o questionário trimestral.</p>
+        </div>
+
+        <Card animated delay={0.12} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <label className="grid gap-1 text-sm font-bold">Unidade
+            <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={unidadeId} onChange={(e) => setUnidadeId(e.target.value)}>
+              {unidades.map((unidade) => <option key={unidade.id} value={unidade.id}>{unidade.nome}</option>)}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm font-bold">Ano
+            <input className="min-h-[42px] rounded-lg border border-borda px-3" type="number" value={ano} onChange={(e) => setAno(Number(e.target.value))} />
+          </label>
+          <label className="grid gap-1 text-sm font-bold">Trimestre
+            <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={trimestre} onChange={(e) => { setTrimestre(Number(e.target.value)); setSemana(((Number(e.target.value) - 1) * 13) + 1); }}>
+              {[1, 2, 3, 4].map((item) => <option key={item} value={item}>{item}º trimestre</option>)}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm font-bold">Semana
+            <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={semana} onChange={(e) => setSemana(Number(e.target.value))}>
+              {semanas.map((item, index) => <option key={item} value={item}>Semana {index + 1}</option>)}
+            </select>
+          </label>
+        </Card>
+        <div className="text-sm text-marinho/80 font-medium px-2 mt-[-6px]">
+          Data da classe/coleta: <strong>Sábado, {calcularDataSabado(ano, semana)}</strong>
+        </div>
+{/* METAS SEMANAIS */}
+        <div className="mt-4 grid gap-4">
+          <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho mb-1 border-b border-borda pb-2">Metas Semanais</h3>
+          
+          <Card animated delay={0.13} className="grid gap-4">
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              <div className="bg-marinho/5 p-3 rounded-xl text-marinho hidden md:block">
+                <UserPlus size={24} />
+              </div>
+              <div className="flex-1">
+                <h4 className="m-0 font-outfit text-base">Cadastrar novo aluno</h4>
+                <p className="m-0 text-sm text-muted">Unidade: {card?.unidade?.nome || "Selecione"}</p>
+              </div>
+              <button type="button" onClick={cadastrarAluno} disabled={saving} className="inline-flex items-center justify-center min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer">
+                Cadastrar
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[160px_1fr] gap-4">
+              <label className="grid gap-2 text-sm font-bold text-marinho">
+                Foto
+                <span className="flex flex-col items-center justify-center gap-2 min-h-[150px] rounded-xl border border-dashed border-borda bg-black/[0.02] cursor-pointer text-muted text-center px-3">
+                  {fotoPreviewAluno ? (
+                    <img src={fotoPreviewAluno} alt="Previa do aluno" className="w-20 h-20 rounded-full object-cover shadow-sm" />
+                  ) : (
+                    <span className="w-16 h-16 rounded-full bg-marinho/10 text-marinho flex items-center justify-center">
+                      <Camera size={26} />
+                    </span>
+                  )}
+                  <span className="text-xs font-semibold">{novoAluno.foto ? novoAluno.foto.name : "Escolher foto"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => setNovoAluno((atual) => ({ ...atual, foto: e.target.files?.[0] || null }))}
+                  />
+                </span>
+              </label>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                <label className="grid gap-1 text-sm font-bold text-marinho">Nome *
+                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.nome} onChange={(e) => setNovoAluno((atual) => ({ ...atual, nome: e.target.value }))} placeholder="Digite o nome..." />
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-marinho">Sexo *
+                  <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white font-normal text-texto" value={novoAluno.sexo} onChange={(e) => setNovoAluno((atual) => ({ ...atual, sexo: e.target.value }))}>
+                    <option value="MASCULINO">Masculino</option>
+                    <option value="FEMININO">Feminino</option>
+                  </select>
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-marinho">WhatsApp *
+                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.whatsapp} onChange={(e) => setNovoAluno((atual) => ({ ...atual, whatsapp: e.target.value }))} placeholder="(00) 00000-0000" />
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-marinho">Nascimento
+                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" type="date" value={novoAluno.dataNascimento} onChange={(e) => setNovoAluno((atual) => ({ ...atual, dataNascimento: e.target.value }))} />
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-marinho">Batismo
+                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" type="date" value={novoAluno.dataBatismo} onChange={(e) => setNovoAluno((atual) => ({ ...atual, dataBatismo: e.target.value }))} />
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-marinho">Email
+                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" type="email" value={novoAluno.email} onChange={(e) => setNovoAluno((atual) => ({ ...atual, email: e.target.value }))} placeholder="email@exemplo.com" />
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-marinho md:col-span-2 xl:col-span-3">Endereco
+                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.endereco} onChange={(e) => setNovoAluno((atual) => ({ ...atual, endereco: e.target.value }))} placeholder="Rua, numero, bairro..." />
+                </label>
+              </div>
+            </div>
+          </Card>
+
+          <Card animated delay={0.135} className="grid gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="m-0 font-outfit text-lg">Coleta Semanal dos Alunos</h3>
+                <p className="m-0 mt-1 text-muted text-sm">Preenchimento da unidade para a semana selecionada.</p>
+              </div>
+              <button type="button" onClick={salvarTudoSemana} disabled={saving} className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer">
+                <Save size={17} /> Salvar semana
+              </button>
+            </div>
+            
+            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                <h4 className="text-sm font-bold text-marinho mb-2">Legenda das Perguntas Semanais:</h4>
+                <ul className="text-sm text-muted grid gap-1.5 list-disc pl-4">
+                  <li><strong>Estudou a lição:</strong> Estudou a lição durante a semana?</li>
+                  <li><strong>Pontual:</strong> Foi pontual no sábado?</li>
+                  <li><strong>PG:</strong> Você participou regularmente do Pequeno Grupo com os membros da classe?</li>
+                  <li><strong>Ação:</strong> Você participou de uma ação solidária para captação de interessados?</li>
+                  <li><strong>Estudo Bíblico:</strong> Você ministrou, ou acompanhou, estudo bíblico para alguém no decorrer desse trimestre?</li>
+                </ul>
+            </div>
+
+            <div className="overflow-x-auto border border-borda rounded-lg">
+              <table className="w-full min-w-[760px] border-collapse">
+                <thead>
+                  <tr className="bg-black/5">
+                    <th className="px-3 py-3 text-left text-muted text-xs border-b border-borda font-semibold">Aluno</th>
+                    <th className="px-3 py-3 text-center text-muted text-xs border-b border-borda font-semibold" title="Estudou a lição durante a semana?">
+                      <div className="flex flex-col items-center gap-1">
+                        Estudou a lição
+                        <input type="checkbox" checked={headerCheckboxes.estudouLicao} onChange={(e) => marcarTodosColeta("estudouLicao", e.target.checked)} title="Marcar todos" className="cursor-pointer" />
+                      </div>
+                    </th>
+                    <th className="px-3 py-3 text-center text-muted text-xs border-b border-borda font-semibold" title="Foi pontual no sábado?">
+                      <div className="flex flex-col items-center gap-1">
+                        Pontual
+                        <input type="checkbox" checked={headerCheckboxes.foiPontual} onChange={(e) => marcarTodosColeta("foiPontual", e.target.checked)} title="Marcar todos" className="cursor-pointer" />
+                      </div>
+                    </th>
+                    <th className="px-3 py-3 text-center text-muted text-xs border-b border-borda font-semibold" title="Você participou regularmente do Pequeno Grupo com os membros da classe?">
+                      <div className="flex flex-col items-center gap-1">
+                        PG
+                        <input type="checkbox" checked={headerCheckboxes.pequenoGrupo} onChange={(e) => marcarTodosColeta("pequenoGrupo", e.target.checked)} title="Marcar todos" className="cursor-pointer" />
+                      </div>
+                    </th>
+                    <th className="px-3 py-3 text-center text-muted text-xs border-b border-borda font-semibold" title="Você participou de uma ação solidária para captação de interessados?">
+                      <div className="flex flex-col items-center gap-1">
+                        Ação
+                        <input type="checkbox" checked={headerCheckboxes.acaoSolidaria} onChange={(e) => marcarTodosColeta("acaoSolidaria", e.target.checked)} title="Marcar todos" className="cursor-pointer" />
+                      </div>
+                    </th>
+                    <th className="px-3 py-3 text-center text-muted text-xs border-b border-borda font-semibold" title="Você ministrou, ou acompanhou, estudo bíblico para alguém no decorrer desse trimestre?">
+                      <div className="flex flex-col items-center gap-1">
+                        Estudo Bíblico
+                        <input type="checkbox" checked={headerCheckboxes.estudosBiblicos} onChange={(e) => marcarTodosColeta("estudosBiblicos", e.target.checked ? 1 : null)} title="Marcar todos" className="cursor-pointer" />
+                      </div>
+                    </th>
+                    <th className="px-3 py-3 text-left text-muted text-xs border-b border-borda font-semibold">
+                      <div className="flex flex-col items-start gap-1">
+                        <span>Observação ({calcularDataSabado(ano, semana)})</span>
+                        <input type="checkbox" className="invisible" />
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(coleta?.alunos || []).map((item, i) => (
+                    <tr key={item.aluno.id} className={i % 2 === 0 ? "bg-white" : "bg-black/[0.02]"}>
+                      <td className="px-3 py-2.5 border-b border-borda text-sm font-bold text-texto">{item.aluno.nome}</td>
+                      <td className="px-3 py-2.5 border-b border-borda text-center"><input type="checkbox" checked={item.coleta.estudouLicao} onChange={(e) => atualizarColeta(item.aluno.id, "estudouLicao", e.target.checked)} className="cursor-pointer" /></td>
+                      <td className="px-3 py-2.5 border-b border-borda text-center"><input type="checkbox" checked={item.coleta.foiPontual} onChange={(e) => atualizarColeta(item.aluno.id, "foiPontual", e.target.checked)} className="cursor-pointer" /></td>
+                      <td className="px-3 py-2.5 border-b border-borda text-center"><input type="checkbox" checked={item.coleta.pequenoGrupo === true} onChange={(e) => atualizarColeta(item.aluno.id, "pequenoGrupo", e.target.checked)} className="cursor-pointer" /></td>
+                      <td className="px-3 py-2.5 border-b border-borda text-center"><input type="checkbox" checked={item.coleta.acaoSolidaria === true} onChange={(e) => { atualizarColeta(item.aluno.id, "acaoSolidaria", e.target.checked); if (e.target.checked) setModalAcaoAluno(item.aluno.id); }} className="cursor-pointer" /></td>
+                      <td className="px-3 py-2.5 border-b border-borda text-center"><input type="checkbox" checked={item.coleta.estudosBiblicos > 0} onChange={(e) => { if (e.target.checked) { setModalEstudoAluno(item.aluno.id); } else { atualizarColeta(item.aluno.id, "estudosBiblicos", null); } }} className="cursor-pointer" /></td>
+                      <td className="px-3 py-2.5 border-b border-borda">
+                        <ModalInput type="textarea" label={`Observação de ${item.aluno.nome}`} value={item.coleta.observacao || ""} onChange={(v) => atualizarColeta(item.aluno.id, "observacao", v)} placeholder="Clique para editar" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
+
+        </>
+)}
+
+{(aba === "trimestrais") && (
+<>
+{/* METAS TRIMESTRAIS */}
+        <div className="mt-8 grid gap-4">
+          <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho mb-1 border-b border-borda pb-2">Metas Trimestrais</h3>
+          
+          <Card animated delay={0.16} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 1</h4>
+             <span className="block font-bold text-texto text-sm">A unidade de ação está participando do programa de incentivo ao estudo da lição?</span>
+             <div className="flex gap-5 mt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.incentivaEstudo === true} onChange={() => setForm({...form, incentivaEstudo: true})} /> Sim</label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.incentivaEstudo === false} onChange={() => setForm({...form, incentivaEstudo: false})} /> Não</label>
+             </div>
+          </Card>
+
+          <Card animated delay={0.17} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 2</h4>
+             <span className="block font-bold text-texto text-sm">A unidade de ação está participando do programa de incentivo à pontualidade?</span>
+             <div className="flex gap-5 mt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.incentivaPontualidade === true} onChange={() => setForm({...form, incentivaPontualidade: true})} /> Sim</label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.incentivaPontualidade === false} onChange={() => setForm({...form, incentivaPontualidade: false})} /> Não</label>
+             </div>
+          </Card>
+
+          <Card animated delay={0.18} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 3</h4>
+             <span className="block font-bold text-texto text-sm">O professor visitou pelo menos um dos seus alunos por mês, todos os meses no decorrer do ano?</span>
+             <div className="flex gap-5 mt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.visitouAlunos === true} onChange={() => setForm({...form, visitouAlunos: true})} /> Sim</label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.visitouAlunos === false} onChange={() => setForm({...form, visitouAlunos: false})} /> Não</label>
+             </div>
+             <div className="mt-2 bg-black/5 p-4 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid gap-1 text-sm font-bold text-marinho">Primeira visita<ModalInput type="date" label="Primeira visita" value={form.primeiraVisita} onChange={(v) => setForm({ ...form, primeiraVisita: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Última visita<ModalInput type="date" label="Última visita" value={form.ultimaVisita} onChange={(v) => setForm({ ...form, ultimaVisita: v })} /></div>
+             </div>
+          </Card>
+
+          <Card animated delay={0.19} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 4</h4>
+             <span className="block font-bold text-texto text-sm">Participação do professor na Classe dos Professores. Marque os sábados em que o professor participou.</span>
+             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 mt-1">
+              {presencas.map((item) => (
+                <label key={item.numeroSabado} className="flex items-center gap-2 min-h-[40px] rounded-lg border border-borda px-3 text-sm cursor-pointer hover:bg-black/5 transition-colors">
+                  <input type="checkbox" checked={Boolean(item.presente)} onChange={(e) => setPresencas((atuais) => atuais.map((p) => p.numeroSabado === item.numeroSabado ? { ...p, presente: e.target.checked } : p))} className="w-4 h-4 rounded text-marinho focus:ring-marinho" />
+                  Sábado {item.numeroSabado}
+                </label>
+              ))}
+            </div>
+          </Card>
+
+          <Card animated delay={0.20} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 5</h4>
+             <span className="block font-bold text-texto text-sm">Funcionamento de um Pequeno Grupo com os membros da classe e interessados. Escreva onde funciona o PG, o dia da semana e o horário em que acontece.</span>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <div className="grid gap-1 text-sm font-bold text-marinho">Nome da pessoa responsável pelo Pequeno Grupo:<ModalInput label="Responsável pelo PG" value={form.pequenoGrupoResponsavel} onChange={(v) => setForm({ ...form, pequenoGrupoResponsavel: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Endereço:<ModalInput label="Endereço do PG" value={form.pequenoGrupoEndereco} onChange={(v) => setForm({ ...form, pequenoGrupoEndereco: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Dia da semana:<ModalInput label="Dia da semana" value={form.pequenoGrupoDia} onChange={(v) => setForm({ ...form, pequenoGrupoDia: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Horário:<ModalInput label="Horário" type="time" value={form.pequenoGrupoHorario} onChange={(v) => setForm({ ...form, pequenoGrupoHorario: v })} /></div>
+             </div>
+          </Card>
+
+          <Card animated delay={0.21} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 6</h4>
+             <span className="block font-bold text-texto text-sm">Promoção de uma ação social para captação de interessados. Descreva a ação social realizada.</span>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                <div className="grid gap-1 text-sm font-bold text-marinho md:col-span-2">Descrição da ação social<ModalInput label="Descrição da ação social" type="textarea" value={form.acaoSocialDescricao} onChange={(v) => setForm({ ...form, acaoSocialDescricao: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Tipo de ação:<ModalInput label="Tipo de ação" value={form.acaoSocialTipo} onChange={(v) => setForm({ ...form, acaoSocialTipo: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Data:<ModalInput label="Data da ação" type="date" value={form.acaoSocialData} onChange={(v) => setForm({ ...form, acaoSocialData: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Local:<ModalInput label="Local da ação" value={form.acaoSocialLocal} onChange={(v) => setForm({ ...form, acaoSocialLocal: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Quantidade de pessoas envolvidas:<ModalInput label="Pessoas envolvidas" type="number" value={form.pessoasAlcancadas} onChange={(v) => setForm({ ...form, pessoasAlcancadas: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Quantidade de interessados alcançados:<ModalInput label="Interessados alcançados" type="number" value={form.interessadosAlcancados} onChange={(v) => setForm({ ...form, interessadosAlcancados: v })} /></div>
+             </div>
+          </Card>
+
+          <Card animated delay={0.22} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 7</h4>
+             <span className="block font-bold text-texto text-sm">A unidade de ação teve pelo menos 50% dos alunos ministrando pelo menos uma série de estudos bíblicos no decorrer do ano? Anote o nome dos alunos e a pessoa para quem estão ministrando o estudo bíblico.</span>
+             <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mt-2">
+                <div className="grid gap-1 text-sm font-bold text-marinho">Nome do aluno da unidade de ação:<ModalInput label="Nome do aluno" placeholder="Nome do aluno" value={novoEstudo.alunoNome} onChange={(v) => setNovoEstudo({ ...novoEstudo, alunoNome: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Nome da pessoa que recebe o estudo:<ModalInput label="Pessoa que recebe o estudo" placeholder="Pessoa que recebe o estudo" value={novoEstudo.interessadoNome} onChange={(v) => setNovoEstudo({ ...novoEstudo, interessadoNome: v })} /></div>
+                <button type="button" onClick={adicionarEstudo} className="self-end inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-bold cursor-pointer"><Plus size={16} /> Adicionar</button>
+             </div>
+             {card?.cartao?.estudosBiblicos?.length > 0 && (
+                <div className="mt-2 bg-black/5 p-4 rounded-lg">
+                  <h5 className="m-0 text-sm font-bold text-marinho mb-2">Estudos Adicionados:</h5>
+                  <ul className="m-0 pl-5 text-sm text-muted grid gap-1">
+                    {card.cartao.estudosBiblicos.map((item) => <li key={item.id}><strong>{item.alunoNome}</strong> ensina <strong>{item.interessadoNome}</strong></li>)}
+                  </ul>
+                </div>
+             )}
+          </Card>
+
+          <Card animated delay={0.23} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 8</h4>
+             <span className="block font-bold text-texto text-sm">Cada unidade de ação deve levar pelo menos uma pessoa ao batismo no decorrer do ano. Nome de quem se batizou por meio da unidade de ação.</span>
+             <div className="grid gap-1 text-sm font-bold text-marinho mt-2">Nome:<ModalInput label="Nomes dos batismos" type="textarea" placeholder="Nomes separados por vírgula..." value={form.batismosNomes} onChange={(v) => setForm({ ...form, batismosNomes: v })} /></div>
+             <div className="grid gap-1 text-sm font-bold text-marinho">Quantidade de batismos:<ModalInput label="Quantidade de batismos" type="number" value={form.batismos} onChange={(v) => setForm({ ...form, batismos: v })} /></div>
+          </Card>
+
+          <Card animated delay={0.24} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 9</h4>
+             <span className="block font-bold text-texto text-sm">A unidade de ação promoveu almoços, encontros sociais, pôr do sol juntos ou comemoração dos aniversariantes?</span>
+             <div className="flex gap-5 mt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.promoveuConfraternizacao === true} onChange={() => setForm({...form, promoveuConfraternizacao: true})} /> Sim</label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.promoveuConfraternizacao === false} onChange={() => setForm({...form, promoveuConfraternizacao: false})} /> Não</label>
+             </div>
+             
+             <div className="mt-4 border-t border-borda pt-4">
+               <span className="block font-bold text-texto text-sm mb-3">Campos adicionais - Liste as ações realizadas:</span>
+               <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_auto] gap-3">
+                  <div className="grid gap-1 text-sm font-bold text-marinho">Ação:<ModalInput label="Ação realizada" placeholder="Ação realizada" value={novaConfrat.descricao} onChange={(v) => setNovaConfrat({ ...novaConfrat, descricao: v })} /></div>
+                  <div className="grid gap-1 text-sm font-bold text-marinho">Data:<ModalInput label="Data da confraternização" type="date" value={novaConfrat.data} onChange={(v) => setNovaConfrat({ ...novaConfrat, data: v })} /></div>
+                  <button type="button" onClick={adicionarConfrat} className="self-end inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-bold cursor-pointer"><Plus size={16} /> Adicionar</button>
+               </div>
+               {card?.cartao?.confraternizacoes?.length > 0 && (
+                  <div className="mt-3 bg-black/5 p-4 rounded-lg">
+                    <ul className="m-0 pl-5 text-sm text-muted grid gap-1">
+                      {card.cartao.confraternizacoes.map((item) => <li key={item.id}><strong>{item.descricao}</strong> | Data: {inputDate(item.data)}</li>)}
+                    </ul>
+                  </div>
+               )}
+             </div>
+          </Card>
+
+          <Card animated delay={0.25} className="grid gap-4">
+             <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 10</h4>
+             <span className="block font-bold text-texto text-sm">A unidade de ação realizou reuniões de planejamento e distribuiu as funções da Escola Sabatina entre os alunos? Foi realizada reunião de avaliação e planejamento para o próximo trimestre?</span>
+             <div className="flex gap-5 mt-1">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.planejamentoTrimestral === true} onChange={() => setForm({...form, planejamentoTrimestral: true})} /> Sim</label>
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.planejamentoTrimestral === false} onChange={() => setForm({...form, planejamentoTrimestral: false})} /> Não</label>
+             </div>
+          </Card>
+
+          <button type="button" onClick={salvarQuestionario} disabled={saving} className="mx-auto mt-2 mb-8 inline-flex items-center justify-center gap-2 min-h-[50px] px-8 rounded-xl border-0 bg-marinho text-white font-extrabold cursor-pointer text-base shadow-lg shadow-marinho/20 w-full md:w-auto hover:bg-marinho/90 transition-colors">
+             <Save size={20} /> Salvar Questionário do Professor
+          </button>
+        </div>
+        
+        {/* OTHER METAS */}
+        {card?.metas?.map((metaItem, index) => (
+          <Card animated delay={0.26 + (index * 0.03)} hoverable={false} className="!p-0 overflow-hidden" key={metaItem.titulo}>
+            <button type="button" className="flex items-center justify-between w-full min-h-[78px] px-4.5 py-3.5 border-0 bg-transparent text-left cursor-pointer hover:bg-black/5" onClick={() => setOpen(open === metaItem.titulo ? "" : metaItem.titulo)}>
+              <span>
+                <strong className="block text-base">{metaItem.titulo}</strong>
+                <small className="block mt-1 text-muted text-sm">{metaItem.detalhe}</small>
+              </span>
+              <span className="flex items-center gap-3 whitespace-nowrap text-muted">
+                <StatusPill ok={metaItem.ok}>{metaItem.status}</StatusPill>
+                {open === metaItem.titulo ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+              </span>
+            </button>
+            {open === metaItem.titulo && (
+              <div className="flex items-center gap-2 px-4.5 pb-4.5 border-t border-borda pt-4 text-sm text-muted">
+                <Check size={16} /> Dados carregados das respostas salvas no questionario.
+              </div>
+            )}
+          </Card>
+        ))}
+
+        </>
+)}
+
+        {modalAcaoAluno && (() => {
+        const item = coleta?.alunos?.find(a => a.aluno.id === modalAcaoAluno);
+        if (!item) return null;
+        return (
+          <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 grid gap-4">
+              <h3 className="m-0 text-lg font-outfit text-marinho">Ação Solidária - {item.aluno.nome}</h3>
+              <div className="grid gap-1 text-sm font-bold text-texto">
+                Descreva a ação solidária realizada:
+                <input type="text" className="min-h-[40px] rounded-lg border border-borda px-3 font-normal" value={item.coleta.acaoSolidariaDescricao || ""} onChange={(e) => atualizarColeta(item.aluno.id, "acaoSolidariaDescricao", e.target.value)} />
+              </div>
+              <div className="grid gap-1 text-sm font-bold text-texto">
+                Tipo de ação (ex: Cesta básica, Saúde):
+                <input type="text" className="min-h-[40px] rounded-lg border border-borda px-3 font-normal" value={item.coleta.acaoSolidariaTipo || ""} onChange={(e) => atualizarColeta(item.aluno.id, "acaoSolidariaTipo", e.target.value)} />
+              </div>
+              <div className="flex justify-end mt-2">
+                <button type="button" onClick={() => setModalAcaoAluno(null)} className="min-h-[40px] px-5 rounded-lg bg-marinho text-white font-bold">Concluir</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {modalEstudoAluno && (() => {
+        const item = coleta?.alunos?.find(a => a.aluno.id === modalEstudoAluno);
+        if (!item) return null;
+        return (
+          <div className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 grid gap-4">
+              <h3 className="m-0 text-lg font-outfit text-marinho">Estudo Bíblico - {item.aluno.nome}</h3>
+              <div className="grid gap-1 text-sm font-bold text-texto">
+                Quantos estudos?
+                <input type="number" min="1" className="min-h-[40px] rounded-lg border border-borda px-3 font-normal" value={item.coleta.estudosBiblicos || 1} onChange={(e) => atualizarColeta(item.aluno.id, "estudosBiblicos", Number(e.target.value))} />
+              </div>
+              <div className="flex justify-end mt-2">
+                <button type="button" onClick={() => { if (!item.coleta.estudosBiblicos) atualizarColeta(item.aluno.id, "estudosBiblicos", 1); setModalEstudoAluno(null); }} className="min-h-[40px] px-5 rounded-lg bg-marinho text-white font-bold">Concluir</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+    </section>
+  );
+}
