@@ -49,6 +49,11 @@ export async function getProfessorCard(params = {}) {
   }
 }
 
+export async function getCartoesProfessor(params = {}) {
+  const { data } = await api.get("/cartoes-professor", { params });
+  return data;
+}
+
 export async function salvarCartaoProfessor(id, payload) {
   const { data } = await api.patch(`/cartoes-professor/${id}`, payload);
   return data;
