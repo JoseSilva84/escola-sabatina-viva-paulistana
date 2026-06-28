@@ -40,21 +40,21 @@ O diretor deve responder este conjunto uma vez por trimestre. No ano, serao 4 pr
 
 **Pergunta 1:** Avaliar e promover a Escola Sabatina como um todo e a execucao dos 10 itens do Projeto Professor Nota 10. Todas as classes estao cumprindo os 10 itens do Projeto Professor Nota 10?
 - [ ] Sim
-- [ ] Nao
+- [ ] Não
 - [ ] Algumas
 
 **Pergunta 2:** Realizar a Classe dos Professores. A Classe dos Professores foi realizada regularmente neste trimestre?
 - [ ] Sim
-- [ ] Nao
+- [ ] Não
 
-**Subpergunta - Quem participou das reunioes?**
+**Subpergunta - Quem participou das reuniões?**
 - [ ] Todos os professores
 - [ ] Apenas parte da equipe
 - [ ] Nenhum professor participou
 
 **Pergunta 3:** Implantar a Classe dos Interessados. A Classe dos Interessados ja foi implantada na igreja?
 - [ ] Sim
-- [ ] Nao
+- [ ] Não
 
 **Campo adicional:**
 - Quantos alunos estao participando da Classe dos Interessados? _______ alunos atualmente.

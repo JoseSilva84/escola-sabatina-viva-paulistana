@@ -518,10 +518,11 @@ export function ProfessorPage() {
 {(aba === "trimestrais") && (
 <>
 {/* METAS TRIMESTRAIS */}
-        <div className="mt-8 grid gap-4">
-          <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho mb-1 border-b border-borda pb-2">Metas Trimestrais</h3>
+        <div className="mt-8">
+          <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho mb-4 border-b border-borda pb-2">Metas Trimestrais</h3>
           
-          <Card animated delay={0.16} className="grid gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+            <Card animated delay={0.16} className="grid gap-4">
              <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 1</h4>
              <span className="block font-bold text-texto text-sm">A unidade de ação está participando do programa de incentivo ao estudo da lição?</span>
              <div className="flex gap-5 mt-1">
@@ -546,16 +547,16 @@ export function ProfessorPage() {
                 <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.visitouAlunos === true} onChange={() => setForm({...form, visitouAlunos: true})} /> Sim</label>
                 <label className="flex items-center gap-2 cursor-pointer text-sm font-medium"><input type="radio" className="w-4 h-4 text-marinho focus:ring-marinho" checked={form.visitouAlunos === false} onChange={() => setForm({...form, visitouAlunos: false})} /> Não</label>
              </div>
-             <div className="mt-2 bg-black/5 p-4 rounded-lg grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="mt-2 bg-black/5 p-4 rounded-lg grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1 text-sm font-bold text-marinho">Primeira visita<ModalInput type="date" label="Primeira visita" value={form.primeiraVisita} onChange={(v) => setForm({ ...form, primeiraVisita: v })} /></div>
                 <div className="grid gap-1 text-sm font-bold text-marinho">Última visita<ModalInput type="date" label="Última visita" value={form.ultimaVisita} onChange={(v) => setForm({ ...form, ultimaVisita: v })} /></div>
              </div>
           </Card>
 
-          <Card animated delay={0.19} className="grid gap-4">
+          <Card animated delay={0.19} className="grid gap-4 lg:col-span-2">
              <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 4</h4>
              <span className="block font-bold text-texto text-sm">Participação do professor na Classe dos Professores. Marque os sábados em que o professor participou.</span>
-             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 mt-1">
+             <div className="flex flex-wrap gap-3 mt-2">
               {presencas.map((item) => (
                 <label key={item.numeroSabado} className="flex items-center gap-2 min-h-[40px] rounded-lg border border-borda px-3 text-sm cursor-pointer hover:bg-black/5 transition-colors">
                   <input type="checkbox" checked={Boolean(item.presente)} onChange={(e) => setPresencas((atuais) => atuais.map((p) => p.numeroSabado === item.numeroSabado ? { ...p, presente: e.target.checked } : p))} className="w-4 h-4 rounded text-marinho focus:ring-marinho" />
@@ -565,23 +566,23 @@ export function ProfessorPage() {
             </div>
           </Card>
 
-          <Card animated delay={0.20} className="grid gap-4">
+          <Card animated delay={0.20} className="grid gap-4 lg:col-span-2">
              <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 5</h4>
              <span className="block font-bold text-texto text-sm">Funcionamento de um Pequeno Grupo com os membros da classe e interessados. Escreva onde funciona o PG, o dia da semana e o horário em que acontece.</span>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                <div className="grid gap-1 text-sm font-bold text-marinho">Nome da pessoa responsável pelo Pequeno Grupo:<ModalInput label="Responsável pelo PG" value={form.pequenoGrupoResponsavel} onChange={(v) => setForm({ ...form, pequenoGrupoResponsavel: v })} /></div>
-                <div className="grid gap-1 text-sm font-bold text-marinho">Endereço:<ModalInput label="Endereço do PG" value={form.pequenoGrupoEndereco} onChange={(v) => setForm({ ...form, pequenoGrupoEndereco: v })} /></div>
-                <div className="grid gap-1 text-sm font-bold text-marinho">Dia da semana:<ModalInput label="Dia da semana" value={form.pequenoGrupoDia} onChange={(v) => setForm({ ...form, pequenoGrupoDia: v })} /></div>
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                <div className="grid gap-1 text-sm font-bold text-marinho sm:col-span-2">Nome da pessoa responsável pelo Pequeno Grupo:<ModalInput label="Responsável pelo PG" value={form.pequenoGrupoResponsavel} onChange={(v) => setForm({ ...form, pequenoGrupoResponsavel: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho sm:col-span-2">Endereço:<ModalInput label="Endereço do PG" value={form.pequenoGrupoEndereco} onChange={(v) => setForm({ ...form, pequenoGrupoEndereco: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho">Dia da semana:<ModalInput label="Dia da semana" type="select" options={[{value:"Domingo",label:"Domingo"},{value:"Segunda-feira",label:"Segunda-feira"},{value:"Terça-feira",label:"Terça-feira"},{value:"Quarta-feira",label:"Quarta-feira"},{value:"Quinta-feira",label:"Quinta-feira"},{value:"Sexta-feira",label:"Sexta-feira"},{value:"Sábado",label:"Sábado"}]} value={form.pequenoGrupoDia} onChange={(v) => setForm({ ...form, pequenoGrupoDia: v })} /></div>
                 <div className="grid gap-1 text-sm font-bold text-marinho">Horário:<ModalInput label="Horário" type="time" value={form.pequenoGrupoHorario} onChange={(v) => setForm({ ...form, pequenoGrupoHorario: v })} /></div>
              </div>
           </Card>
 
-          <Card animated delay={0.21} className="grid gap-4">
+          <Card animated delay={0.21} className="grid gap-4 lg:col-span-2 2xl:col-span-3">
              <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 6</h4>
              <span className="block font-bold text-texto text-sm">Promoção de uma ação social para captação de interessados. Descreva a ação social realizada.</span>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                <div className="grid gap-1 text-sm font-bold text-marinho md:col-span-2">Descrição da ação social<ModalInput label="Descrição da ação social" type="textarea" value={form.acaoSocialDescricao} onChange={(v) => setForm({ ...form, acaoSocialDescricao: v })} /></div>
-                <div className="grid gap-1 text-sm font-bold text-marinho">Tipo de ação:<ModalInput label="Tipo de ação" value={form.acaoSocialTipo} onChange={(v) => setForm({ ...form, acaoSocialTipo: v })} /></div>
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                <div className="grid gap-1 text-sm font-bold text-marinho sm:col-span-2">Descrição da ação social<ModalInput label="Descrição da ação social" type="textarea" value={form.acaoSocialDescricao} onChange={(v) => setForm({ ...form, acaoSocialDescricao: v })} /></div>
+                <div className="grid gap-1 text-sm font-bold text-marinho sm:col-span-2">Tipo de ação:<ModalInput label="Tipo de ação" value={form.acaoSocialTipo} onChange={(v) => setForm({ ...form, acaoSocialTipo: v })} /></div>
                 <div className="grid gap-1 text-sm font-bold text-marinho">Data:<ModalInput label="Data da ação" type="date" value={form.acaoSocialData} onChange={(v) => setForm({ ...form, acaoSocialData: v })} /></div>
                 <div className="grid gap-1 text-sm font-bold text-marinho">Local:<ModalInput label="Local da ação" value={form.acaoSocialLocal} onChange={(v) => setForm({ ...form, acaoSocialLocal: v })} /></div>
                 <div className="grid gap-1 text-sm font-bold text-marinho">Quantidade de pessoas envolvidas:<ModalInput label="Pessoas envolvidas" type="number" value={form.pessoasAlcancadas} onChange={(v) => setForm({ ...form, pessoasAlcancadas: v })} /></div>
@@ -589,13 +590,13 @@ export function ProfessorPage() {
              </div>
           </Card>
 
-          <Card animated delay={0.22} className="grid gap-4">
+          <Card animated delay={0.22} className="grid gap-4 lg:col-span-2">
              <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 7</h4>
              <span className="block font-bold text-texto text-sm">A unidade de ação teve pelo menos 50% dos alunos ministrando pelo menos uma série de estudos bíblicos no decorrer do ano? Anote o nome dos alunos e a pessoa para quem estão ministrando o estudo bíblico.</span>
-             <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 mt-2">
+             <div className="flex flex-col gap-3 mt-2">
                 <div className="grid gap-1 text-sm font-bold text-marinho">Nome do aluno da unidade de ação:<ModalInput label="Nome do aluno" placeholder="Nome do aluno" value={novoEstudo.alunoNome} onChange={(v) => setNovoEstudo({ ...novoEstudo, alunoNome: v })} /></div>
                 <div className="grid gap-1 text-sm font-bold text-marinho">Nome da pessoa que recebe o estudo:<ModalInput label="Pessoa que recebe o estudo" placeholder="Pessoa que recebe o estudo" value={novoEstudo.interessadoNome} onChange={(v) => setNovoEstudo({ ...novoEstudo, interessadoNome: v })} /></div>
-                <button type="button" onClick={adicionarEstudo} className="self-end inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-bold cursor-pointer"><Plus size={16} /> Adicionar</button>
+                <button type="button" onClick={adicionarEstudo} className="self-end inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-bold cursor-pointer hover:bg-marinho/90 transition-colors"><Plus size={16} /> Adicionar estudo</button>
              </div>
              {card?.cartao?.estudosBiblicos?.length > 0 && (
                 <div className="mt-2 bg-black/5 p-4 rounded-lg">
@@ -614,7 +615,7 @@ export function ProfessorPage() {
              <div className="grid gap-1 text-sm font-bold text-marinho">Quantidade de batismos:<ModalInput label="Quantidade de batismos" type="number" value={form.batismos} onChange={(v) => setForm({ ...form, batismos: v })} /></div>
           </Card>
 
-          <Card animated delay={0.24} className="grid gap-4">
+          <Card animated delay={0.24} className="grid gap-4 lg:col-span-2">
              <h4 className="m-0 font-outfit text-base text-marinho">Pergunta 9</h4>
              <span className="block font-bold text-texto text-sm">A unidade de ação promoveu almoços, encontros sociais, pôr do sol juntos ou comemoração dos aniversariantes?</span>
              <div className="flex gap-5 mt-1">
@@ -624,10 +625,10 @@ export function ProfessorPage() {
              
              <div className="mt-4 border-t border-borda pt-4">
                <span className="block font-bold text-texto text-sm mb-3">Campos adicionais - Liste as ações realizadas:</span>
-               <div className="grid grid-cols-1 md:grid-cols-[1fr_180px_auto] gap-3">
+               <div className="flex flex-col gap-3">
                   <div className="grid gap-1 text-sm font-bold text-marinho">Ação:<ModalInput label="Ação realizada" placeholder="Ação realizada" value={novaConfrat.descricao} onChange={(v) => setNovaConfrat({ ...novaConfrat, descricao: v })} /></div>
                   <div className="grid gap-1 text-sm font-bold text-marinho">Data:<ModalInput label="Data da confraternização" type="date" value={novaConfrat.data} onChange={(v) => setNovaConfrat({ ...novaConfrat, data: v })} /></div>
-                  <button type="button" onClick={adicionarConfrat} className="self-end inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-bold cursor-pointer"><Plus size={16} /> Adicionar</button>
+                  <button type="button" onClick={adicionarConfrat} className="self-end inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-bold cursor-pointer hover:bg-marinho/90 transition-colors"><Plus size={16} /> Adicionar ação</button>
                </div>
                {card?.cartao?.confraternizacoes?.length > 0 && (
                   <div className="mt-3 bg-black/5 p-4 rounded-lg">
@@ -648,7 +649,9 @@ export function ProfessorPage() {
              </div>
           </Card>
 
-          <button type="button" onClick={salvarQuestionario} disabled={saving} className="mx-auto mt-2 mb-8 inline-flex items-center justify-center gap-2 min-h-[50px] px-8 rounded-xl border-0 bg-marinho text-white font-extrabold cursor-pointer text-base shadow-lg shadow-marinho/20 w-full md:w-auto hover:bg-marinho/90 transition-colors">
+          </div>
+
+          <button type="button" onClick={salvarQuestionario} disabled={saving} className="mx-auto mt-6 mb-8 flex items-center justify-center gap-2 min-h-[50px] px-8 rounded-xl border-0 bg-marinho text-white font-extrabold cursor-pointer text-base shadow-lg shadow-marinho/20 w-full md:w-auto hover:bg-marinho/90 transition-colors">
              <Save size={20} /> Salvar Questionário do Professor
           </button>
         </div>

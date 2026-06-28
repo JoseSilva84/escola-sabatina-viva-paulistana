@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, Check, Minus, Plus, Save, Users, Pencil, X, Camera } from "lucide-react";
+import { ArrowDown, ArrowUp, Camera, Check, Info, Minus, Pencil, Plus, Save, Users, X } from "lucide-react";
 import { toast } from "sonner";
-import { criarUnidade, getDiretorCard, getProfessorCard, getProfessores, getUnidades, salvarCartaoDiretor, atualizarAluno } from "../api/services";
+import { criarUnidade, getDiretorCard, getProfessorCard, getProfessores, getUnidades, salvarCartaoDiretor, atualizarAluno, criarAluno } from "../api/services";
 import { ProgressRing } from "../components/ProgressRing";
 import { Card } from "../components/Card";
 import { ModalInput } from "../components/ModalInput";
@@ -23,6 +23,15 @@ function Indicator({ title, value, subtitle, trend, index = 0 }) {
   );
 }
 
+function QuestionLabel({ num, text }) {
+  return (
+    <div className="flex items-center gap-2.5 mb-0.5">
+      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gradient-to-br from-marinho to-marinho/80 text-white text-xs font-extrabold shrink-0 shadow-md ring-2 ring-marinho/20">{num}</span>
+      <span className="leading-tight tracking-tight text-marinho/90">{text}</span>
+    </div>
+  );
+}
+
 function dateValue(value) {
   return value ? String(value).slice(0, 10) : "";
 }
@@ -39,8 +48,10 @@ export function DiretorPage() {
   const [unidadeSelecionada, setUnidadeSelecionada] = useState(null);
   const [alunosClasse, setAlunosClasse] = useState(null);
   const [alunoEditando, setAlunoEditando] = useState(null);
+  const [criandoAluno, setCriandoAluno] = useState(false);
   const [fotoAmpliada, setFotoAmpliada] = useState(null);
   const [novoAluno, setNovoAluno] = useState(null);
+  const [mostrarRegrasConformidade, setMostrarRegrasConformidade] = useState(false);
   const { usuario } = useAuth();
   const isDiretorOuAdmin = usuario?.papel === "DIRETOR" || usuario?.papel === "ADMIN";
 
@@ -121,9 +132,16 @@ export function DiretorPage() {
       dados.append("email", novoAluno.email?.trim() || "");
       if (novoAluno.foto) dados.append("foto", novoAluno.foto);
 
-      await atualizarAluno(alunoEditando.id, dados);
-      toast.success("Aluno atualizado com sucesso!");
+      if (criandoAluno) {
+        await criarAluno(dados);
+        toast.success("Aluno adicionado com sucesso!");
+      } else {
+        await atualizarAluno(alunoEditando.id, dados);
+        toast.success("Aluno atualizado com sucesso!");
+      }
+      
       setAlunoEditando(null);
+      setCriandoAluno(false);
       setNovoAluno(null);
       
       // Recarregar os alunos da classe
@@ -202,7 +220,7 @@ export function DiretorPage() {
       </div>
 
       {isDiretorOuAdmin && (
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-4.5 mt-4.5">
+        <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-4.5 mt-4.5">
           <Card animated delay={0.3} className="grid gap-3">
             <div className="flex justify-between gap-3 items-start">
               <div>
@@ -213,9 +231,9 @@ export function DiretorPage() {
                 <Save size={17} /> Salvar
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
               <div className="grid gap-1.5 text-sm font-bold text-marinho">
-                Classes cumprem os 10 itens?
+                <QuestionLabel num={1} text="Classes cumprem os 10 itens?" />
                 <ModalInput 
                   type="select" 
                   label="Cumprimento dos itens" 
@@ -225,24 +243,41 @@ export function DiretorPage() {
                 />
               </div>
               <div className="grid gap-1.5 text-sm font-bold text-marinho">
-                Classe dos Professores
-                <ModalInput label="Classe dos Professores" value={form.classeProfessoresFrequencia} onChange={(v) => setForm({ ...form, classeProfessoresFrequencia: v })} placeholder="Ex.: Semanal" />
+                <QuestionLabel num={2} text="A Classe dos Professores foi realizada regularmente neste trimestre?" />
+                <div className="flex items-center gap-6 h-[42px] px-2">
+                  <label className="flex items-center gap-2 cursor-pointer font-medium text-[15px] hover:text-[#ca8a04] transition-colors">
+                    <input type="radio" name="classeProfessoresFrequencia" className="w-4 h-4 accent-marinho" checked={form.classeProfessoresFrequencia === "SIM"} onChange={() => setForm({ ...form, classeProfessoresFrequencia: "SIM" })} /> Sim
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer font-medium text-[15px] hover:text-[#ca8a04] transition-colors">
+                    <input type="radio" name="classeProfessoresFrequencia" className="w-4 h-4 accent-marinho" checked={form.classeProfessoresFrequencia === "NAO"} onChange={() => setForm({ ...form, classeProfessoresFrequencia: "NAO" })} /> Não
+                  </label>
+                </div>
               </div>
               <div className="grid gap-1.5 text-sm font-bold text-marinho md:col-span-2">
-                Quem participou?
+                <QuestionLabel num={3} text="Quem participou da Classe?" />
                 <ModalInput label="Quem participou da Classe?" type="textarea" value={form.classeProfessoresParticipantes} onChange={(v) => setForm({ ...form, classeProfessoresParticipantes: v })} />
               </div>
-              <label className="flex items-center gap-2 text-sm font-bold text-marinho"><input type="checkbox" checked={form.classeInteressadosImplantada} onChange={(e) => setForm({ ...form, classeInteressadosImplantada: e.target.checked })} /> Classe dos Interessados implantada</label>
               <div className="grid gap-1.5 text-sm font-bold text-marinho">
-                Quantidade de interessados
+                <QuestionLabel num={4} text="A Classe dos Interessados foi implantada?" />
+                <div className="flex items-center gap-6 h-[42px] px-2">
+                  <label className="flex items-center gap-2 cursor-pointer font-medium text-[15px] hover:text-[#ca8a04] transition-colors">
+                    <input type="radio" name="classeInteressadosImplantada" className="w-4 h-4 accent-marinho" checked={form.classeInteressadosImplantada === true} onChange={() => setForm({ ...form, classeInteressadosImplantada: true })} /> Sim
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer font-medium text-[15px] hover:text-[#ca8a04] transition-colors">
+                    <input type="radio" name="classeInteressadosImplantada" className="w-4 h-4 accent-marinho" checked={form.classeInteressadosImplantada === false} onChange={() => setForm({ ...form, classeInteressadosImplantada: false })} /> Não
+                  </label>
+                </div>
+              </div>
+              <div className="grid gap-1.5 text-sm font-bold text-marinho">
+                <QuestionLabel num={5} text="Quantidade de interessados" />
                 <ModalInput type="number" label="Quantidade de interessados" value={form.classeInteressadosQuantidade} onChange={(v) => setForm({ ...form, classeInteressadosQuantidade: v })} />
               </div>
               <div className="grid gap-1.5 text-sm font-bold text-marinho">
-                Primeira visita
+                <QuestionLabel num={6} text="Data da primeira visita aos professores" />
                 <ModalInput type="date" label="Primeira visita" value={form.primeiraVisitaProfessores} onChange={(v) => setForm({ ...form, primeiraVisitaProfessores: v })} />
               </div>
               <div className="grid gap-1.5 text-sm font-bold text-marinho">
-                Ultima visita
+                <QuestionLabel num={7} text="Data da última visita aos professores" />
                 <ModalInput type="date" label="Última visita" value={form.ultimaVisitaProfessores} onChange={(v) => setForm({ ...form, ultimaVisitaProfessores: v })} />
               </div>
             </div>
@@ -279,9 +314,29 @@ export function DiretorPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(280px,0.8fr)] gap-4.5 mt-4.5">
-        <Card animated delay={0.5} className="overflow-x-auto">
-          <h3 className="m-0 mb-4 font-outfit text-lg">Conformidade das Classes - 10 Itens</h3>
+      <div className="flex flex-col gap-4.5 mt-4.5">
+        <Card animated delay={0.5} className="overflow-x-auto w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 className="m-0 font-outfit text-lg">Conformidade das Classes - 10 Itens</h3>
+            <button
+              type="button"
+              onClick={() => setMostrarRegrasConformidade((atual) => !atual)}
+              className="inline-flex items-center justify-center gap-2 min-h-[36px] px-3 rounded-full border border-borda bg-white text-marinho font-bold text-sm cursor-pointer hover:bg-marinho hover:text-white transition-colors"
+              aria-expanded={mostrarRegrasConformidade}
+            >
+              <Info size={16} /> Regras
+            </button>
+          </div>
+          {mostrarRegrasConformidade && (
+            <div className="mb-4 rounded-lg border border-borda bg-[#f8fbff] px-4 py-3">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 text-sm">
+                <RegraConformidade titulo="Questionario" detalhe="Percentual de preenchimento dos 10 itens do questionario do professor. Cada item cumprido vale 10%." />
+                <RegraConformidade titulo="Planejamento" detalhe="Check verde quando o planejamento trimestral foi marcado; traco vermelho quando nao foi marcado." />
+                <RegraConformidade titulo="Coletas" detalhe="Media do progresso dos alunos nas coletas semanais do trimestre, considerando estudo da licao e pontualidade." />
+                <RegraConformidade titulo="Pastoreio" detalhe="Classificacao pelo questionario: 80%+ Otimo, 50% a 79% Medio, abaixo de 50% Pendente." />
+              </div>
+            </div>
+          )}
           <table className="w-full min-w-[720px] border-collapse">
             <thead>
               <tr>
@@ -325,9 +380,29 @@ export function DiretorPage() {
           </>
         ) : (
           <>
-            <div className="mb-4.5">
-              <h2 className="m-0 font-outfit tracking-tight text-[26px]">Alunos - {unidadeSelecionada.nome}</h2>
-              <p className="m-0 mt-1.5 text-muted">Lista de alunos, com foto e informações de contato.</p>
+            <div className="mb-4.5 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
+              <div>
+                <h2 className="m-0 font-outfit tracking-tight text-[26px]">Alunos - {unidadeSelecionada.nome}</h2>
+                <p className="m-0 mt-1.5 text-muted">Lista de alunos, com foto e informações de contato.</p>
+              </div>
+              <button
+                onClick={() => {
+                  setCriandoAluno(true);
+                  setNovoAluno({
+                    nome: "",
+                    sexo: "MASCULINO",
+                    whatsapp: "",
+                    dataNascimento: "",
+                    dataBatismo: "",
+                    endereco: "",
+                    email: "",
+                    foto: null
+                  });
+                }}
+                className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer hover:bg-marinho/90 transition-colors"
+              >
+                <Plus size={18} /> Adicionar aluno
+              </button>
             </div>
             
             {!alunosClasse ? (
@@ -420,12 +495,12 @@ export function DiretorPage() {
     )}
 
     {/* Edição de Aluno Modal */}
-    {alunoEditando && (
+    {(alunoEditando || criandoAluno) && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
         <Card className="w-full max-w-2xl bg-white p-6 max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="m-0 font-outfit text-[22px] cursor-pointer">Editar Aluno</h3>
-            <button className="text-muted hover:text-texto" onClick={() => { setAlunoEditando(null); setNovoAluno(null); }}>
+            <h3 className="m-0 font-outfit text-[22px] cursor-pointer">{criandoAluno ? "Adicionar Aluno" : "Editar Aluno"}</h3>
+            <button className="text-muted hover:text-texto" onClick={() => { setAlunoEditando(null); setCriandoAluno(false); setNovoAluno(null); }}>
               <X size={24} />
             </button>
           </div>
@@ -435,7 +510,7 @@ export function DiretorPage() {
               <label className="cursor-pointer group relative">
                 {novoAluno?.foto ? (
                   <img src={URL.createObjectURL(novoAluno.foto)} alt="Preview" className="w-20 h-20 rounded-full object-cover border-2 border-marinho/20" />
-                ) : alunoEditando.fotoUrl ? (
+                ) : alunoEditando?.fotoUrl ? (
                   <img src={alunoEditando.fotoUrl} alt="Atual" className="w-20 h-20 rounded-full object-cover border-2 border-marinho/20 group-hover:opacity-50 transition-opacity" />
                 ) : (
                   <div className="w-20 h-20 rounded-full bg-marinho/10 text-marinho flex items-center justify-center border-2 border-transparent group-hover:bg-marinho/20 transition-colors">
@@ -485,14 +560,15 @@ export function DiretorPage() {
               </label>
             </div>
 
-            <div className="flex justify-end gap-3 mt-4">
-              <button 
-                className="px-4 py-2 rounded-lg border border-borda text-texto font-semibold hover:bg-black/5"
-                onClick={() => { setAlunoEditando(null); setNovoAluno(null); }}
-              >
-                Cancelar
-              </button>
-              <button 
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-borda">
+            <button
+              type="button"
+              className="px-4 py-2 text-muted font-bold hover:text-texto cursor-pointer"
+              onClick={() => { setAlunoEditando(null); setCriandoAluno(false); setNovoAluno(null); }}
+            >
+              Cancelar
+            </button>
+            <button 
                 className="px-4 py-2 rounded-lg bg-marinho text-white font-extrabold hover:bg-[#102d55] flex items-center gap-2"
                 onClick={salvarEdicaoAluno}
                 disabled={saving}
@@ -524,6 +600,15 @@ function ProgressBar({ value }) {
       <i className="inline-block h-2 rounded-full bg-[#28ad86]" style={{ width: `${safe}%` }} />
       <b className="text-xs">{safe}%</b>
     </span>
+  );
+}
+
+function RegraConformidade({ titulo, detalhe }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-md bg-white border border-borda/70 px-3 py-2">
+      <strong className="text-marinho text-[13px]">{titulo}</strong>
+      <span className="text-muted text-xs leading-snug">{detalhe}</span>
+    </div>
   );
 }
 

@@ -48,6 +48,10 @@ function montarMetas(cartao, coletas = []) {
   ].map((item) => ({ ...item, coletasRegistradas: coletas.length }));
 }
 
+function dataOpcional(valor) {
+  return valor ? new Date(valor) : null;
+}
+
 async function buscarCartaoPorContexto(req, ano, trimestre, unidadeId) {
   const unidade = await prisma.unidadeAcao.findFirst({
     where: {
@@ -210,9 +214,9 @@ routes.patch("/:id", autorizar("ADMIN", "DIRETOR", "PROFESSOR"), asyncHandler(as
 
   const data = {
     ...dados,
-    primeiraVisita: dados.primeiraVisita ? new Date(dados.primeiraVisita) : dados.primeiraVisita,
-    ultimaVisita: dados.ultimaVisita ? new Date(dados.ultimaVisita) : dados.ultimaVisita,
-    acaoSocialData: dados.acaoSocialData ? new Date(dados.acaoSocialData) : dados.acaoSocialData
+    ...(dados.primeiraVisita !== undefined ? { primeiraVisita: dataOpcional(dados.primeiraVisita) } : {}),
+    ...(dados.ultimaVisita !== undefined ? { ultimaVisita: dataOpcional(dados.ultimaVisita) } : {}),
+    ...(dados.acaoSocialData !== undefined ? { acaoSocialData: dataOpcional(dados.acaoSocialData) } : {})
   };
 
   const cartao = await prisma.cartaoProfessor.update({
