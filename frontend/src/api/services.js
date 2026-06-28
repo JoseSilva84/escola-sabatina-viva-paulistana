@@ -99,6 +99,16 @@ export async function salvarColetaSemanal(payload) {
   return data;
 }
 
+export async function getRegistrosAlunos(params = {}) {
+  const { data } = await api.get("/coletas-semanais/alunos-registros", { params });
+  return data;
+}
+
+export async function atualizarRegistroAluno(id, payload) {
+  const { data } = await api.patch(`/coletas-semanais/alunos-registros/${id}`, payload);
+  return data;
+}
+
 export async function getColetaSemanalProfessor(params) {
   const { data } = await api.get("/coletas-semanais/professor", { params });
   return data;

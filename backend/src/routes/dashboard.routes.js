@@ -7,11 +7,80 @@ const { progressoPorSemanas, completudeProfessor, completudeDiretor } = require(
 const routes = Router();
 routes.use(autenticar);
 
+function sabadoDaSemana(ano, semana) {
+  const data = new Date(ano, 0, 1, 12, 0, 0);
+  const diaSemana = data.getDay();
+  const diasParaPrimeiroSabado = (6 - diaSemana + 7) % 7;
+  data.setDate(data.getDate() + diasParaPrimeiroSabado + (semana - 1) * 7);
+  return data;
+}
+
+function semanasDoMes(ano, mes) {
+  return Array.from({ length: 53 }, (_, index) => index + 1)
+    .filter((semana) => {
+      const data = sabadoDaSemana(ano, semana);
+      return data.getFullYear() === ano && data.getMonth() + 1 === mes;
+    });
+}
+
+function trimestresDoPeriodo(periodo, trimestre) {
+  if (periodo === "anual") return [1, 2, 3, 4];
+  return [trimestre];
+}
+
+function normalizarNome(nome) {
+  return String(nome || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
 routes.get("/", asyncHandler(async (req, res) => {
-  const ano = Number(req.query.ano || new Date().getFullYear());
-  const trimestre = Number(req.query.trimestre || 1);
+  const hoje = new Date();
+  const periodoSolicitado = req.query.periodo || "mensal";
+  const periodo = ["mensal", "trimestral", "anual"].includes(periodoSolicitado) ? periodoSolicitado : "mensal";
+
+  const filtroUltimaColeta = {
+    igrejaId: req.usuario.igrejaId,
+    ...(req.query.ano ? { ano: Number(req.query.ano) } : {}),
+    ...(req.usuario.papel === "PROFESSOR" ? { professorId: req.usuario.id } : {})
+  };
+  const ultimaColetaGeral = await prisma.coletaSemanalAluno.findFirst({
+    where: filtroUltimaColeta,
+    orderBy: [{ ano: "desc" }, { numeroSemana: "desc" }]
+  });
+
+  const ano = Number(req.query.ano || ultimaColetaGeral?.ano || hoje.getFullYear());
+  const semanaReferencia = ultimaColetaGeral?.ano === ano ? ultimaColetaGeral.numeroSemana : null;
+  const mesReferencia = semanaReferencia ? sabadoDaSemana(ano, semanaReferencia).getMonth() + 1 : hoje.getMonth() + 1;
+  const mes = Number(req.query.mes || mesReferencia);
+  const trimestreReferencia = semanaReferencia ? Math.ceil(semanaReferencia / 13) : Math.floor((mes - 1) / 3) + 1;
+  const trimestre = Number(req.query.trimestre || trimestreReferencia);
   const semanaInicio = ((trimestre - 1) * 13) + 1;
-  const semanas = Array.from({ length: 13 }, (_, index) => semanaInicio + index);
+  const semanasTrimestre = Array.from({ length: 13 }, (_, index) => semanaInicio + index);
+  const semanasPeriodo = periodo === "anual"
+    ? Array.from({ length: 53 }, (_, index) => index + 1)
+    : periodo === "mensal"
+      ? semanasDoMes(ano, mes)
+      : semanasTrimestre;
+
+  const ultimaColetaPeriodo = await prisma.coletaSemanalAluno.findFirst({
+    where: {
+      igrejaId: req.usuario.igrejaId,
+      ano,
+      numeroSemana: { in: semanasPeriodo },
+      ...(req.usuario.papel === "PROFESSOR" ? { professorId: req.usuario.id } : {})
+    },
+    orderBy: { numeroSemana: "desc" }
+  });
+  const semanaCorte = ultimaColetaPeriodo?.numeroSemana || 0;
+  const semanas = semanasPeriodo.filter((semana) => semana <= semanaCorte);
+  const trimestreCorte = semanaCorte ? Math.ceil(semanaCorte / 13) : trimestre;
+  const trimestres = periodo === "anual"
+    ? Array.from({ length: trimestreCorte }, (_, index) => index + 1)
+    : trimestresDoPeriodo(periodo, trimestre);
 
   const unidades = await prisma.unidadeAcao.findMany({
     where: req.usuario.papel === "PROFESSOR"
@@ -21,7 +90,7 @@ routes.get("/", asyncHandler(async (req, res) => {
       professor: true,
       alunos: true,
       cartoesProfessor: {
-        where: { ano, trimestre },
+        where: { ano, trimestre: { in: trimestres } },
         include: { presencas: true, estudosBiblicos: true, confraternizacoes: true }
       }
     },
@@ -35,7 +104,7 @@ routes.get("/", asyncHandler(async (req, res) => {
   const coletas = await prisma.coletaSemanalAluno.findMany({
     where: { igrejaId: req.usuario.igrejaId, ano, numeroSemana: { in: semanas } }
   });
-  const progressoAlunos = progressoPorSemanas(coletas, Math.max(1, unidades.reduce((soma, unidade) => soma + unidade.alunos.length, 0) * 13));
+  const progressoAlunos = progressoPorSemanas(coletas, Math.max(1, unidades.reduce((soma, unidade) => soma + unidade.alunos.length, 0) * semanas.length));
 
   const unidadesResumo = unidades.map((unidade) => {
     const cartao = unidade.cartoesProfessor[0];
@@ -79,6 +148,19 @@ routes.get("/", asyncHandler(async (req, res) => {
     }
   });
 
+  const estudosProfessorPorAluno = new Map();
+  if (periodo !== "mensal") {
+    unidades.forEach(unidade => {
+      unidade.cartoesProfessor.forEach(cartao => {
+        (cartao.estudosBiblicos || []).forEach(estudo => {
+          const chave = normalizarNome(estudo.alunoNome);
+          if (!chave) return;
+          estudosProfessorPorAluno.set(chave, (estudosProfessorPorAluno.get(chave) || 0) + 1);
+        });
+      });
+    });
+  }
+
   const ranking = Array.from(rankingMap.values()).map(aluno => {
     let estudoPontos = 0;
     let pontualidadePontos = 0;
@@ -94,7 +176,10 @@ routes.get("/", asyncHandler(async (req, res) => {
       if (c.estudosBiblicos) estudosBiblicosPontos += (c.estudosBiblicos * 50);
     });
 
-    const progresso = progressoPorSemanas(aluno.coletas, 13);
+    const estudosProfessor = estudosProfessorPorAluno.get(normalizarNome(aluno.nome)) || 0;
+    estudosBiblicosPontos += estudosProfessor * 50;
+
+    const progresso = progressoPorSemanas(aluno.coletas, Math.max(1, semanas.length));
     const conquistasPontos = pequenoGrupoPontos + acaoSolidariaPontos + estudosBiblicosPontos;
     const pontosTrimestre = estudoPontos + pontualidadePontos + conquistasPontos;
     

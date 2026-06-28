@@ -20,6 +20,30 @@ function semanasDoTrimestre(trimestre) {
   return Array.from({ length: 13 }, (_, index) => inicio + index);
 }
 
+function dataSabado(ano, semana) {
+  const data = new Date(ano, 0, 1, 12, 0, 0);
+  const diaSemana = data.getDay();
+  const diasParaPrimeiroSabado = (6 - diaSemana + 7) % 7;
+  data.setDate(data.getDate() + diasParaPrimeiroSabado + (semana - 1) * 7);
+  return data;
+}
+
+function dataISO(data) {
+  return data.toISOString().slice(0, 10);
+}
+
+function semanaPorData(valor) {
+  if (!valor) return null;
+  const alvo = new Date(`${valor}T12:00:00`);
+  if (Number.isNaN(alvo.getTime())) return null;
+  const ano = alvo.getFullYear();
+  const chave = dataISO(alvo);
+  for (let semana = 1; semana <= 53; semana += 1) {
+    if (dataISO(dataSabado(ano, semana)) === chave) return { ano, semana };
+  }
+  return { ano, semana: null };
+}
+
 routes.get("/", asyncHandler(async (req, res) => {
   const schema = z.object({
     ano: z.coerce.number().int(),
@@ -67,6 +91,120 @@ routes.get("/", asyncHandler(async (req, res) => {
         }
       };
     })
+  });
+}));
+
+routes.get("/alunos-registros", asyncHandler(async (req, res) => {
+  const schema = z.object({
+    nome: z.string().optional(),
+    ano: z.coerce.number().int().optional(),
+    trimestre: z.coerce.number().int().min(1).max(4).optional(),
+    semana: z.coerce.number().int().min(1).max(53).optional(),
+    data: z.string().optional(),
+    unidadeId: z.string().optional()
+  });
+  const params = schema.parse(req.query);
+  const porData = semanaPorData(params.data);
+  if (params.data && !porData?.semana) return res.json([]);
+  const ano = porData?.ano || params.ano;
+  const semana = porData?.semana || params.semana;
+  const semanas = params.trimestre ? semanasDoTrimestre(params.trimestre) : null;
+
+  const where = {
+    igrejaId: req.usuario.igrejaId,
+    ...(req.usuario.papel === "PROFESSOR" ? { professorId: req.usuario.id } : {}),
+    ...(params.unidadeId ? { unidadeId: params.unidadeId } : {}),
+    ...(ano ? { ano } : {}),
+    ...(semana ? { numeroSemana: semana } : {}),
+    ...(!semana && semanas ? { numeroSemana: { in: semanas } } : {}),
+    ...(params.nome ? { aluno: { nome: { contains: params.nome, mode: "insensitive" } } } : {})
+  };
+
+  const registros = await prisma.coletaSemanalAluno.findMany({
+    where,
+    include: {
+      aluno: { select: { id: true, nome: true, fotoUrl: true } },
+      unidade: { select: { id: true, nome: true } }
+    },
+    orderBy: [
+      { ano: "desc" },
+      { numeroSemana: "desc" },
+      { aluno: { nome: "asc" } }
+    ],
+    take: 300
+  });
+
+  res.json(registros.map((item) => ({
+    id: item.id,
+    ano: item.ano,
+    numeroSemana: item.numeroSemana,
+    trimestre: trimestreDaSemana(item.numeroSemana),
+    data: dataISO(dataSabado(item.ano, item.numeroSemana)),
+    aluno: item.aluno,
+    unidade: item.unidade,
+    estudouLicao: Boolean(item.estudouLicao),
+    foiPontual: Boolean(item.foiPontual),
+    pequenoGrupo: item.pequenoGrupo,
+    acaoSolidaria: item.acaoSolidaria,
+    acaoSolidariaDescricao: item.acaoSolidariaDescricao || "",
+    acaoSolidariaTipo: item.acaoSolidariaTipo || "",
+    estudosBiblicos: item.estudosBiblicos,
+    observacao: item.observacao || ""
+  })));
+}));
+
+routes.patch("/alunos-registros/:id", autorizar("PROFESSOR", "ADMIN"), asyncHandler(async (req, res) => {
+  const dados = z.object({
+    estudouLicao: z.boolean().optional(),
+    foiPontual: z.boolean().optional(),
+    pequenoGrupo: z.boolean().nullable().optional(),
+    acaoSolidaria: z.boolean().nullable().optional(),
+    acaoSolidariaDescricao: z.string().optional(),
+    acaoSolidariaTipo: z.string().optional(),
+    estudosBiblicos: z.number().nullable().optional(),
+    observacao: z.string().optional()
+  }).parse(req.body);
+
+  const atual = await prisma.coletaSemanalAluno.findUnique({
+    where: { id: req.params.id },
+    include: { unidade: true }
+  });
+  if (!atual) throw new AppError("Registro do aluno não encontrado", 404);
+  if (atual.igrejaId !== req.usuario.igrejaId) throw new AppError("Registro do aluno não encontrado", 404);
+  if (req.usuario.papel === "PROFESSOR" && atual.professorId !== req.usuario.id) {
+    throw new AppError("Você não pode editar este registro", 403);
+  }
+
+  const atualizado = await prisma.coletaSemanalAluno.update({
+    where: { id: req.params.id },
+    data: {
+      ...dados,
+      ...(dados.acaoSolidariaDescricao !== undefined ? { acaoSolidariaDescricao: dados.acaoSolidariaDescricao || "" } : {}),
+      ...(dados.acaoSolidariaTipo !== undefined ? { acaoSolidariaTipo: dados.acaoSolidariaTipo || "" } : {}),
+      ...(dados.observacao !== undefined ? { observacao: dados.observacao || "" } : {})
+    },
+    include: {
+      aluno: { select: { id: true, nome: true, fotoUrl: true } },
+      unidade: { select: { id: true, nome: true } }
+    }
+  });
+
+  res.json({
+    id: atualizado.id,
+    ano: atualizado.ano,
+    numeroSemana: atualizado.numeroSemana,
+    trimestre: trimestreDaSemana(atualizado.numeroSemana),
+    data: dataISO(dataSabado(atualizado.ano, atualizado.numeroSemana)),
+    aluno: atualizado.aluno,
+    unidade: atualizado.unidade,
+    estudouLicao: Boolean(atualizado.estudouLicao),
+    foiPontual: Boolean(atualizado.foiPontual),
+    pequenoGrupo: atualizado.pequenoGrupo,
+    acaoSolidaria: atualizado.acaoSolidaria,
+    acaoSolidariaDescricao: atualizado.acaoSolidariaDescricao || "",
+    acaoSolidariaTipo: atualizado.acaoSolidariaTipo || "",
+    estudosBiblicos: atualizado.estudosBiblicos,
+    observacao: atualizado.observacao || ""
   });
 }));
 

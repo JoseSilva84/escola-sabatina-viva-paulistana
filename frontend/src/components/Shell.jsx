@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BarChart3, Bell, BookOpen, ClipboardList, Home, LogOut, Settings, Trophy, Users, ChevronDown, ChevronUp, Star, Calendar } from "lucide-react";
+import { BarChart3, Bell, BookOpen, ClipboardList, Home, IdCard, LogOut, Settings, Trophy, Users, ChevronDown, ChevronUp, Star, Calendar } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -76,13 +76,13 @@ const links = [
     icon: Trophy, 
     papeis: ["ADMIN", "DIRETOR", "PROFESSOR", "ALUNO"],
     subItems: [
-      { to: "/ranking", label: "Diário" },
       { to: "/ranking?periodo=mensal", label: "Mensal" },
+      { to: "/ranking?periodo=trimestral", label: "Trimestral" },
       { to: "/ranking?periodo=anual", label: "Anual" }
     ]
   },
-  { to: "#gamificacao", label: "Gamificação", icon: Trophy, papeis: ["ADMIN", "DIRETOR", "PROFESSOR", "ALUNO"], onClick: (e) => { e.preventDefault(); toast.info("Área de Gamificação em breve!"); } },
   { to: "/diretor", label: "Classes", icon: Users, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
+  { to: "/alunos", label: "Alunos", icon: IdCard, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
   { to: "/relatorio", label: "Relatórios", icon: BarChart3, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] }
 ];
 

@@ -8,6 +8,7 @@ import { ProfessorPage } from "./pages/ProfessorPage";
 import { DiretorPage } from "./pages/DiretorPage";
 import { RankingPage } from "./pages/RankingPage";
 import { RelatorioPage } from "./pages/RelatorioPage";
+import { AlunosPage } from "./pages/AlunosPage";
 import { NotificationProvider } from "./components/NotificationProvider";
 
 function Home() {
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/professor/:aba" element={<Private><ProfessorPage /></Private>} />
         <Route path="/diretor" element={<Private><DiretorPage /></Private>} />
         <Route path="/ranking" element={<Private><RankingPage /></Private>} />
+        <Route path="/alunos" element={<Private><AlunosPage /></Private>} />
         <Route path="/relatorio" element={<Private><RelatorioPage /></Private>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
