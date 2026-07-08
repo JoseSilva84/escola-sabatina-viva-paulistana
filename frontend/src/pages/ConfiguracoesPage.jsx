@@ -122,8 +122,8 @@ function aplicarTema(tema) {
   }
 }
 
-function baixarArquivo(nome, conteudo) {
-  const blob = new Blob([conteudo], { type: "text/csv;charset=utf-8" });
+function baixarArquivo(nome, conteudo, tipo = "text/plain;charset=utf-8") {
+  const blob = new Blob([conteudo], { type: tipo });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -132,6 +132,46 @@ function baixarArquivo(nome, conteudo) {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+function escaparPdf(texto) {
+  return String(texto || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[()\\]/g, "\\$&");
+}
+
+function criarPdfRelatorio({ perfil, titulo, geradoEm }) {
+  const linhas = [
+    "Escola Sabatina Viva",
+    "Relatorio exportado",
+    "",
+    `Perfil: ${perfil}`,
+    `Relatorio: ${titulo}`,
+    `Gerado em: ${geradoEm}`
+  ];
+  const conteudo = linhas.map((linha, index) => `BT /F1 14 Tf 72 ${740 - index * 26} Td (${escaparPdf(linha)}) Tj ET`).join("\n");
+  const stream = `${conteudo}\n`;
+  const objetos = [
+    "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj",
+    "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj",
+    "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj",
+    "4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj",
+    `5 0 obj << /Length ${stream.length} >> stream\n${stream}endstream endobj`
+  ];
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objetos.forEach((objeto) => {
+    offsets.push(pdf.length);
+    pdf += `${objeto}\n`;
+  });
+  const xref = pdf.length;
+  pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach((offset) => {
+    pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+  });
+  pdf += `trailer << /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return pdf;
 }
 
 function ToggleTema({ tema, onChange }) {
@@ -202,12 +242,13 @@ export function ConfiguracoesPage() {
 
   function exportarRelatorio() {
     const titulo = relatorioPorPerfil[usuario?.papel] || "Relatorio";
-    const conteudo = [
-      "perfil,relatorio,gerado_em",
-      `${perfil},"${titulo}",${new Date().toISOString()}`
-    ].join("\n");
-    baixarArquivo(`relatorio-${String(usuario?.papel || "usuario").toLowerCase()}.csv`, conteudo);
-    toast.success("Relatorio exportado para o seu nivel de acesso.");
+    const conteudo = criarPdfRelatorio({
+      perfil,
+      titulo,
+      geradoEm: new Date().toLocaleString("pt-BR")
+    });
+    baixarArquivo(`relatorio-${String(usuario?.papel || "usuario").toLowerCase()}.pdf`, conteudo, "application/pdf");
+    toast.success("PDF exportado para o seu nivel de acesso.");
   }
 
   function acaoPadrao(titulo) {
@@ -252,7 +293,7 @@ export function ConfiguracoesPage() {
                   onClick={exportarRelatorio}
                   className="inline-flex min-h-[40px] w-fit items-center justify-center gap-2 rounded-lg border-0 bg-marinho px-4 font-bold text-white transition-colors hover:bg-marinho-escuro"
                 >
-                  <Download size={16} /> Exportar CSV
+                  <Download size={16} /> Exportar PDF
                 </button>
               </ConfigCard>
             );

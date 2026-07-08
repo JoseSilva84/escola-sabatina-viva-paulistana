@@ -23,6 +23,26 @@
     color: var(--color-texto);
   }
 
+  button,
+  a,
+  select,
+  summary,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="checkbox"],
+  input[type="radio"],
+  label:has(input[type="checkbox"]),
+  label:has(input[type="radio"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
   html.dark body {
     background: radial-gradient(circle at top right, #10233f 0%, #071323 50%, #0b1728 100%);
     color: #e5edf7;

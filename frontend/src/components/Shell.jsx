@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BarChart3, Bell, BookOpen, ClipboardList, Home, IdCard, LogOut, Settings, Trophy, Users, ChevronDown, ChevronUp, Star, Calendar } from "lucide-react";
+import { BarChart3, Bell, BookOpen, Building2, Calendar, CalendarClock, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -93,12 +93,43 @@ const papelLabels = {
   ALUNO: "ALUNO"
 };
 
+const produtoPorPapel = {
+  ADMIN: "Departamental Mipes",
+  DIRETOR: "Diretor Nota 10",
+  PROFESSOR: "Professor Nota 10",
+  ALUNO: "Aluno Nota 10"
+};
+
+const configComum = [
+  { label: "Notificacoes", icon: Bell },
+  { label: "Exportar relatorios", icon: Download },
+  { label: "Tema do sistema", icon: Palette }
+];
+
+const configAdmin = [
+  { label: "Notificacoes", icon: Bell },
+  { label: "Perfil e conta", icon: UserCog },
+  { label: "Dados da igreja", icon: Building2 },
+  { label: "Unidades de Acao", icon: Users },
+  { label: "Ano e trimestre padrao", icon: CalendarClock },
+  { label: "Usuarios e permissoes", icon: ShieldCheck },
+  { label: "Identidade do sistema", icon: Image },
+  { label: "Importar/Exportar dados", icon: UploadCloud },
+  { label: "Criterios de pontuacao", icon: SlidersHorizontal },
+  { label: "Ajuda e suporte", icon: HelpCircle },
+  { label: "Tema do sistema", icon: Palette }
+];
+
 export function Shell({ children }) {
   const { usuario, sair } = useAuth();
   const location = useLocation();
   const visibleLinks = links.filter((link) => link.papeis.includes(usuario.papel));
   const [openMenus, setOpenMenus] = useState({ Ranking: true });
   const papelLabel = papelLabels[usuario.papel] || usuario.papel;
+  const produtoNome = produtoPorPapel[usuario.papel] || "Escola Sabatina Viva";
+  const [produtoPrimeiraLinha, ...produtoOutrasLinhas] = produtoNome.split(" ");
+  const produtoRestante = produtoOutrasLinhas.join(" ");
+  const configItens = usuario.papel === "ADMIN" ? configAdmin : configComum;
 
   const toggleMenu = (label) => {
     setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
@@ -115,7 +146,10 @@ export function Shell({ children }) {
       <aside className="sticky top-0 lg:h-screen flex flex-row lg:flex-col p-4 lg:p-7 text-white bg-gradient-to-br from-[#173a6a] to-[#102d55] shadow-[4px_0_24px_rgba(16,45,85,0.08)] z-40 overflow-x-auto lg:overflow-visible">
         <div className="hidden lg:flex items-center gap-3 font-bold text-[22px] leading-[1.1] tracking-tight">
           <LogoIcon type={logoType} />
-          <div>Professor<br />Nota 10 {logoType === "PROFESSOR" && <Star size={16} fill="#facc15" className="inline text-[#facc15] ml-0.5 relative -top-0.5" />}</div>
+          <div>
+            {produtoPrimeiraLinha}<br />
+            {produtoRestante} {logoType === "PROFESSOR" && <Star size={16} fill="#facc15" className="inline text-[#facc15] ml-0.5 relative -top-0.5" />}
+          </div>
         </div>
         <nav className="flex lg:flex-col gap-1.5 lg:mt-8 lg:w-full m-0">
           {visibleLinks.map((link) => {
@@ -188,7 +222,7 @@ export function Shell({ children }) {
           <div>
             <p className="m-0 mb-0.5 text-muted text-[13px]">Escola Sabatina VIVA</p>
             <h1 className="m-0 font-outfit tracking-tight text-[22px] flex items-center gap-2">
-              Professor Nota 10
+              {produtoNome}
               {usuario?.papel && <span className="text-muted text-base font-normal tracking-wide">| {papelLabel}</span>}
             </h1>
           </div>
@@ -199,12 +233,41 @@ export function Shell({ children }) {
             >
               <Bell size={20} className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-125 group-hover:rotate-6" />
             </button>
-            <div className="grid place-items-center w-[38px] h-[38px] rounded-full text-white bg-gradient-to-br from-[#3977b8] to-[#df9f57] font-extrabold">
-              {usuario.nome?.charAt(0)}
-            </div>
-            <div className="hidden lg:block">
-              <strong className="block text-texto leading-tight">{usuario.nome}</strong>
-              <span className="block text-muted text-[12px]">{papelLabel}</span>
+            <div className="relative hidden lg:block group">
+              <button
+                type="button"
+                className="flex items-center gap-3 rounded-xl border-0 bg-transparent px-1.5 py-1 text-left cursor-pointer transition-colors hover:bg-marinho/5 focus:bg-marinho/5 focus:outline-none"
+              >
+                <span className="grid place-items-center w-[38px] h-[38px] rounded-full text-white bg-gradient-to-br from-[#3977b8] to-[#df9f57] font-extrabold">
+                  {usuario.nome?.charAt(0)}
+                </span>
+                <span>
+                  <strong className="block text-texto leading-tight">{usuario.nome}</strong>
+                  <span className="block text-muted text-[12px]">{papelLabel}</span>
+                </span>
+              </button>
+              <div className="invisible absolute right-0 top-full z-50 mt-2 w-[260px] translate-y-1 rounded-xl border border-borda bg-white p-2 opacity-0 shadow-xl shadow-marinho/10 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                <div className="px-3 py-2">
+                  <strong className="block text-sm text-texto">{usuario.nome}</strong>
+                  <span className="block text-xs text-muted">{produtoNome}</span>
+                </div>
+                <div className="my-1 h-px bg-borda" />
+                <div className="grid gap-1">
+                  {configItens.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <NavLink
+                        key={item.label}
+                        to="/configuracoes"
+                        className="flex min-h-[38px] items-center gap-3 rounded-lg px-3 text-sm font-bold text-marinho transition-colors hover:bg-marinho/10"
+                      >
+                        <Icon size={16} />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           </div>
         </header>
