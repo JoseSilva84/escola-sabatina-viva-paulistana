@@ -7,17 +7,46 @@ import { motion } from "framer-motion";
 import { Tooltip } from "react-tooltip";
 import "react-tooltip/dist/react-tooltip.css";
 
+const meses = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro"
+];
+
 export function RankingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const hoje = new Date();
   const periodo = searchParams.get("periodo") || "mensal";
+  const anoVigente = hoje.getFullYear();
+  const mesVigente = hoje.getMonth() + 1;
+  const trimestreVigente = Math.floor(hoje.getMonth() / 3) + 1;
+  const ano = Number(searchParams.get("ano") || anoVigente);
+  const mes = Number(searchParams.get("mes") || mesVigente);
+  const trimestre = Number(searchParams.get("trimestre") || trimestreVigente);
   const busca = searchParams.get("busca") || "";
+  const anos = Array.from(new Set([anoVigente - 2, anoVigente - 1, anoVigente, anoVigente + 1, ano])).sort((a, b) => b - a);
   
   const [ranking, setRanking] = useState([]);
   const [mostrarRegras, setMostrarRegras] = useState(false);
 
   useEffect(() => {
-    getDashboard({ periodo }).then((data) => setRanking(data.ranking || []));
-  }, [periodo]);
+    const params = {
+      periodo,
+      ano,
+      ...(periodo === "mensal" ? { mes } : {}),
+      ...(periodo === "trimestral" ? { trimestre } : {})
+    };
+    getDashboard(params).then((data) => setRanking(data.ranking || []));
+  }, [periodo, ano, mes, trimestre]);
 
   const rankingFiltrado = ranking.filter((aluno) => (
     aluno.nome.toLowerCase().includes(busca.trim().toLowerCase())
@@ -67,20 +96,37 @@ export function RankingPage() {
       </div>
       
       <Card animated delay={0.5} className="overflow-x-auto bg-white/50 backdrop-blur-sm border border-white/50 p-4 shadow-xl">
-        <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
-          <div className="flex p-1 rounded-full bg-[#eef2f7] self-start md:self-auto border border-borda">
-            <button 
-              onClick={() => atualizarBusca({ periodo: "mensal" })}
-              className={`min-h-[34px] px-6 border-0 rounded-full font-bold cursor-pointer transition-colors ${periodo === "mensal" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
-            >Mensal</button>
-            <button 
-              onClick={() => atualizarBusca({ periodo: "trimestral" })}
-              className={`min-h-[34px] px-6 border-0 rounded-full font-bold cursor-pointer transition-colors ${periodo === "trimestral" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
-            >Trimestral</button>
-            <button 
-              onClick={() => atualizarBusca({ periodo: "anual" })}
-              className={`min-h-[34px] px-6 border-0 rounded-full font-bold cursor-pointer transition-colors ${periodo === "anual" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
-            >Anual</button>
+        <div className="flex flex-col xl:flex-row justify-between gap-4 mb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex p-1 rounded-full bg-[#eef2f7] self-start border border-borda">
+              <button 
+                onClick={() => atualizarPeriodo("mensal")}
+                className={`min-h-[34px] px-6 border-0 rounded-full font-bold cursor-pointer transition-colors ${periodo === "mensal" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
+              >Mensal</button>
+              <button 
+                onClick={() => atualizarPeriodo("trimestral")}
+                className={`min-h-[34px] px-6 border-0 rounded-full font-bold cursor-pointer transition-colors ${periodo === "trimestral" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
+              >Trimestral</button>
+              <button 
+                onClick={() => atualizarPeriodo("anual")}
+                className={`min-h-[34px] px-6 border-0 rounded-full font-bold cursor-pointer transition-colors ${periodo === "anual" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
+              >Anual</button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {periodo === "mensal" && (
+                <FiltroSelect value={mes} onChange={(valor) => atualizarBusca({ mes: valor })} ariaLabel="Mês do ranking">
+                  {meses.map((nome, index) => <option key={nome} value={index + 1}>{nome}</option>)}
+                </FiltroSelect>
+              )}
+              {periodo === "trimestral" && (
+                <FiltroSelect value={trimestre} onChange={(valor) => atualizarBusca({ trimestre: valor })} ariaLabel="Trimestre do ranking">
+                  {[1, 2, 3, 4].map((item) => <option key={item} value={item}>{item}º trimestre</option>)}
+                </FiltroSelect>
+              )}
+              <FiltroSelect value={ano} onChange={(valor) => atualizarBusca({ ano: valor })} ariaLabel="Ano do ranking">
+                {anos.map((item) => <option key={item} value={item}>{item}</option>)}
+              </FiltroSelect>
+            </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
             <button
@@ -221,6 +267,40 @@ export function RankingPage() {
     });
     setSearchParams(params);
   }
+
+  function atualizarPeriodo(proximoPeriodo) {
+    const params = new URLSearchParams(searchParams);
+    params.set("periodo", proximoPeriodo);
+    if (!params.get("ano")) params.set("ano", String(anoVigente));
+    if (proximoPeriodo === "mensal") {
+      if (!params.get("mes")) params.set("mes", String(mesVigente));
+      params.delete("trimestre");
+    }
+    if (proximoPeriodo === "trimestral") {
+      if (!params.get("trimestre")) params.set("trimestre", String(trimestreVigente));
+      params.delete("mes");
+    }
+    if (proximoPeriodo === "anual") {
+      params.delete("mes");
+      params.delete("trimestre");
+    }
+    setSearchParams(params);
+  }
+}
+
+function FiltroSelect({ value, onChange, children, ariaLabel }) {
+  return (
+    <label className="inline-flex">
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="min-h-[38px] rounded-full border border-borda bg-white px-3 pr-8 text-sm font-bold normal-case tracking-normal text-marinho outline-none transition-colors hover:border-marinho focus:border-marinho"
+      >
+        {children}
+      </select>
+    </label>
+  );
 }
 
 function fotoAluno(aluno) {
