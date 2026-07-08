@@ -22,4 +22,54 @@
     font-family: var(--font-outfit);
     color: var(--color-texto);
   }
+
+  html.dark body {
+    background: radial-gradient(circle at top right, #10233f 0%, #071323 50%, #0b1728 100%);
+    color: #e5edf7;
+  }
+
+  html.dark input,
+  html.dark select,
+  html.dark textarea {
+    background-color: #0f1f35 !important;
+    border-color: #28415f !important;
+    color: #e5edf7 !important;
+  }
+
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+    color: #8ea2bd !important;
+  }
+
+  html.dark [class*="bg-white"] {
+    background-color: rgba(15, 31, 53, 0.88) !important;
+  }
+
+  html.dark aside [class*="bg-white/15"],
+  html.dark aside [class*="bg-white/10"] {
+    background-color: rgba(255, 255, 255, 0.14) !important;
+  }
+
+  html.dark [class*="text-texto"] {
+    color: #e5edf7 !important;
+  }
+
+  html.dark [class*="text-muted"] {
+    color: #9fb0c8 !important;
+  }
+
+  html.dark [class*="text-marinho"] {
+    color: #8fb8ff !important;
+  }
+
+  html.dark [class*="border-borda"],
+  html.dark [class*="border-white"] {
+    border-color: rgba(105, 131, 166, 0.35) !important;
+  }
+
+  html.dark [class*="bg-black/5"],
+  html.dark [class*="bg-marinho/5"],
+  html.dark [class*="bg-marinho/10"] {
+    background-color: rgba(143, 184, 255, 0.12) !important;
+  }
 }

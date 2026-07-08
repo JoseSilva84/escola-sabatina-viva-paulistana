@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarDays, Camera, Check, ChevronDown, ChevronUp, Edit3, Eye, Plus, Save, Trophy, UserPlus, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, ChevronUp, Edit3, Eye, Plus, Save, Trophy, UserPlus, X } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -110,14 +110,6 @@ export function ProfessorPage() {
   const [etapaTrimestral, setEtapaTrimestral] = useState(-1);
   const [mostrarAvaliacoes, setMostrarAvaliacoes] = useState(false);
   const [avaliacoesTrimestrais, setAvaliacoesTrimestrais] = useState([]);
-
-  const fotoPreviewAluno = useMemo(() => (
-    novoAluno.foto ? URL.createObjectURL(novoAluno.foto) : ""
-  ), [novoAluno.foto]);
-
-  useEffect(() => () => {
-    if (fotoPreviewAluno) URL.revokeObjectURL(fotoPreviewAluno);
-  }, [fotoPreviewAluno]);
 
   useEffect(() => {
     getUnidades({ igrejaAtual: true }).then((lista) => {
@@ -276,8 +268,8 @@ export function ProfessorPage() {
       return (
         <div className="min-h-[220px] flex flex-col justify-center gap-4">
           <div className="max-w-2xl">
-            <span className="inline-flex items-center justify-center rounded-lg bg-marinho/10 px-3 py-1 text-sm font-bold text-marinho">Metas Trimestrais</span>
-            <h5 className="m-0 mt-4 font-outfit text-2xl text-texto">Iniciar Avaliação Trimestral do Professor</h5>
+            <span className="inline-flex items-center justify-center rounded-lg bg-marinho/10 px-3 py-1 text-sm font-bold text-marinho">Metas - Professor</span>
+            <h5 className="m-0 mt-4 font-outfit text-2xl text-texto">Iniciar Avaliação Trimestral da Unidade de Ação</h5>
             <p className="m-0 mt-2 text-sm text-muted">Clique em iniciar para escolher a unidade, o ano e o trimestre desta avaliação.</p>
           </div>
         </div>
@@ -592,10 +584,6 @@ export function ProfessorPage() {
       toast.error("Informe o nome do aluno.");
       return;
     }
-    if (!novoAluno.whatsapp.trim()) {
-      toast.error("Informe o WhatsApp do aluno.");
-      return;
-    }
     if (!unidadeId) {
       toast.error("Selecione uma Unidade de Ação.");
       return;
@@ -605,14 +593,8 @@ export function ProfessorPage() {
     try {
       const dados = new FormData();
       dados.append("nome", nome);
-      dados.append("sexo", novoAluno.sexo);
       dados.append("whatsapp", novoAluno.whatsapp.trim());
       dados.append("unidadeId", unidadeId);
-      dados.append("dataNascimento", novoAluno.dataNascimento);
-      dados.append("dataBatismo", novoAluno.dataBatismo);
-      dados.append("endereço", novoAluno.endereco.trim());
-      dados.append("email", novoAluno.email.trim());
-      if (novoAluno.foto) dados.append("foto", novoAluno.foto);
 
       await criarAluno(dados);
       toast.success("Aluno cadastrado na Unidade de Ação selecionada.");
@@ -663,7 +645,7 @@ export function ProfessorPage() {
         </div>
 {/* METAS SEMANAIS */}
         <div className="mt-4 grid gap-4">
-          <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho mb-1 border-b border-borda pb-2">Metas Semanais</h3>
+          <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho mb-1 border-b border-borda pb-2">Metas - Aluno</h3>
           
           <Card animated delay={0.13} className="grid gap-4">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -679,53 +661,13 @@ export function ProfessorPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[160px_1fr] gap-4">
-              <label className="grid gap-2 text-sm font-bold text-marinho">
-                Foto
-                <span className="flex flex-col items-center justify-center gap-2 min-h-[150px] rounded-xl border border-dashed border-borda bg-black/[0.02] cursor-pointer text-muted text-center px-3">
-                  {fotoPreviewAluno ? (
-                    <img src={fotoPreviewAluno} alt="Previa do aluno" className="w-20 h-20 rounded-full object-cover shadow-sm" />
-                  ) : (
-                    <span className="w-16 h-16 rounded-full bg-marinho/10 text-marinho flex items-center justify-center">
-                      <Camera size={26} />
-                    </span>
-                  )}
-                  <span className="text-xs font-semibold">{novoAluno.foto ? novoAluno.foto.name : "Escolher foto"}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(e) => setNovoAluno((atual) => ({ ...atual, foto: e.target.files?.[0] || null }))}
-                  />
-                </span>
-              </label>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="grid gap-1 text-sm font-bold text-marinho">Nome *
                   <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.nome} onChange={(e) => setNovoAluno((atual) => ({ ...atual, nome: e.target.value }))} placeholder="Digite o nome..." />
                 </label>
-                <label className="grid gap-1 text-sm font-bold text-marinho">Sexo *
-                  <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white font-normal text-texto" value={novoAluno.sexo} onChange={(e) => setNovoAluno((atual) => ({ ...atual, sexo: e.target.value }))}>
-                    <option value="MASCULINO">Masculino</option>
-                    <option value="FEMININO">Feminino</option>
-                  </select>
-                </label>
-                <label className="grid gap-1 text-sm font-bold text-marinho">WhatsApp *
+                <label className="grid gap-1 text-sm font-bold text-marinho">WhatsApp
                   <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.whatsapp} onChange={(e) => setNovoAluno((atual) => ({ ...atual, whatsapp: e.target.value }))} placeholder="(00) 00000-0000" />
                 </label>
-                <label className="grid gap-1 text-sm font-bold text-marinho">Nascimento
-                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" type="date" value={novoAluno.dataNascimento} onChange={(e) => setNovoAluno((atual) => ({ ...atual, dataNascimento: e.target.value }))} />
-                </label>
-                <label className="grid gap-1 text-sm font-bold text-marinho">Batismo
-                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" type="date" value={novoAluno.dataBatismo} onChange={(e) => setNovoAluno((atual) => ({ ...atual, dataBatismo: e.target.value }))} />
-                </label>
-                <label className="grid gap-1 text-sm font-bold text-marinho">Email
-                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" type="email" value={novoAluno.email} onChange={(e) => setNovoAluno((atual) => ({ ...atual, email: e.target.value }))} placeholder="email@exemplo.com" />
-                </label>
-                <label className="grid gap-1 text-sm font-bold text-marinho md:col-span-2 xl:col-span-3">Endereco
-                  <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.endereco} onChange={(e) => setNovoAluno((atual) => ({ ...atual, endereco: e.target.value }))} placeholder="Rua, numero, bairro..." />
-                </label>
-              </div>
             </div>
           </Card>
 
@@ -823,7 +765,7 @@ export function ProfessorPage() {
         <div className="mt-8 grid gap-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-borda pb-3">
             <div>
-              <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho">Metas Trimestrais</h3>
+              <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho">Metas - Professor</h3>
               <p className="m-0 mt-1 text-sm text-muted">Preencha uma etapa por vez para a unidade selecionada.</p>
             </div>
             <button type="button" onClick={() => { setMostrarAvaliacoes((atual) => !atual); if (!mostrarAvaliacoes) carregarAvaliacoesTrimestrais().catch(() => setAvaliacoesTrimestrais([])); }} className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border border-borda bg-white text-marinho font-bold cursor-pointer hover:bg-marinho/5 transition-colors">
@@ -861,7 +803,7 @@ export function ProfessorPage() {
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div>
                 <span className="text-sm font-bold text-marinho">{etapaTrimestral === -1 ? "Início" : etapaTrimestral === 0 ? "Escolha do período" : `Pergunta ${etapaTrimestral} de 10`}</span>
-                <h4 className="m-0 mt-1 font-outfit text-xl text-texto">{etapaTrimestral === -1 ? "Iniciar Avaliação Trimestral do Professor" : etapaTrimestral === 0 ? "Ano e trimestre da avaliação" : "Avaliação trimestral do professor"}</h4>
+                <h4 className="m-0 mt-1 font-outfit text-xl text-texto">{etapaTrimestral === -1 ? "Iniciar Avaliação Trimestral da Unidade de Ação" : etapaTrimestral === 0 ? "Ano e trimestre da avaliação" : "Avaliação trimestral do professor"}</h4>
                 {etapaTrimestral >= 0 && <p className="m-0 mt-1 text-sm text-muted">{trimestre}º trimestre de {ano} | {trimestreAtualPeriodo}</p>}
               </div>
               <div className="flex flex-col gap-3 md:items-end">
@@ -907,7 +849,7 @@ export function ProfessorPage() {
 <>
 {/* METAS TRIMESTRAIS */}
         <div className="mt-8">
-          <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho mb-4 border-b border-borda pb-2">Metas Trimestrais</h3>
+          <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho mb-4 border-b border-borda pb-2">Metas - Professor</h3>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
             <Card animated delay={0.16} className="grid gap-4">

@@ -6,6 +6,13 @@ import { AppErrorBoundary } from "./components/AppErrorBoundary.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import "./styles.css";
 
+try {
+  const temaSalvo = window.localStorage.getItem("nota10.tema");
+  document.documentElement.classList.toggle("dark", temaSalvo === "dark");
+} catch {
+  // Sem armazenamento local, o sistema inicia no tema claro.
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>

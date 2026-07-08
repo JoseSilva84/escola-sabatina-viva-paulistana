@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, Camera, Check, Info, Minus, Pencil, Plus, Save, Users, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Info, Minus, Pencil, Plus, Save, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { criarUnidade, getDiretorCard, getProfessorCard, getProfessores, getUnidades, salvarCartaoDiretor, atualizarAluno, criarAluno } from "../api/services";
 import { ProgressRing } from "../components/ProgressRing";
@@ -115,22 +115,17 @@ export function DiretorPage() {
   }
 
   async function salvarEdicaoAluno() {
-    if (!novoAluno.nome.trim() || !novoAluno.whatsapp.trim()) {
-      toast.error("Nome e WhatsApp são obrigatórios.");
+    if (!novoAluno.nome.trim()) {
+      toast.error("Informe o nome do aluno.");
       return;
     }
     setSaving(true);
     try {
       const dados = new FormData();
       dados.append("nome", novoAluno.nome.trim());
-      dados.append("sexo", novoAluno.sexo);
       dados.append("whatsapp", novoAluno.whatsapp.trim());
       dados.append("unidadeId", unidadeSelecionada.id);
-      dados.append("dataNascimento", novoAluno.dataNascimento || "");
-      dados.append("dataBatismo", novoAluno.dataBatismo || "");
-      dados.append("endereco", novoAluno.endereco?.trim() || "");
-      dados.append("email", novoAluno.email?.trim() || "");
-      if (novoAluno.foto) dados.append("foto", novoAluno.foto);
+      if (novoAluno.sexo) dados.append("sexo", novoAluno.sexo);
 
       if (criandoAluno) {
         await criarAluno(dados);
@@ -506,59 +501,15 @@ export function DiretorPage() {
           </div>
 
           <div className="grid gap-4">
-            <div className="flex items-center gap-4 mb-2">
-              <label className="cursor-pointer group relative">
-                {novoAluno?.foto ? (
-                  <img src={URL.createObjectURL(novoAluno.foto)} alt="Preview" className="w-20 h-20 rounded-full object-cover border-2 border-marinho/20" />
-                ) : alunoEditando?.fotoUrl ? (
-                  <img src={alunoEditando.fotoUrl} alt="Atual" className="w-20 h-20 rounded-full object-cover border-2 border-marinho/20 group-hover:opacity-50 transition-opacity" />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-marinho/10 text-marinho flex items-center justify-center border-2 border-transparent group-hover:bg-marinho/20 transition-colors">
-                    <Camera size={30} />
-                  </div>
-                )}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full bg-black/40 text-white">
-                  <Camera size={24} />
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => setNovoAluno({ ...novoAluno, foto: e.target.files?.[0] || null })}
-                />
-              </label>
-              <div className="text-sm">
-                <strong className="block text-marinho">Foto do Aluno</strong>
-                <span className="text-muted">Clique para alterar a imagem</span>
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label className="grid gap-1 text-sm font-bold text-marinho">Nome *
                 <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.nome} onChange={(e) => setNovoAluno({ ...novoAluno, nome: e.target.value })} placeholder="Digite o nome..." />
               </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho">Sexo *
-                <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white font-normal text-texto" value={novoAluno.sexo} onChange={(e) => setNovoAluno({ ...novoAluno, sexo: e.target.value })}>
-                  <option value="MASCULINO">Masculino</option>
-                  <option value="FEMININO">Feminino</option>
-                </select>
-              </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho">WhatsApp *
+              <label className="grid gap-1 text-sm font-bold text-marinho">WhatsApp
                 <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.whatsapp} onChange={(e) => setNovoAluno({ ...novoAluno, whatsapp: e.target.value })} placeholder="(00) 00000-0000" />
               </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho">Email
-                <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" type="email" value={novoAluno.email} onChange={(e) => setNovoAluno({ ...novoAluno, email: e.target.value })} placeholder="email@exemplo.com" />
-              </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho">Nascimento
-                <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" type="date" value={novoAluno.dataNascimento} onChange={(e) => setNovoAluno({ ...novoAluno, dataNascimento: e.target.value })} />
-              </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho">Batismo
-                <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" type="date" value={novoAluno.dataBatismo} onChange={(e) => setNovoAluno({ ...novoAluno, dataBatismo: e.target.value })} />
-              </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho md:col-span-2">Endereço
-                <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.endereco} onChange={(e) => setNovoAluno({ ...novoAluno, endereco: e.target.value })} placeholder="Rua, numero, bairro..." />
-              </label>
             </div>
+
 
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-borda">
             <button

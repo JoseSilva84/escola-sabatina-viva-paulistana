@@ -9,6 +9,7 @@ import { DiretorPage } from "./pages/DiretorPage";
 import { RankingPage } from "./pages/RankingPage";
 import { RelatorioPage } from "./pages/RelatorioPage";
 import { AlunosPage } from "./pages/AlunosPage";
+import { ConfiguracoesPage } from "./pages/ConfiguracoesPage";
 import { NotificationProvider } from "./components/NotificationProvider";
 
 function Home() {
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/ranking" element={<Private><RankingPage /></Private>} />
         <Route path="/alunos" element={<Private><AlunosPage /></Private>} />
         <Route path="/relatorio" element={<Private><RelatorioPage /></Private>} />
+        <Route path="/configuracoes" element={<Private><ConfiguracoesPage /></Private>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <NotificationProvider />

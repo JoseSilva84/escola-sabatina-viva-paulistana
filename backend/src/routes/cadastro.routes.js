@@ -196,9 +196,9 @@ routes.get("/alunos", asyncHandler(async (req, res) => {
 routes.post("/alunos", autorizar("ADMIN", "DIRETOR", "PROFESSOR"), uploadFotoAluno.single("foto"), asyncHandler(async (req, res) => {
   const schema = z.object({
     nome: z.string().min(2),
-    sexo: z.enum(["MASCULINO", "FEMININO"]),
+    sexo: z.enum(["MASCULINO", "FEMININO"]).optional().default("MASCULINO"),
     unidadeId: z.string().min(1),
-    whatsapp: z.string().min(8),
+    whatsapp: z.string().optional().nullable().default(""),
     dataNascimento: z.string().optional().nullable(),
     dataBatismo: z.string().optional().nullable(),
     endereco: z.string().optional().nullable(),
@@ -234,7 +234,7 @@ routes.post("/alunos", autorizar("ADMIN", "DIRETOR", "PROFESSOR"), uploadFotoAlu
     data: {
       nome: dados.nome,
       sexo: dados.sexo,
-      whatsapp: dados.whatsapp,
+      whatsapp: dados.whatsapp || "",
       dataNascimento: dados.dataNascimento ? new Date(dados.dataNascimento) : null,
       dataBatismo: dados.dataBatismo ? new Date(dados.dataBatismo) : null,
       endereco: dados.endereco || null,
@@ -251,9 +251,9 @@ routes.post("/alunos", autorizar("ADMIN", "DIRETOR", "PROFESSOR"), uploadFotoAlu
 routes.put("/alunos/:id", autorizar("ADMIN", "DIRETOR", "PROFESSOR"), uploadFotoAluno.single("foto"), asyncHandler(async (req, res) => {
   const schema = z.object({
     nome: z.string().min(2),
-    sexo: z.enum(["MASCULINO", "FEMININO"]),
+    sexo: z.enum(["MASCULINO", "FEMININO"]).optional(),
     unidadeId: z.string().min(1),
-    whatsapp: z.string().min(8),
+    whatsapp: z.string().optional().nullable(),
     dataNascimento: z.string().optional().nullable(),
     dataBatismo: z.string().optional().nullable(),
     endereco: z.string().optional().nullable(),
@@ -290,12 +290,12 @@ routes.put("/alunos/:id", autorizar("ADMIN", "DIRETOR", "PROFESSOR"), uploadFoto
     where: { id: req.params.id },
     data: {
       nome: dados.nome,
-      sexo: dados.sexo,
-      whatsapp: dados.whatsapp,
-      dataNascimento: dados.dataNascimento ? new Date(dados.dataNascimento) : null,
-      dataBatismo: dados.dataBatismo ? new Date(dados.dataBatismo) : null,
-      endereco: dados.endereco || null,
-      email: dados.email || null,
+      sexo: dados.sexo || alunoExistente.sexo,
+      whatsapp: dados.whatsapp ?? alunoExistente.whatsapp,
+      dataNascimento: dados.dataNascimento === undefined ? alunoExistente.dataNascimento : (dados.dataNascimento ? new Date(dados.dataNascimento) : null),
+      dataBatismo: dados.dataBatismo === undefined ? alunoExistente.dataBatismo : (dados.dataBatismo ? new Date(dados.dataBatismo) : null),
+      endereco: dados.endereco === undefined ? alunoExistente.endereco : (dados.endereco || null),
+      email: dados.email === undefined ? alunoExistente.email : (dados.email || null),
       fotoUrl,
       fotoPublicId,
       unidadeId: dados.unidadeId

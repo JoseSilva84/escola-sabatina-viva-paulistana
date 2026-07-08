@@ -1,7 +1,7 @@
 import React from "react";
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { GraduationCap, Eye, EyeOff } from "lucide-react";
+import { BookOpenCheck, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
@@ -101,8 +101,8 @@ export function Login() {
           custom={{ x: -100, y: -100, rotate: -45 }}
           className="flex items-center gap-3 font-bold text-[22px] leading-[1.1] tracking-tight text-center justify-center"
         >
-          <GraduationCap size={34} className="text-[#f4c21f]" />
-          <span>Professor Nota 10</span>
+          <BookOpenCheck size={34} className="text-[#f4c21f]" />
+          <span>ESCOLA SABATINA VIVA</span>
         </motion.div>
 
         <motion.h1

@@ -68,8 +68,8 @@ function LogoIcon({ type }) {
 
 const links = [
   { to: "/diretor", label: "Dashboard", icon: Home, papeis: ["ADMIN", "DIRETOR"] },
-  { to: "/professor/semanais", label: "Metas Semanais", icon: Calendar, papeis: ["ADMIN", "PROFESSOR"] },
-  { to: "/professor/trimestrais", label: "Metas Trimestrais", icon: ClipboardList, papeis: ["ADMIN", "PROFESSOR"] },
+  { to: "/professor/semanais", label: "Metas - Aluno", icon: Calendar, papeis: ["ADMIN", "PROFESSOR"] },
+  { to: "/professor/trimestrais", label: "Metas - Professor", icon: ClipboardList, papeis: ["ADMIN", "PROFESSOR"] },
   { to: "/aluno", label: "Cartão do Aluno", icon: BookOpen, papeis: ["ADMIN", "ALUNO"] },
   { 
     label: "Ranking", 
@@ -86,11 +86,19 @@ const links = [
   { to: "/relatorio", label: "Relatórios", icon: BarChart3, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] }
 ];
 
+const papelLabels = {
+  ADMIN: "Departamental Mipes",
+  DIRETOR: "DIRETOR",
+  PROFESSOR: "PROFESSOR",
+  ALUNO: "ALUNO"
+};
+
 export function Shell({ children }) {
   const { usuario, sair } = useAuth();
   const location = useLocation();
   const visibleLinks = links.filter((link) => link.papeis.includes(usuario.papel));
   const [openMenus, setOpenMenus] = useState({ Ranking: true });
+  const papelLabel = papelLabels[usuario.papel] || usuario.papel;
 
   const toggleMenu = (label) => {
     setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
@@ -165,10 +173,10 @@ export function Shell({ children }) {
           })}
         </nav>
         <div className="hidden lg:block absolute right-3.5 bottom-6 left-3.5 pt-4 border-t border-white/15 space-y-1">
-          <button className="group flex items-center w-full min-h-[46px] px-3.5 gap-3 border-0 rounded-lg text-white/80 bg-transparent cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white" type="button">
+          <NavLink to="/configuracoes" className={({ isActive }) => `group flex items-center w-full min-h-[46px] px-3.5 gap-3 border-0 rounded-lg text-white/80 bg-transparent cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white ${isActive ? "bg-white/15 text-white" : ""}`}>
             <Settings size={19} className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:rotate-6" />
-            <span>Configurações</span>
-          </button>
+            <span>Configuracoes</span>
+          </NavLink>
           <button className="group flex items-center w-full min-h-[46px] px-3.5 gap-3 border-0 rounded-lg text-white/80 bg-transparent cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white" onClick={sair} type="button">
             <LogOut size={19} className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:rotate-6" />
             <span>Sair</span>
@@ -181,7 +189,7 @@ export function Shell({ children }) {
             <p className="m-0 mb-0.5 text-muted text-[13px]">Escola Sabatina VIVA</p>
             <h1 className="m-0 font-outfit tracking-tight text-[22px] flex items-center gap-2">
               Professor Nota 10
-              {usuario?.papel && <span className="text-muted text-base font-normal tracking-wide">| {usuario.papel}</span>}
+              {usuario?.papel && <span className="text-muted text-base font-normal tracking-wide">| {papelLabel}</span>}
             </h1>
           </div>
           <div className="flex items-center gap-3">
@@ -196,7 +204,7 @@ export function Shell({ children }) {
             </div>
             <div className="hidden lg:block">
               <strong className="block text-texto leading-tight">{usuario.nome}</strong>
-              <span className="block text-muted text-[12px]">{usuario.papel}</span>
+              <span className="block text-muted text-[12px]">{papelLabel}</span>
             </div>
           </div>
         </header>
