@@ -217,14 +217,26 @@ export function DiretorPage() {
       {isDiretorOuAdmin && (
         <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-4.5 mt-4.5">
           <Card animated delay={0.3} className="grid gap-3">
-            <div className="flex justify-between gap-3 items-start">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <h3 className="m-0 font-outfit text-lg">Questionario trimestral do diretor</h3>
                 <p className="m-0 mt-1 text-muted text-sm">{data.igreja?.nome || "Igreja vinculada ao diretor"}</p>
               </div>
-              <button type="button" onClick={salvarQuestionario} disabled={saving} className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer">
-                <Save size={17} /> Salvar
-              </button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <label className="grid gap-1 text-xs font-bold text-marinho">Ano
+                  <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white text-texto" value={ano} onChange={(e) => setAno(Number(e.target.value))}>
+                    {[anoAtual - 1, anoAtual, anoAtual + 1].map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                </label>
+                <label className="grid gap-1 text-xs font-bold text-marinho">Trimestre
+                  <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white text-texto" value={trimestre} onChange={(e) => setTrimestre(Number(e.target.value))}>
+                    {[1, 2, 3, 4].map((item) => <option key={item} value={item}>{item}º tri</option>)}
+                  </select>
+                </label>
+                <button type="button" onClick={salvarQuestionario} disabled={saving} className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer">
+                  <Save size={17} /> Salvar
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
               <div className="grid gap-1.5 text-sm font-bold text-marinho">

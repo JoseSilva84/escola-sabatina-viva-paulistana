@@ -68,8 +68,8 @@ function LogoIcon({ type }) {
 
 const links = [
   { to: "/diretor", label: "Dashboard", icon: Home, papeis: ["ADMIN", "DIRETOR"] },
-  { to: "/professor/semanais", label: "Metas - Aluno", icon: Calendar, papeis: ["ADMIN", "PROFESSOR"] },
-  { to: "/professor/trimestrais", label: "Metas - Professor", icon: ClipboardList, papeis: ["ADMIN", "PROFESSOR"] },
+  { to: "/professor/semanais", label: "Metas - Aluno", icon: Calendar, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
+  { to: "/professor/trimestrais", label: "Metas - Professor", icon: ClipboardList, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
   { to: "/aluno", label: "Cartão do Aluno", icon: BookOpen, papeis: ["ADMIN", "ALUNO"] },
   { 
     label: "Ranking", 
@@ -117,7 +117,7 @@ export function Shell({ children }) {
           <LogoIcon type={logoType} />
           <div>Professor<br />Nota 10 {logoType === "PROFESSOR" && <Star size={16} fill="#facc15" className="inline text-[#facc15] ml-0.5 relative -top-0.5" />}</div>
         </div>
-        <nav className="flex lg:flex-col gap-2 lg:mt-10 lg:w-full m-0">
+        <nav className="flex lg:flex-col gap-1.5 lg:mt-8 lg:w-full m-0">
           {visibleLinks.map((link) => {
             const { to, label, icon: Icon, onClick, subItems } = link;
             
@@ -127,7 +127,7 @@ export function Shell({ children }) {
                 <div key={label} className="flex flex-col">
                   <button
                     onClick={() => toggleMenu(label)}
-                    className={`group flex items-center justify-between w-full min-h-[46px] px-3.5 border-0 rounded-lg text-white/80 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/15 hover:text-white ${isOpen ? "bg-white/10 text-white" : "bg-transparent"}`}
+                    className={`group flex items-center justify-between w-full min-h-[42px] px-3.5 border-0 rounded-lg text-white/80 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/15 hover:text-white ${isOpen ? "bg-white/10 text-white" : "bg-transparent"}`}
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={19} className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110" />
@@ -141,13 +141,13 @@ export function Shell({ children }) {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="hidden lg:flex flex-col ml-[19px] pl-4 border-l border-white/15 mt-1 gap-1 overflow-hidden"
+                        className="hidden lg:flex flex-col ml-[19px] pl-4 border-l border-white/15 mt-1 gap-0.5 overflow-hidden"
                       >
                         {subItems.map((sub) => (
                           <NavLink
                             key={sub.label}
                             to={sub.to}
-                            className={({ isActive }) => `flex items-center min-h-[36px] px-3 border-0 rounded-md text-[14px] text-white/70 transition-all duration-200 hover:text-white hover:bg-white/10 ${isActive && location.search === (sub.to.split('?')[1] ? '?'+sub.to.split('?')[1] : '') ? "text-white bg-white/10 font-medium" : ""}`}
+                            className={({ isActive }) => `flex items-center min-h-[32px] px-3 border-0 rounded-md text-[14px] text-white/70 transition-all duration-200 hover:text-white hover:bg-white/10 ${isActive && location.search === (sub.to.split('?')[1] ? '?'+sub.to.split('?')[1] : '') ? "text-white bg-white/10 font-medium" : ""}`}
                           >
                             {sub.label}
                           </NavLink>
@@ -164,7 +164,7 @@ export function Shell({ children }) {
                 key={`${to}-${label}`} 
                 to={to} 
                 onClick={onClick}
-                className={({ isActive }) => `group flex items-center justify-center lg:justify-start min-w-12 lg:min-w-0 min-h-[46px] px-3.5 gap-3 border-0 rounded-lg text-white/80 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white ${isActive && !onClick ? "bg-white/15 text-white" : ""}`}
+                className={({ isActive }) => `group flex items-center justify-center lg:justify-start min-w-12 lg:min-w-0 min-h-[42px] px-3.5 gap-3 border-0 rounded-lg text-white/80 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white ${isActive && !onClick ? "bg-white/15 text-white" : ""}`}
               >
                 <Icon size={19} className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:rotate-6" />
                 <span className="hidden lg:block">{label}</span>
@@ -172,12 +172,12 @@ export function Shell({ children }) {
             );
           })}
         </nav>
-        <div className="hidden lg:block absolute right-3.5 bottom-6 left-3.5 pt-4 border-t border-white/15 space-y-1">
-          <NavLink to="/configuracoes" className={({ isActive }) => `group flex items-center w-full min-h-[46px] px-3.5 gap-3 border-0 rounded-lg text-white/80 bg-transparent cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white ${isActive ? "bg-white/15 text-white" : ""}`}>
+        <div className="hidden lg:block mt-auto pt-4 border-t border-white/15 space-y-1 shrink-0">
+          <NavLink to="/configuracoes" className={({ isActive }) => `group flex items-center w-full min-h-[42px] px-3.5 gap-3 border-0 rounded-lg text-white/80 bg-transparent cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white ${isActive ? "bg-white/15 text-white" : ""}`}>
             <Settings size={19} className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:rotate-6" />
-            <span>Configuracoes</span>
+            <span>Configurações</span>
           </NavLink>
-          <button className="group flex items-center w-full min-h-[46px] px-3.5 gap-3 border-0 rounded-lg text-white/80 bg-transparent cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white" onClick={sair} type="button">
+          <button className="group flex items-center w-full min-h-[42px] px-3.5 gap-3 border-0 rounded-lg text-white/80 bg-transparent cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white" onClick={sair} type="button">
             <LogOut size={19} className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:rotate-6" />
             <span>Sair</span>
           </button>

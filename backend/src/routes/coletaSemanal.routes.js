@@ -153,7 +153,7 @@ routes.get("/alunos-registros", asyncHandler(async (req, res) => {
   })));
 }));
 
-routes.patch("/alunos-registros/:id", autorizar("PROFESSOR", "ADMIN"), asyncHandler(async (req, res) => {
+routes.patch("/alunos-registros/:id", autorizar("PROFESSOR", "DIRETOR", "ADMIN"), asyncHandler(async (req, res) => {
   const dados = z.object({
     estudouLicao: z.boolean().optional(),
     foiPontual: z.boolean().optional(),
@@ -252,7 +252,7 @@ routes.get("/professor", asyncHandler(async (req, res) => {
   });
 }));
 
-routes.put("/lote", autorizar("PROFESSOR", "ADMIN"), asyncHandler(async (req, res) => {
+routes.put("/lote", autorizar("PROFESSOR", "DIRETOR", "ADMIN"), asyncHandler(async (req, res) => {
   const schema = z.object({
     ano: z.number().int(),
     numeroSemana: z.number().int().min(1).max(53),
@@ -343,7 +343,7 @@ routes.put("/lote", autorizar("PROFESSOR", "ADMIN"), asyncHandler(async (req, re
   });
 }));
 
-routes.put("/professor", autorizar("PROFESSOR", "ADMIN"), asyncHandler(async (req, res) => {
+routes.put("/professor", autorizar("PROFESSOR", "DIRETOR", "ADMIN"), asyncHandler(async (req, res) => {
   const schema = z.object({
     ano: z.number().int(),
     numeroSemana: z.number().int().min(1).max(53),

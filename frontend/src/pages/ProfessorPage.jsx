@@ -79,6 +79,28 @@ function periodoTrimestre(ano, trimestre) {
   return `${formatarDataBR(inicio)} a ${formatarDataBR(fim)}`;
 }
 
+function semanasDoTrimestre(ano, trimestre) {
+  const inicioTrimestre = new Date(ano, (trimestre - 1) * 3, 1, 12, 0, 0);
+  const fimTrimestre = new Date(ano, trimestre * 3, 0, 12, 0, 0);
+  const primeiroSabado = new Date(ano, 0, 1, 12, 0, 0);
+  const diasParaPrimeiroSabado = (6 - primeiroSabado.getDay() + 7) % 7;
+  primeiroSabado.setDate(primeiroSabado.getDate() + diasParaPrimeiroSabado);
+
+  const semanasFiltradas = [];
+  for (let numero = 1, data = new Date(primeiroSabado); data.getFullYear() === ano; numero += 1, data.setDate(data.getDate() + 7)) {
+    if (data >= inicioTrimestre && data <= fimTrimestre) {
+      semanasFiltradas.push({
+        numero: semanasFiltradas.length + 1,
+        semanaAno: numero,
+        data: formatarDataBR(data),
+        rotulo: `Semana ${numero} - ${formatarDataBR(data)}`
+      });
+    }
+  }
+
+  return semanasFiltradas;
+}
+
 function separarNomes(valor) {
   return String(valor || "")
     .split(/\r?\n|,/)
@@ -197,9 +219,18 @@ export function ProfessorPage() {
     carregarColeta().catch(() => setColeta(null));
       }, [ano, semana, unidadeId]);
 
-  const semanas = useMemo(() => Array.from({ length: 13 }, (_, index) => ((trimestre - 1) * 13) + index + 1), [trimestre]);
+  const semanas = useMemo(() => semanasDoTrimestre(ano, trimestre), [ano, trimestre]);
+  const semanaSelecionada = useMemo(() => semanas.find((item) => item.numero === semana), [semanas, semana]);
+  const dataSemanaSelecionada = semanaSelecionada?.data || calcularDataSabado(ano, semana);
   const trimestreAtualPeriodo = useMemo(() => periodoTrimestre(ano, trimestre), [ano, trimestre]);
   const nomesBatismos = useMemo(() => separarNomes(form.batismosNomes), [form.batismosNomes]);
+
+  useEffect(() => {
+    if (!semanas.length) return;
+    if (!semanas.some((item) => item.numero === semana)) {
+      setSemana(semanas[0].numero);
+    }
+  }, [semana, semanas]);
 
   useEffect(() => {
     if (aba !== "trimestrais") return;
@@ -216,7 +247,7 @@ export function ProfessorPage() {
     if (avaliacao.unidadeId) setUnidadeId(avaliacao.unidadeId);
     setAno(avaliacao.ano);
     setTrimestre(avaliacao.trimestre);
-    setSemana(((avaliacao.trimestre - 1) * 13) + 1);
+    setSemana(semanasDoTrimestre(avaliacao.ano, avaliacao.trimestre)[0]?.numero || 1);
     setEtapaTrimestral(1);
     setMostrarAvaliacoes(false);
   }
@@ -289,7 +320,7 @@ export function ProfessorPage() {
               <input className="min-h-[42px] rounded-lg border border-borda px-3" type="number" value={ano} onChange={(e) => setAno(Number(e.target.value))} />
             </label>
             <label className="grid gap-1 text-sm font-bold">Trimestre
-              <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={trimestre} onChange={(e) => { setTrimestre(Number(e.target.value)); setSemana(((Number(e.target.value) - 1) * 13) + 1); }}>
+              <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={trimestre} onChange={(e) => setTrimestre(Number(e.target.value))}>
                 {[1, 2, 3, 4].map((item) => <option key={item} value={item}>{item}º trimestre</option>)}
               </select>
             </label>
@@ -620,29 +651,6 @@ export function ProfessorPage() {
           <p className="m-0 mt-1.5 text-muted">Gerencie sua unidade, preencha a coleta semanal e o questionário trimestral.</p>
         </div>
 
-        <Card animated delay={0.12} className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <label className="grid gap-1 text-sm font-bold">Unidade
-            <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={unidadeId} onChange={(e) => setUnidadeId(e.target.value)}>
-              {unidades.map((unidade) => <option key={unidade.id} value={unidade.id}>{unidade.nome}</option>)}
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm font-bold">Ano
-            <input className="min-h-[42px] rounded-lg border border-borda px-3" type="number" value={ano} onChange={(e) => setAno(Number(e.target.value))} />
-          </label>
-          <label className="grid gap-1 text-sm font-bold">Trimestre
-            <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={trimestre} onChange={(e) => { setTrimestre(Number(e.target.value)); setSemana(((Number(e.target.value) - 1) * 13) + 1); }}>
-              {[1, 2, 3, 4].map((item) => <option key={item} value={item}>{item}º trimestre</option>)}
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm font-bold">Semana
-            <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={semana} onChange={(e) => setSemana(Number(e.target.value))}>
-              {semanas.map((item, index) => <option key={item} value={item}>Semana {index + 1}</option>)}
-            </select>
-          </label>
-        </Card>
-        <div className="text-sm text-marinho/80 font-medium px-2 mt-[-6px]">
-          Data da classe/coleta: <strong>Sábado, {calcularDataSabado(ano, semana)}</strong>
-        </div>
 {/* METAS SEMANAIS */}
         <div className="mt-4 grid gap-4">
           <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho mb-1 border-b border-borda pb-2">Metas - Aluno</h3>
@@ -670,6 +678,32 @@ export function ProfessorPage() {
                 </label>
             </div>
           </Card>
+
+          <div className="grid gap-3">
+          <Card animated delay={0.132} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <label className="grid gap-1 text-sm font-bold">Unidade
+              <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={unidadeId} onChange={(e) => setUnidadeId(e.target.value)}>
+                {unidades.map((unidade) => <option key={unidade.id} value={unidade.id}>{unidade.nome}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm font-bold">Ano
+              <input className="min-h-[42px] rounded-lg border border-borda px-3" type="number" value={ano} onChange={(e) => setAno(Number(e.target.value))} />
+            </label>
+            <label className="grid gap-1 text-sm font-bold">Trimestre
+              <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={trimestre} onChange={(e) => setTrimestre(Number(e.target.value))}>
+                {[1, 2, 3, 4].map((item) => <option key={item} value={item}>{item}º trimestre</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm font-bold">Semana
+              <select key={`${ano}-${trimestre}`} className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={semana} onChange={(e) => setSemana(Number(e.target.value))}>
+                {semanas.map((item) => <option key={`${ano}-${trimestre}-${item.numero}`} value={item.numero}>{item.rotulo}</option>)}
+              </select>
+            </label>
+          </Card>
+          <div className="text-sm text-marinho/80 font-medium px-2">
+            Data da classe/coleta: <strong>Sábado, {dataSemanaSelecionada}</strong>
+          </div>
+          </div>
 
           <Card animated delay={0.135} className="grid gap-4">
             <div className="flex items-center justify-between gap-3">
@@ -730,7 +764,7 @@ export function ProfessorPage() {
                     </th>
                     <th className="px-3 py-3 text-left text-muted text-xs border-b border-borda font-semibold">
                       <div className="flex flex-col items-start gap-1">
-                        <span>Observação ({calcularDataSabado(ano, semana)})</span>
+                        <span>Observação ({dataSemanaSelecionada})</span>
                         <input type="checkbox" className="invisible" />
                       </div>
                     </th>

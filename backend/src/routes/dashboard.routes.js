@@ -16,11 +16,29 @@ function sabadoDaSemana(ano, semana) {
 }
 
 function semanasDoMes(ano, mes) {
-  return Array.from({ length: 53 }, (_, index) => index + 1)
-    .filter((semana) => {
+  const semanasLocais = Array.from({ length: 53 }, (_, index) => index + 1)
+    .map((semana) => {
       const data = sabadoDaSemana(ano, semana);
-      return data.getFullYear() === ano && data.getMonth() + 1 === mes;
-    });
+      return { data, semana };
+    })
+    .filter(({ data }) => data.getFullYear() === ano && data.getMonth() + 1 === mes)
+    .map(({ data }) => semanaLocalDoTrimestre(ano, data));
+
+  return [...new Set(semanasLocais)];
+}
+
+function semanaLocalDoTrimestre(ano, data) {
+  const trimestre = Math.floor(data.getMonth() / 3) + 1;
+  const inicioTrimestre = new Date(ano, (trimestre - 1) * 3, 1, 12, 0, 0);
+  let local = 0;
+  for (let semana = 1; semana <= 53; semana += 1) {
+    const sabado = sabadoDaSemana(ano, semana);
+    if (sabado.getFullYear() !== ano || sabado < inicioTrimestre) continue;
+    if (sabado.getMonth() >= trimestre * 3) break;
+    local += 1;
+    if (sabado.toISOString().slice(0, 10) === data.toISOString().slice(0, 10)) return local;
+  }
+  return 1;
 }
 
 function trimestresDoPeriodo(periodo, trimestre) {
@@ -54,14 +72,13 @@ routes.get("/", asyncHandler(async (req, res) => {
 
   const ano = Number(req.query.ano || ultimaColetaGeral?.ano || hoje.getFullYear());
   const semanaReferencia = ultimaColetaGeral?.ano === ano ? ultimaColetaGeral.numeroSemana : null;
-  const mesReferencia = semanaReferencia ? sabadoDaSemana(ano, semanaReferencia).getMonth() + 1 : hoje.getMonth() + 1;
+  const mesReferencia = hoje.getFullYear() === ano ? hoje.getMonth() + 1 : 1;
   const mes = Number(req.query.mes || mesReferencia);
-  const trimestreReferencia = semanaReferencia ? Math.ceil(semanaReferencia / 13) : Math.floor((mes - 1) / 3) + 1;
+  const trimestreReferencia = Math.floor((mes - 1) / 3) + 1;
   const trimestre = Number(req.query.trimestre || trimestreReferencia);
-  const semanaInicio = ((trimestre - 1) * 13) + 1;
-  const semanasTrimestre = Array.from({ length: 13 }, (_, index) => semanaInicio + index);
+  const semanasTrimestre = Array.from({ length: 13 }, (_, index) => index + 1);
   const semanasPeriodo = periodo === "anual"
-    ? Array.from({ length: 53 }, (_, index) => index + 1)
+    ? Array.from({ length: 13 }, (_, index) => index + 1)
     : periodo === "mensal"
       ? semanasDoMes(ano, mes)
       : semanasTrimestre;
