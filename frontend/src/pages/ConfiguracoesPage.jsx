@@ -29,23 +29,23 @@ const perfilLabels = {
 };
 
 const relatorioPorPerfil = {
-  ADMIN: "Relatorios gerais do Departamental Mipes",
-  DIRETOR: "Relatorios das classes e unidades de acao",
-  PROFESSOR: "Relatorios da sua unidade de acao",
-  ALUNO: "Relatorio do acompanhamento do aluno"
+  ADMIN: "Relatórios gerais do Departamental Mipes",
+  DIRETOR: "Relatórios das classes e unidades de acao",
+  PROFESSOR: "Relatórios da sua unidade de acao",
+  ALUNO: "Relatório do acompanhamento do aluno"
 };
 
 const opcoesComuns = [
   {
     id: "notificacoes",
-    titulo: "Notificacoes",
-    descricao: "Lembretes de coleta semanal, avaliacao trimestral e pendencias do seu perfil.",
+    titulo: "Notificações",
+    descricao: "Lembretes de coleta semanal, avaliação trimestral e pendências do seu perfil.",
     icon: Bell
   },
   {
     id: "exportar",
-    titulo: "Exportar relatorios",
-    descricao: "Baixe somente os relatorios permitidos para o seu nivel de acesso.",
+    titulo: "Exportar relatórios",
+    descricao: "Baixe somente os relatórios permitidos para o seu nível de acesso.",
     icon: Download
   },
   {
@@ -66,7 +66,7 @@ const opcoesAdmin = [
   {
     id: "igreja",
     titulo: "Dados da igreja",
-    descricao: "Nome da igreja, distrito, associacao/campo, endereco e contatos oficiais.",
+    descricao: "Nome da igreja, distrito, associacao/campo, endereço e contatos oficiais.",
     icon: Building2
   },
   {
@@ -77,20 +77,20 @@ const opcoesAdmin = [
   },
   {
     id: "periodo",
-    titulo: "Ano e trimestre padrao",
-    descricao: "Definir ano atual, trimestre atual e semana padrao de abertura.",
+    titulo: "Ano e trimestre padrão",
+    descricao: "Definir ano atual, trimestre atual e semana padrão de abertura.",
     icon: CalendarClock
   },
   {
     id: "usuarios",
-    titulo: "Usuarios e permissoes",
+    titulo: "Usuários e permissões",
     descricao: "Gerenciar diretores, professores, alunos e perfis de acesso.",
     icon: ShieldCheck
   },
   {
     id: "identidade",
     titulo: "Identidade do sistema",
-    descricao: "Nome Escola Sabatina Viva, logo, cores e icone do sistema.",
+    descricao: "Nome Escola Sabatina Viva, logo, cores e ícone do sistema.",
     icon: Image
   },
   {
@@ -101,14 +101,14 @@ const opcoesAdmin = [
   },
   {
     id: "pontuacao",
-    titulo: "Criterios de pontuacao",
+    titulo: "Criterios de pontuação",
     descricao: "Editar pesos das metas, ranking, desempenho e regras de conformidade.",
     icon: SlidersHorizontal
   },
   {
     id: "ajuda",
     titulo: "Ajuda e suporte",
-    descricao: "Manual rapido, duvidas frequentes, contato do suporte e versao do sistema.",
+    descricao: "Manual rápido, dúvidas frequentes, contato do suporte e versão do sistema.",
     icon: HelpCircle
   }
 ];
@@ -259,7 +259,7 @@ export function ConfiguracoesPage() {
     <section className="grid gap-5">
       <div>
         <p className="m-0 text-sm font-bold text-marinho">{perfil}</p>
-        <h2 className="m-0 mt-1 font-outfit text-[28px] tracking-tight text-texto">Configuracoes</h2>
+        <h2 className="m-0 mt-1 font-outfit text-[28px] tracking-tight text-texto">Configurações</h2>
         <p className="m-0 mt-1 text-muted">
           {isAdmin
             ? "Acesso completo de administracao do sistema Escola Sabatina Viva."
