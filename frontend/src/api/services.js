@@ -31,6 +31,7 @@ export async function salvarPerfilInicial(payload) {
   const formData = new FormData();
   formData.append("nome", payload.nome);
   formData.append("whatsapp", payload.whatsapp);
+  formData.append("sexoPerfil", payload.sexoPerfil);
   if (payload.foto) formData.append("foto", payload.foto);
   const { data } = await api.post("/auth/perfil-inicial", formData);
   return data;
@@ -158,12 +159,8 @@ export async function salvarCartaoDiretor(id, payload) {
 }
 
 export async function getUnidades(params = {}) {
-  try {
-    const { data } = await api.get("/cadastros/unidades", { params });
-    return data;
-  } catch {
-    return dashboard.unidades.map((u, i) => ({ id: `demo-u-${i+1}`, nome: u.nome }));
-  }
+  const { data } = await api.get("/cadastros/unidades", { params });
+  return data;
 }
 
 export async function getProfessores() {

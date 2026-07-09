@@ -9,12 +9,7 @@ export const ranking = [];
 
 export const dashboard = {
   indicadores: { taxaAprovacao: 88, presencaAlunos: 90, evasao: 1, desempenhoEscola: 97 },
-  unidades: [
-    { nome: "Classe Rei Davi", metodologia: 90, planoAula: true, avaliacoes: true, tecnologia: true, carisma: true, pastoreio: "Ótimo" },
-    { nome: "Classe Apóstolo Paulo", metodologia: 25, planoAula: true, avaliacoes: true, tecnologia: false, carisma: true, pastoreio: "Médio" },
-    { nome: "Classe de Rute", metodologia: 85, planoAula: true, avaliacoes: true, tecnologia: true, carisma: true, pastoreio: "Bom" },
-    { nome: "Arca de Noé", metodologia: 70, planoAula: true, avaliacoes: false, tecnologia: true, carisma: true, pastoreio: "Bom" }
-  ]
+  unidades: []
 };
 
 export const alunoCard = {

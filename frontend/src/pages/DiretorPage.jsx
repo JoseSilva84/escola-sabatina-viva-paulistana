@@ -215,7 +215,7 @@ export function DiretorPage() {
         <Indicator index={3} title="Questionário" value={`${data.indicadores.desempenhoEscola}%`} subtitle="Cartao do diretor" />
       </div>
 
-      {isDiretorOuAdmin && (
+      {false && isDiretorOuAdmin && (
         <div className="grid grid-cols-1 2xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)] gap-4.5 mt-4.5">
           <Card animated delay={0.3} className="grid gap-3">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

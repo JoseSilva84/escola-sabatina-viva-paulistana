@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Bell, BookOpen, Building2, Calendar, CalendarClock, Camera, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star } from "lucide-react";
+import { Bell, BookOpen, Building2, Calendar, CalendarClock, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { salvarPerfilInicial, trocarSenha } from "../api/services";
+import avatarDiretorPadrao from "../assets/avatar-diretor-padrao.png";
+import avatarDiretorMasculino from "../assets/avatar-diretor-masculino.png";
 
 function FlatCap({ color, className }) {
   return (
@@ -133,6 +135,7 @@ export function Shell({ children }) {
   const [trocandoSenha, setTrocandoSenha] = useState(false);
   const [nomeDiretor, setNomeDiretor] = useState("");
   const [whatsappDiretor, setWhatsappDiretor] = useState("");
+  const [sexoDiretor, setSexoDiretor] = useState("MASCULINO");
   const [fotoDiretor, setFotoDiretor] = useState(null);
   const [fotoPreview, setFotoPreview] = useState("");
   const [salvandoPerfil, setSalvandoPerfil] = useState(false);
@@ -145,6 +148,10 @@ export function Shell({ children }) {
   const detalheContexto = usuario.distritoNome
     ? `Distrito ${usuario.distritoNome}`
     : papelLabel;
+  const nomePareceMasculino = /^(carlos|jo[aã]o|jos[eé]|paulo|pedro|marcos|lucas|mateus|rafael|gabriel|daniel|andre|ant[oô]nio)\b/i.test(usuario.nome || "");
+  const avatarPadrao = usuario.sexoPerfil === "MASCULINO" || (!usuario.sexoPerfil && nomePareceMasculino)
+    ? avatarDiretorMasculino
+    : avatarDiretorPadrao;
 
   const toggleMenu = (label) => {
     setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
@@ -178,6 +185,7 @@ export function Shell({ children }) {
       const data = await salvarPerfilInicial({
         nome: nomeDiretor,
         whatsapp: whatsappDiretor,
+        sexoPerfil: sexoDiretor,
         foto: fotoDiretor
       });
       atualizarUsuario(data.usuario);
@@ -240,9 +248,7 @@ export function Shell({ children }) {
               {fotoPreview ? (
                 <img src={fotoPreview} alt="Prévia do perfil" className="h-24 w-24 rounded-full object-cover ring-4 ring-marinho/10" />
               ) : (
-                <span className="grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-[#3977b8] to-[#df9f57] text-white ring-4 ring-marinho/10">
-                  <Camera size={30} />
-                </span>
+                <img src={sexoDiretor === "MASCULINO" ? avatarDiretorMasculino : avatarDiretorPadrao} alt="Avatar padrão" className="h-24 w-24 rounded-full object-cover ring-4 ring-marinho/10" />
               )}
               <span className="mt-2 text-sm font-bold text-marinho">Escolher foto (opcional)</span>
               <input type="file" accept="image/*" onChange={selecionarFoto} className="sr-only" />
@@ -255,6 +261,13 @@ export function Shell({ children }) {
             <label className="grid gap-1.5 text-sm font-bold">
               WhatsApp
               <input value={whatsappDiretor} onChange={(event) => setWhatsappDiretor(event.target.value)} required minLength={8} placeholder="(00) 00000-0000" className="min-h-[44px] rounded-lg border border-borda px-3" />
+            </label>
+            <label className="grid gap-1.5 text-sm font-bold">
+              Sexo
+              <select value={sexoDiretor} onChange={(event) => setSexoDiretor(event.target.value)} className="min-h-[44px] rounded-lg border border-borda bg-white px-3">
+                <option value="MASCULINO">Masculino</option>
+                <option value="FEMININO">Feminino</option>
+              </select>
             </label>
             <p className="m-0 text-xs text-muted">Se você não escolher uma foto, será usado o avatar padrão com a inicial do seu nome.</p>
             <button disabled={salvandoPerfil} className="min-h-[44px] rounded-lg border-0 bg-marinho px-4 font-bold text-white">
@@ -361,9 +374,7 @@ export function Shell({ children }) {
                 {usuario.fotoUrl ? (
                   <img src={usuario.fotoUrl} alt="" className="h-[38px] w-[38px] rounded-full object-cover" />
                 ) : (
-                  <span className="grid place-items-center w-[38px] h-[38px] rounded-full text-white bg-gradient-to-br from-[#3977b8] to-[#df9f57] font-extrabold">
-                    {usuario.nome?.charAt(0)}
-                  </span>
+                  <img src={avatarPadrao} alt="Avatar padrão" className="h-[38px] w-[38px] rounded-full object-cover" />
                 )}
                 <span>
                   <strong className="block max-w-[250px] truncate text-texto leading-tight">{nomeContexto}</strong>

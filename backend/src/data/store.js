@@ -39,12 +39,7 @@ const usuarios = [
 
 const igrejas = [{ id: "igreja-viva", nome: "Escola Sabatina VIVA" }];
 
-const unidades = [
-  { id: "ua-9a", nome: "Classe Rei Davi", professorId: "u-professor", igrejaId: "igreja-viva" },
-  { id: "ua-9b", nome: "Classe Apóstolo Paulo", professorId: "u-professor", igrejaId: "igreja-viva" },
-  { id: "ua-10a", nome: "Classe de Rute", professorId: "u-professor", igrejaId: "igreja-viva" },
-  { id: "ua-10b", nome: "Arca de Noé", professorId: "u-professor", igrejaId: "igreja-viva" }
-];
+const unidades = [];
 
 const alunos = [];
 

@@ -41,6 +41,7 @@ function payloadUsuario(usuario) {
     codigoAcesso: usuario.codigoAcesso || null,
     whatsapp: usuario.whatsapp || null,
     fotoUrl: usuario.fotoUrl || null,
+    sexoPerfil: usuario.sexoPerfil || null,
     papel: usuario.papel,
     igrejaId: usuario.igrejaId,
     distritoId: usuario.distritoId || usuario.igreja?.distritoId || null,
@@ -167,7 +168,8 @@ function enviarFotoPerfil(buffer, usuarioId) {
 routes.post("/perfil-inicial", autenticar, autorizar("DIRETOR"), uploadFotoPerfil.single("foto"), asyncHandler(async (req, res) => {
   const dados = z.object({
     nome: z.string().trim().min(2),
-    whatsapp: z.string().trim().min(8)
+    whatsapp: z.string().trim().min(8),
+    sexoPerfil: z.enum(["MASCULINO", "FEMININO"])
   }).parse(req.body);
 
   let fotoUrl = null;
@@ -184,9 +186,10 @@ routes.post("/perfil-inicial", autenticar, autorizar("DIRETOR"), uploadFotoPerfi
     data: {
       nome: dados.nome,
       whatsapp: dados.whatsapp,
+      sexoPerfil: dados.sexoPerfil,
       ...(fotoUrl ? { fotoUrl } : {})
     },
-    select: { nome: true, whatsapp: true, fotoUrl: true }
+    select: { nome: true, whatsapp: true, fotoUrl: true, sexoPerfil: true }
   });
 
   res.json({ usuario: { ...usuario, perfilPendente: false } });
