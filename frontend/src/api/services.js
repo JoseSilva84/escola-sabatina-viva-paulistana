@@ -1,15 +1,30 @@
 import { api } from "./client";
 import { alunoCard, dashboard, demoUsers, professorCard, ranking } from "./demoData";
 
-export async function login(email, senha) {
+export async function login(credenciais) {
   try {
-    const { data } = await api.post("/auth/login", { email, senha });
+    const { data } = await api.post("/auth/login", credenciais);
     return data;
   } catch (error) {
+    const { email, senha } = credenciais;
     const usuario = demoUsers[email?.toLowerCase()];
     if (!usuario || senha !== "123456") throw error;
     return { token: `demo-${usuario.id}`, usuario };
   }
+}
+
+export async function getDistritosAcesso() {
+  const { data } = await api.get("/auth/distritos");
+  return data;
+}
+
+export async function getIgrejasAcesso(distritoId) {
+  const { data } = await api.get(`/auth/distritos/${distritoId}/igrejas`);
+  return data;
+}
+
+export async function trocarSenha(payload) {
+  await api.post("/auth/trocar-senha", payload);
 }
 
 export async function getDashboard(params = {}) {
@@ -144,6 +159,21 @@ export async function getUnidades(params = {}) {
 
 export async function getProfessores() {
   const { data } = await api.get("/cadastros/professores");
+  return data;
+}
+
+export async function criarProfessor(payload) {
+  const { data } = await api.post("/cadastros/professores", payload);
+  return data;
+}
+
+export async function alterarStatusProfessor(id, ativo) {
+  const { data } = await api.patch(`/cadastros/professores/${id}/status`, { ativo });
+  return data;
+}
+
+export async function redefinirSenhaProfessor(id) {
+  const { data } = await api.post(`/cadastros/professores/${id}/redefinir-senha`);
   return data;
 }
 

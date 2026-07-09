@@ -1,5 +1,7 @@
 const { Router } = require("express");
 const { z } = require("zod");
+const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const prisma = require("../utils/prisma");
 const cloudinary = require("../utils/cloudinary");
@@ -70,10 +72,142 @@ routes.get("/igrejas", asyncHandler(async (req, res) => {
 routes.get("/professores", asyncHandler(async (req, res) => {
   const lista = await prisma.usuario.findMany({
     where: { papel: "PROFESSOR", igrejaId: req.usuario.igrejaId },
-    select: { id: true, nome: true, email: true, igrejaId: true },
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      codigoAcesso: true,
+      igrejaId: true,
+      ativo: true,
+      deveTrocarSenha: true,
+      criadoEm: true
+    },
     orderBy: { nome: "asc" }
   });
   res.json(lista);
+}));
+
+function gerarSenhaTemporaria() {
+  const letras = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  const numeros = "23456789";
+  const simbolos = "!@#$%";
+  const todos = letras + numeros + simbolos;
+  const caracteres = [
+    letras[crypto.randomInt(letras.length)],
+    numeros[crypto.randomInt(numeros.length)],
+    simbolos[crypto.randomInt(simbolos.length)]
+  ];
+  while (caracteres.length < 12) {
+    caracteres.push(todos[crypto.randomInt(todos.length)]);
+  }
+  for (let indice = caracteres.length - 1; indice > 0; indice -= 1) {
+    const troca = crypto.randomInt(indice + 1);
+    [caracteres[indice], caracteres[troca]] = [caracteres[troca], caracteres[indice]];
+  }
+  return caracteres.join("");
+}
+
+function slugAcesso(valor) {
+  return String(valor)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ".")
+    .replace(/^\.+|\.+$/g, "");
+}
+
+async function gerarLoginProfessor(nome, nomeIgreja) {
+  const base = `${slugAcesso(nome)}.${slugAcesso(nomeIgreja)}`.slice(0, 90);
+  for (let tentativa = 1; tentativa <= 100; tentativa += 1) {
+    const codigo = tentativa === 1 ? base : `${base}.${tentativa}`;
+    const existente = await prisma.usuario.findFirst({
+      where: { codigoAcesso: { equals: codigo, mode: "insensitive" } },
+      select: { id: true }
+    });
+    if (!existente) return codigo;
+  }
+  return `${base}.${crypto.randomUUID().slice(0, 8)}`;
+}
+
+routes.post("/professores", autorizar("ADMIN", "DIRETOR"), asyncHandler(async (req, res) => {
+  const dados = z.object({
+    nome: z.string().trim().min(2),
+    senha: z.string().min(8)
+  }).parse(req.body);
+  const igreja = await prisma.igreja.findUnique({
+    where: { id: req.usuario.igrejaId },
+    select: { nome: true }
+  });
+  if (!igreja) throw new AppError("Igreja não encontrada", 404);
+
+  const codigoAcesso = await gerarLoginProfessor(dados.nome, igreja.nome);
+  const email = `${codigoAcesso}@acesso.nota10.local`;
+
+  const professor = await prisma.usuario.create({
+    data: {
+      nome: dados.nome,
+      email,
+      codigoAcesso,
+      senhaHash: await bcrypt.hash(dados.senha, 12),
+      papel: "PROFESSOR",
+      igrejaId: req.usuario.igrejaId,
+      distritoId: req.usuario.distritoId || null,
+      ativo: true,
+      deveTrocarSenha: true
+    },
+    select: {
+      id: true,
+      nome: true,
+      email: true,
+      codigoAcesso: true,
+      igrejaId: true,
+      ativo: true,
+      deveTrocarSenha: true
+    }
+  });
+
+  res.status(201).json({ professor });
+}));
+
+routes.patch("/professores/:id/status", autorizar("ADMIN", "DIRETOR"), asyncHandler(async (req, res) => {
+  const { ativo } = z.object({ ativo: z.boolean() }).parse(req.body);
+  const professor = await prisma.usuario.findFirst({
+    where: {
+      id: req.params.id,
+      papel: "PROFESSOR",
+      igrejaId: req.usuario.igrejaId
+    }
+  });
+  if (!professor) throw new AppError("Professor não encontrado nesta igreja", 404);
+
+  const atualizado = await prisma.usuario.update({
+    where: { id: professor.id },
+    data: { ativo },
+    select: { id: true, nome: true, codigoAcesso: true, ativo: true }
+  });
+  res.json(atualizado);
+}));
+
+routes.post("/professores/:id/redefinir-senha", autorizar("ADMIN", "DIRETOR"), asyncHandler(async (req, res) => {
+  const professor = await prisma.usuario.findFirst({
+    where: {
+      id: req.params.id,
+      papel: "PROFESSOR",
+      igrejaId: req.usuario.igrejaId
+    }
+  });
+  if (!professor) throw new AppError("Professor não encontrado nesta igreja", 404);
+
+  const senhaTemporaria = gerarSenhaTemporaria();
+  await prisma.usuario.update({
+    where: { id: professor.id },
+    data: {
+      senhaHash: await bcrypt.hash(senhaTemporaria, 12),
+      deveTrocarSenha: true,
+      ativo: true
+    }
+  });
+  res.json({ senhaTemporaria });
 }));
 
 routes.get("/unidades", asyncHandler(async (req, res) => {

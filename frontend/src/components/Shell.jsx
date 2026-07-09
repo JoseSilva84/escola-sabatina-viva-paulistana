@@ -4,6 +4,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { trocarSenha } from "../api/services";
 
 function FlatCap({ color, className }) {
   return (
@@ -83,6 +84,7 @@ const links = [
   },
   { to: "/diretor", label: "Classes", icon: Users, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
   { to: "/alunos", label: "Alunos", icon: IdCard, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
+  { to: "/professores", label: "Professores", icon: UserCog, papeis: ["ADMIN", "DIRETOR"] },
   { to: "/relatorio", label: "Relatórios", icon: BarChart3, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] }
 ];
 
@@ -121,19 +123,48 @@ const configAdmin = [
 ];
 
 export function Shell({ children }) {
-  const { usuario, sair } = useAuth();
+  const { usuario, sair, atualizarUsuario } = useAuth();
   const location = useLocation();
   const visibleLinks = links.filter((link) => link.papeis.includes(usuario.papel));
   const [openMenus, setOpenMenus] = useState({ Ranking: true });
+  const [senhaAtual, setSenhaAtual] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
+  const [trocandoSenha, setTrocandoSenha] = useState(false);
   const papelLabel = papelLabels[usuario.papel] || usuario.papel;
   const produtoNome = produtoPorPapel[usuario.papel] || "Escola Sabatina Viva";
   const [produtoPrimeiraLinha, ...produtoOutrasLinhas] = produtoNome.split(" ");
   const produtoRestante = produtoOutrasLinhas.join(" ");
   const configItens = usuario.papel === "ADMIN" ? configAdmin : configComum;
+  const nomeContexto = usuario.igrejaNome || usuario.nome;
+  const detalheContexto = usuario.distritoNome
+    ? `Distrito ${usuario.distritoNome}`
+    : papelLabel;
 
   const toggleMenu = (label) => {
     setOpenMenus(prev => ({ ...prev, [label]: !prev[label] }));
   };
+
+  async function salvarNovaSenha(event) {
+    event.preventDefault();
+    if (novaSenha !== confirmacaoSenha) {
+      toast.error("A confirmação não corresponde à nova senha.");
+      return;
+    }
+    setTrocandoSenha(true);
+    try {
+      await trocarSenha({ senhaAtual, novaSenha });
+      atualizarUsuario({ deveTrocarSenha: false });
+      setSenhaAtual("");
+      setNovaSenha("");
+      setConfirmacaoSenha("");
+      toast.success("Senha alterada com sucesso.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Não foi possível alterar a senha.");
+    } finally {
+      setTrocandoSenha(false);
+    }
+  }
 
   const isRanking = location.pathname.startsWith("/ranking");
   let logoType = "PROFESSOR";
@@ -143,6 +174,31 @@ export function Shell({ children }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] min-h-screen">
+      {usuario.deveTrocarSenha && (
+        <div className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/70 p-5">
+          <form onSubmit={salvarNovaSenha} className="grid w-full max-w-md gap-4 rounded-2xl bg-white p-6 shadow-2xl">
+            <div>
+              <h2 className="m-0 font-outfit text-2xl text-marinho">Crie sua nova senha</h2>
+              <p className="mb-0 mt-1 text-sm text-muted">Por segurança, a senha temporária só pode ser usada neste primeiro acesso.</p>
+            </div>
+            <label className="grid gap-1.5 text-sm font-bold">
+              Senha temporária
+              <input type="password" value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} required className="min-h-[44px] rounded-lg border border-borda px-3" />
+            </label>
+            <label className="grid gap-1.5 text-sm font-bold">
+              Nova senha
+              <input type="password" minLength={8} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required className="min-h-[44px] rounded-lg border border-borda px-3" />
+            </label>
+            <label className="grid gap-1.5 text-sm font-bold">
+              Confirmar nova senha
+              <input type="password" minLength={8} value={confirmacaoSenha} onChange={(e) => setConfirmacaoSenha(e.target.value)} required className="min-h-[44px] rounded-lg border border-borda px-3" />
+            </label>
+            <button disabled={trocandoSenha} className="min-h-[44px] rounded-lg border-0 bg-marinho px-4 font-bold text-white">
+              {trocandoSenha ? "Salvando..." : "Salvar nova senha"}
+            </button>
+          </form>
+        </div>
+      )}
       <aside className="sticky top-0 lg:h-screen flex flex-row lg:flex-col p-4 lg:p-7 text-white bg-gradient-to-br from-[#173a6a] to-[#102d55] shadow-[4px_0_24px_rgba(16,45,85,0.08)] z-40 overflow-x-auto lg:overflow-visible">
         <div className="hidden lg:flex items-center gap-3 font-bold text-[22px] leading-[1.1] tracking-tight">
           <LogoIcon type={logoType} />
@@ -242,14 +298,15 @@ export function Shell({ children }) {
                   {usuario.nome?.charAt(0)}
                 </span>
                 <span>
-                  <strong className="block text-texto leading-tight">{usuario.nome}</strong>
-                  <span className="block text-muted text-[12px]">{papelLabel}</span>
+                  <strong className="block max-w-[250px] truncate text-texto leading-tight">{nomeContexto}</strong>
+                  <span className="block max-w-[250px] truncate text-muted text-[12px]">{detalheContexto}</span>
                 </span>
               </button>
-              <div className="invisible absolute right-0 top-full z-50 mt-2 w-[260px] translate-y-1 rounded-xl border border-borda bg-white p-2 opacity-0 shadow-xl shadow-marinho/10 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+              <div className="invisible absolute right-0 top-full z-50 mt-2 w-[300px] translate-y-1 rounded-xl border border-borda bg-white p-2 opacity-0 shadow-xl shadow-marinho/10 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
                 <div className="px-3 py-2">
-                  <strong className="block text-sm text-texto">{usuario.nome}</strong>
-                  <span className="block text-xs text-muted">{produtoNome}</span>
+                  <strong className="block text-sm text-texto">{nomeContexto}</strong>
+                  <span className="mt-0.5 block text-xs text-muted">{detalheContexto}</span>
+                  <span className="mt-1 block text-xs font-bold text-marinho">{papelLabel}</span>
                 </div>
                 <div className="my-1 h-px bg-borda" />
                 <div className="grid gap-1">
@@ -266,6 +323,14 @@ export function Shell({ children }) {
                       </NavLink>
                     );
                   })}
+                  <button
+                    type="button"
+                    onClick={sair}
+                    className="flex min-h-[38px] items-center gap-3 rounded-lg border-0 bg-transparent px-3 text-left text-sm font-bold text-red-600 transition-colors hover:bg-red-50"
+                  >
+                    <LogOut size={16} />
+                    <span>Sair</span>
+                  </button>
                 </div>
               </div>
             </div>

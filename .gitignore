@@ -13,3 +13,6 @@ pnpm-debug.log*
 
 .DS_Store
 Thumbs.db
+
+# Contém senhas temporárias geradas localmente.
+backend/acessos-diretores.csv

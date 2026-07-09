@@ -7,6 +7,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed": "node src/scripts/seedInicial.js",
+    "acessos:gerar": "node src/scripts/gerarAcessos.js",
     "test": "node src/server.js --check"
   },
   "dependencies": {

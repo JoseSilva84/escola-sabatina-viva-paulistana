@@ -11,33 +11,73 @@ const AppError = require("../utils/AppError");
 const routes = Router();
 
 const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().optional(),
+  codigoAcesso: z.string().min(1).optional(),
+  distritoId: z.string().min(1).optional(),
+  igrejaId: z.string().min(1).optional(),
   senha: z.string().min(1)
-});
+}).refine(
+  (dados) => dados.email || dados.codigoAcesso || (dados.distritoId && dados.igrejaId),
+  { message: "Informe igreja, código de acesso ou e-mail" }
+);
 
 function payloadUsuario(usuario) {
   return {
     id: usuario.id,
     nome: usuario.nome,
     email: usuario.email,
+    codigoAcesso: usuario.codigoAcesso || null,
     papel: usuario.papel,
     igrejaId: usuario.igrejaId,
     distritoId: usuario.distritoId || usuario.igreja?.distritoId || null,
+    distritoNome: usuario.igreja?.distrito?.nome || null,
     igrejaNome: usuario.igreja?.nome,
+    deveTrocarSenha: Boolean(usuario.deveTrocarSenha),
     unidadeId: usuario.unidadesProfessor?.[0]?.id || usuario.unidadeId,
     alunoId: usuario.aluno?.id || usuario.alunoId
   };
 }
+
+routes.get("/distritos", asyncHandler(async (_req, res) => {
+  const distritos = await prisma.distrito.findMany({
+    where: { igrejas: { some: { usuarios: { some: { papel: "DIRETOR", ativo: true } } } } },
+    select: { id: true, nome: true },
+    orderBy: { nome: "asc" }
+  });
+  res.json(distritos);
+}));
+
+routes.get("/distritos/:distritoId/igrejas", asyncHandler(async (req, res) => {
+  const igrejas = await prisma.igreja.findMany({
+    where: {
+      distritoId: req.params.distritoId,
+      usuarios: { some: { papel: "DIRETOR", ativo: true } }
+    },
+    select: { id: true, nome: true },
+    orderBy: { nome: "asc" }
+  });
+  res.json(igrejas);
+}));
 
 routes.post("/login", asyncHandler(async (req, res) => {
   const dados = loginSchema.parse(req.body);
   let usuario = null;
 
   try {
-    usuario = await prisma.usuario.findUnique({
-      where: { email: dados.email.toLowerCase() },
+    const where = dados.distritoId && dados.igrejaId
+      ? {
+          papel: "DIRETOR",
+          igrejaId: dados.igrejaId,
+          igreja: { distritoId: dados.distritoId }
+        }
+      : dados.codigoAcesso
+        ? { codigoAcesso: { equals: dados.codigoAcesso.trim(), mode: "insensitive" } }
+        : { email: dados.email.toLowerCase() };
+
+    usuario = await prisma.usuario.findFirst({
+      where,
       include: {
-        igreja: true,
+        igreja: { include: { distrito: true } },
         aluno: true,
         unidadesProfessor: { where: { ativa: true }, take: 1 }
       }
@@ -46,22 +86,49 @@ routes.post("/login", asyncHandler(async (req, res) => {
     usuario = null;
   }
 
-  if (!usuario) {
+  if (!usuario && dados.email) {
     usuario = usuarios.find((item) => item.email.toLowerCase() === dados.email.toLowerCase());
   }
 
-  if (!usuario || !bcrypt.compareSync(dados.senha, usuario.senhaHash)) {
-    throw new AppError("E-mail ou senha invalidos", 401);
+  if (!usuario || usuario.ativo === false || !bcrypt.compareSync(dados.senha, usuario.senhaHash)) {
+    throw new AppError("Dados de acesso ou senha inválidos", 401);
   }
 
   const payload = payloadUsuario(usuario);
   const token = jwt.sign(payload, process.env.JWT_SECRET || "dev-secret", { expiresIn: "8h" });
+  if (!String(usuario.id).startsWith("u-")) {
+    await prisma.usuario.update({
+      where: { id: usuario.id },
+      data: { ultimoLoginEm: new Date() }
+    });
+  }
   res.json({ token, usuario: payload });
 }));
 
 routes.get("/me", autenticar, (req, res) => {
   res.json({ usuario: req.usuario });
 });
+
+routes.post("/trocar-senha", autenticar, asyncHandler(async (req, res) => {
+  const dados = z.object({
+    senhaAtual: z.string().min(1),
+    novaSenha: z.string().min(8)
+  }).parse(req.body);
+
+  const usuario = await prisma.usuario.findUnique({ where: { id: req.usuario.id } });
+  if (!usuario || !bcrypt.compareSync(dados.senhaAtual, usuario.senhaHash)) {
+    throw new AppError("Senha atual inválida", 401);
+  }
+
+  await prisma.usuario.update({
+    where: { id: usuario.id },
+    data: {
+      senhaHash: bcrypt.hashSync(dados.novaSenha, 12),
+      deveTrocarSenha: false
+    }
+  });
+  res.status(204).send();
+}));
 
 routes.post("/registrar", autenticar, autorizar("ADMIN"), asyncHandler(async (req, res) => {
   const schema = z.object({

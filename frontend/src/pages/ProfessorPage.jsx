@@ -7,10 +7,12 @@ import {
   adicionarEstudoBiblico,
   criarAluno,
   criarCartaoAluno,
+  criarUnidade,
   getCartoesProfessor,
   getCartoesAluno,
   getColetaSemanal,
   getColetaSemanalProfessor,
+  getProfessores,
   getProfessorCard,
   getUnidades,
   salvarCartaoProfessor,
@@ -23,6 +25,7 @@ import { ProgressRing } from "../components/ProgressRing";
 import { StatusPill } from "../components/StatusPill";
 import { Card } from "../components/Card";
 import { ModalInput } from "../components/ModalInput";
+import { useAuth } from "../context/AuthContext";
 
 const anoAtual = new Date().getFullYear();
 
@@ -52,6 +55,85 @@ function alunoQuestionarioVazio(aluno) {
     acaoSolidariaTipo: "",
     ministrouEstudoBiblico: false
   };
+}
+
+function NovaUnidadeModal({ aberto, onClose, onCriada }) {
+  const { usuario } = useAuth();
+  const [nome, setNome] = useState("");
+  const [professorId, setProfessorId] = useState("");
+  const [professores, setProfessores] = useState([]);
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (!aberto) return;
+    getProfessores()
+      .then((lista) => {
+        setProfessores(lista);
+        setProfessorId((atual) => atual || lista[0]?.id || "");
+      })
+      .catch(() => setProfessores([]));
+  }, [aberto]);
+
+  if (!aberto) return null;
+
+  async function cadastrar(event) {
+    event.preventDefault();
+    if (!professorId) {
+      toast.error("Cadastre um professor antes de criar a classe.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      const unidade = await criarUnidade({ nome, professorId });
+      toast.success("Unidade de Ação cadastrada.");
+      setNome("");
+      setProfessorId("");
+      onCriada(unidade);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Não foi possível cadastrar a classe.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/60 p-4" onMouseDown={onClose}>
+      <form onSubmit={cadastrar} onMouseDown={(event) => event.stopPropagation()} className="relative grid w-full max-w-lg gap-5 rounded-2xl bg-white p-7 shadow-2xl">
+        <button type="button" onClick={onClose} aria-label="Fechar" className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full border-0 bg-slate-100 text-marinho">
+          <X size={18} />
+        </button>
+        <h2 className="m-0 pr-10 font-outfit text-2xl text-texto">Nova Unidade de Ação</h2>
+
+        <label className="grid gap-2 text-sm font-bold text-marinho">
+          Nome da Unidade
+          <input value={nome} onChange={(event) => setNome(event.target.value)} placeholder="Digite o nome da unidade" required className="min-h-[54px] rounded-xl border border-borda px-4 text-texto outline-none focus:border-marinho" />
+        </label>
+
+        <label className="grid gap-2 text-sm font-bold text-marinho">
+          Igreja
+          <input disabled value={usuario.igrejaNome || "Igreja vinculada"} className="min-h-[54px] rounded-xl border border-borda bg-slate-50 px-4 text-muted" />
+        </label>
+
+        <label className="grid gap-2 text-sm font-bold text-marinho">
+          Professor Responsável
+          <select value={professorId} onChange={(event) => setProfessorId(event.target.value)} required className="min-h-[54px] rounded-xl border border-borda bg-white px-4 text-texto outline-none focus:border-marinho">
+            <option value="">Selecione o professor</option>
+            {professores.map((professor) => <option key={professor.id} value={professor.id}>{professor.nome}</option>)}
+          </select>
+          {!professores.length && <span className="text-xs font-normal text-amber-700">Nenhum professor cadastrado nesta igreja.</span>}
+        </label>
+
+        <label className="grid gap-2 text-sm font-bold text-marinho">
+          Diretor da Escola Sabatina
+          <input disabled value={usuario.nome || "Diretor logado"} className="min-h-[54px] rounded-xl border border-borda bg-slate-50 px-4 text-muted" />
+        </label>
+
+        <button type="submit" disabled={salvando || !professorId} className="inline-flex min-h-[54px] items-center justify-center gap-2 rounded-xl border-0 bg-marinho px-5 font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50">
+          <Plus size={20} /> {salvando ? "Adicionando..." : "Adicionar classe"}
+        </button>
+      </form>
+    </div>
+  );
 }
 
 
@@ -115,6 +197,10 @@ export function ProfessorPage() {
   const [semana, setSemana] = useState(1);
   const [unidades, setUnidades] = useState([]);
   const [unidadeId, setUnidadeId] = useState("");
+  const [carregandoUnidades, setCarregandoUnidades] = useState(true);
+  const [carregandoMetas, setCarregandoMetas] = useState(false);
+  const [erroMetas, setErroMetas] = useState("");
+  const [modalNovaUnidade, setModalNovaUnidade] = useState(false);
   const [card, setCard] = useState(null);
   const [coleta, setColeta] = useState(null);
     const [open, setOpen] = useState("Coleta semanal");
@@ -137,7 +223,10 @@ export function ProfessorPage() {
     getUnidades({ igrejaAtual: true }).then((lista) => {
       setUnidades(lista);
       setUnidadeId((atual) => atual || lista[0]?.id || "");
-    }).catch(() => setUnidades([]));
+    }).catch(() => {
+      setUnidades([]);
+      setErroMetas("Não foi possível consultar as classes desta igreja.");
+    }).finally(() => setCarregandoUnidades(false));
   }, []);
 
   async function carregar() {
@@ -212,7 +301,14 @@ export function ProfessorPage() {
   
   useEffect(() => {
     if (!unidadeId) return;
-    carregar().catch(() => setCard(null));
+    setCarregandoMetas(true);
+    setErroMetas("");
+    carregar()
+      .catch((error) => {
+        setCard(null);
+        setErroMetas(error.response?.data?.message || "Não foi possível carregar as metas.");
+      })
+      .finally(() => setCarregandoMetas(false));
   }, [ano, trimestre, unidadeId]);
 
   useEffect(() => {
@@ -638,7 +734,48 @@ export function ProfessorPage() {
     }
   }
 
-  if (!card) return <div className="p-10 bg-white rounded-xl shadow-sm text-muted text-center max-w-sm mx-auto mt-10">Carregando metas...</div>;
+  if (carregandoUnidades || carregandoMetas) {
+    return <div className="p-10 bg-white rounded-xl shadow-sm text-muted text-center max-w-sm mx-auto mt-10">Carregando metas...</div>;
+  }
+
+  if (!unidades.length) {
+    return (
+      <>
+        <div className="p-8 bg-white rounded-xl shadow-sm text-center max-w-xl mx-auto mt-10">
+          <h2 className="m-0 font-outfit text-2xl text-marinho">Nenhuma classe cadastrada</h2>
+          <p className="mt-3 mb-5 text-muted">
+            Para lançar as metas, primeiro crie o acesso de um professor e depois cadastre a Unidade de Ação dessa igreja.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link to="/professores" className="inline-flex min-h-[42px] items-center justify-center rounded-lg bg-marinho px-4 font-bold text-white no-underline">
+              Cadastrar professor
+            </Link>
+            <button type="button" onClick={() => setModalNovaUnidade(true)} className="inline-flex min-h-[42px] items-center justify-center rounded-lg border border-borda bg-white px-4 font-bold text-marinho">
+              Cadastrar classe
+            </button>
+          </div>
+        </div>
+        <NovaUnidadeModal
+          aberto={modalNovaUnidade}
+          onClose={() => setModalNovaUnidade(false)}
+          onCriada={(unidade) => {
+            setUnidades([unidade]);
+            setUnidadeId(unidade.id);
+            setModalNovaUnidade(false);
+          }}
+        />
+      </>
+    );
+  }
+
+  if (!card) {
+    return (
+      <div className="p-8 bg-white rounded-xl shadow-sm text-center max-w-xl mx-auto mt-10">
+        <h2 className="m-0 font-outfit text-2xl text-marinho">Não foi possível mostrar as metas</h2>
+        <p className="mt-3 mb-0 text-muted">{erroMetas || "Atualize a página e tente novamente."}</p>
+      </div>
+    );
+  }
 
   return (
     <section className="grid grid-cols-1 gap-5 items-start">

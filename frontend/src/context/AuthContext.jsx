@@ -45,8 +45,8 @@ function carregarUsuarioSalvo() {
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(carregarUsuarioSalvo);
 
-  async function entrar(email, senha) {
-    const data = await loginRequest(email, senha);
+  async function entrar(credenciais) {
+    const data = await loginRequest(credenciais);
     storageSet("nota10.token", data.token);
     storageSet("nota10.usuario", JSON.stringify(data.usuario));
     setUsuario(data.usuario);
@@ -58,7 +58,13 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   }
 
-  const value = useMemo(() => ({ usuario, entrar, sair }), [usuario]);
+  function atualizarUsuario(dados) {
+    const atualizado = { ...usuario, ...dados };
+    storageSet("nota10.usuario", JSON.stringify(atualizado));
+    setUsuario(atualizado);
+  }
+
+  const value = useMemo(() => ({ usuario, entrar, sair, atualizarUsuario }), [usuario]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

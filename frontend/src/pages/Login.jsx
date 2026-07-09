@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { BookOpenCheck, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,20 +7,27 @@ import { useAuth } from "../context/AuthContext";
 
 export function Login() {
   const { usuario, entrar } = useAuth();
-  const [email, setEmail] = useState("professor@nota10.com");
-  const [senha, setSenha] = useState("123456");
+  const [login, setLogin] = useState("");
+  const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [carregando, setCarregando] = useState(false);
 
   if (usuario) return <Navigate to="/" replace />;
 
   async function submit(event) {
     event.preventDefault();
+    setCarregando(true);
     try {
-      await entrar(email, senha);
+      const credenciais = login.includes("@")
+        ? { email: login, senha }
+        : { codigoAcesso: login, senha };
+      await entrar(credenciais);
     } catch {
-      toast.error("Nao consegui entrar com esses dados.", {
-        description: "Confira o e-mail e a senha e tente novamente."
+      toast.error("Não consegui entrar com esses dados.", {
+        description: "Confira a igreja ou o código de acesso e a senha."
       });
+    } finally {
+      setCarregando(false);
     }
   }
 
@@ -119,11 +125,13 @@ export function Login() {
             custom={{ x: -150, y: 50, rotate: -30 }}
             className="grid gap-2 font-bold text-center"
           >
-            E-mail
+            Login
             <input
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              type="email"
+              value={login}
+              onChange={(event) => setLogin(event.target.value)}
+              required
+              autoCapitalize="none"
+              autoComplete="username"
               className="min-h-[46px] px-3.5 border border-white/20 rounded-lg text-white bg-white/10 outline-none focus:border-[#f4c21f] transition-colors text-center"
             />
           </motion.label>
@@ -139,6 +147,8 @@ export function Login() {
                 value={senha}
                 onChange={(event) => setSenha(event.target.value)}
                 type={mostrarSenha ? "text" : "password"}
+                required
+                autoComplete="current-password"
                 className="w-full min-h-[46px] px-3.5 pr-10 border border-white/20 rounded-lg text-white bg-white/10 outline-none focus:border-[#f4c21f] transition-colors text-center"
               />
               <button
@@ -156,9 +166,10 @@ export function Login() {
             variants={shardVariants}
             custom={{ x: 0, y: 150, rotate: -15 }}
             type="submit"
+            disabled={carregando}
             className="group inline-flex items-center justify-center gap-2 mt-2 min-h-[46px] px-4 rounded-lg border-0 bg-[#f4c21f] text-[#10223d] font-extrabold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 active:translate-y-px active:scale-95"
           >
-            Entrar
+            {carregando ? "Entrando..." : "Entrar"}
           </motion.button>
         </form>
       </motion.section>

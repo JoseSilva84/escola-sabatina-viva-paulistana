@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BarChart3, TrendingUp, Users, BookOpen, Star, Trophy } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card } from "../components/Card";
 import { ProgressRing } from "../components/ProgressRing";
 import { getProfessorCard, getUnidades } from "../api/services";
@@ -16,22 +17,32 @@ export function RelatorioPage() {
   const [ano, setAno] = useState(anoAtual);
   const [card, setCard] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     getUnidades().then((res) => {
       setUnidades(res);
       if (res.length > 0 && !unidadeId) {
         setUnidadeId(res[0].id);
+      } else if (!res.length) {
+        setLoading(false);
       }
+    }).catch(() => {
+      setErro("Não foi possível consultar as classes desta igreja.");
+      setLoading(false);
     });
   }, []);
 
   useEffect(() => {
     if (!unidadeId) return;
     setLoading(true);
+    setErro("");
     getProfessorCard({ ano, trimestre, unidadeId })
       .then((data) => setCard(data))
-      .catch(() => setCard(null))
+      .catch((error) => {
+        setCard(null);
+        setErro(error.response?.data?.message || "Não foi possível carregar o relatório.");
+      })
       .finally(() => setLoading(false));
   }, [ano, trimestre, unidadeId]);
 
@@ -75,6 +86,27 @@ export function RelatorioPage() {
         <div className="flex flex-col items-center justify-center p-12 bg-white/50 rounded-2xl border border-white">
           <div className="w-8 h-8 border-4 border-marinho/20 border-t-marinho rounded-full animate-spin"></div>
           <p className="mt-4 text-muted font-medium">Carregando relatório...</p>
+        </div>
+      ) : !unidades.length ? (
+        <div className="flex flex-col items-center justify-center p-10 bg-white rounded-2xl border border-white text-center">
+          <BarChart3 size={36} className="text-marinho/40" />
+          <h3 className="m-0 mt-4 font-outfit text-2xl text-marinho">Nenhum relatório disponível</h3>
+          <p className="mt-2 mb-5 max-w-xl text-muted">
+            Esta igreja ainda não possui Unidade de Ação. Cadastre um professor e uma classe para começar a acompanhar as metas.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link to="/professores" className="inline-flex min-h-[42px] items-center justify-center rounded-lg bg-marinho px-4 font-bold text-white no-underline">
+              Cadastrar professor
+            </Link>
+            <Link to="/diretor" className="inline-flex min-h-[42px] items-center justify-center rounded-lg border border-borda bg-white px-4 font-bold text-marinho no-underline">
+              Cadastrar classe
+            </Link>
+          </div>
+        </div>
+      ) : !card ? (
+        <div className="flex flex-col items-center justify-center p-10 bg-white rounded-2xl border border-white text-center">
+          <h3 className="m-0 font-outfit text-2xl text-marinho">Relatório indisponível</h3>
+          <p className="mt-2 mb-0 text-muted">{erro || "Tente novamente em alguns instantes."}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
