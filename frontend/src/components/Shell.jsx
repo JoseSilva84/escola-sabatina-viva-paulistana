@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { BarChart3, Bell, BookOpen, Building2, Calendar, CalendarClock, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star } from "lucide-react";
+import { BarChart3, Bell, BookOpen, Building2, Calendar, CalendarClock, Camera, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { trocarSenha } from "../api/services";
+import { salvarPerfilInicial, trocarSenha } from "../api/services";
 
 function FlatCap({ color, className }) {
   return (
@@ -131,6 +131,11 @@ export function Shell({ children }) {
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
   const [trocandoSenha, setTrocandoSenha] = useState(false);
+  const [nomeDiretor, setNomeDiretor] = useState("");
+  const [whatsappDiretor, setWhatsappDiretor] = useState("");
+  const [fotoDiretor, setFotoDiretor] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState("");
+  const [salvandoPerfil, setSalvandoPerfil] = useState(false);
   const papelLabel = papelLabels[usuario.papel] || usuario.papel;
   const produtoNome = produtoPorPapel[usuario.papel] || "Escola Sabatina Viva";
   const [produtoPrimeiraLinha, ...produtoOutrasLinhas] = produtoNome.split(" ");
@@ -166,6 +171,30 @@ export function Shell({ children }) {
     }
   }
 
+  async function concluirPerfil(event) {
+    event.preventDefault();
+    setSalvandoPerfil(true);
+    try {
+      const data = await salvarPerfilInicial({
+        nome: nomeDiretor,
+        whatsapp: whatsappDiretor,
+        foto: fotoDiretor
+      });
+      atualizarUsuario(data.usuario);
+      toast.success("Perfil do diretor concluído.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Não foi possível salvar o perfil.");
+    } finally {
+      setSalvandoPerfil(false);
+    }
+  }
+
+  function selecionarFoto(event) {
+    const arquivo = event.target.files?.[0] || null;
+    setFotoDiretor(arquivo);
+    setFotoPreview(arquivo ? URL.createObjectURL(arquivo) : "");
+  }
+
   const isRanking = location.pathname.startsWith("/ranking");
   let logoType = "PROFESSOR";
   if (isRanking) logoType = "RANKING";
@@ -195,6 +224,41 @@ export function Shell({ children }) {
             </label>
             <button disabled={trocandoSenha} className="min-h-[44px] rounded-lg border-0 bg-marinho px-4 font-bold text-white">
               {trocandoSenha ? "Salvando..." : "Salvar nova senha"}
+            </button>
+          </form>
+        </div>
+      )}
+      {!usuario.deveTrocarSenha && usuario.papel === "DIRETOR" && (usuario.perfilPendente || usuario.nome === "Diretor da Escola Sabatina") && (
+        <div className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-slate-950/70 p-5">
+          <form onSubmit={concluirPerfil} className="grid w-full max-w-md gap-4 rounded-2xl bg-white p-6 shadow-2xl">
+            <div>
+              <h2 className="m-0 font-outfit text-2xl text-marinho">Complete seu perfil</h2>
+              <p className="mb-0 mt-1 text-sm text-muted">Esses dados identificarão o diretor desta igreja.</p>
+            </div>
+
+            <label className="mx-auto grid cursor-pointer place-items-center">
+              {fotoPreview ? (
+                <img src={fotoPreview} alt="Prévia do perfil" className="h-24 w-24 rounded-full object-cover ring-4 ring-marinho/10" />
+              ) : (
+                <span className="grid h-24 w-24 place-items-center rounded-full bg-gradient-to-br from-[#3977b8] to-[#df9f57] text-white ring-4 ring-marinho/10">
+                  <Camera size={30} />
+                </span>
+              )}
+              <span className="mt-2 text-sm font-bold text-marinho">Escolher foto (opcional)</span>
+              <input type="file" accept="image/*" onChange={selecionarFoto} className="sr-only" />
+            </label>
+
+            <label className="grid gap-1.5 text-sm font-bold">
+              Nome do diretor
+              <input value={nomeDiretor} onChange={(event) => setNomeDiretor(event.target.value)} required minLength={2} className="min-h-[44px] rounded-lg border border-borda px-3" />
+            </label>
+            <label className="grid gap-1.5 text-sm font-bold">
+              WhatsApp
+              <input value={whatsappDiretor} onChange={(event) => setWhatsappDiretor(event.target.value)} required minLength={8} placeholder="(00) 00000-0000" className="min-h-[44px] rounded-lg border border-borda px-3" />
+            </label>
+            <p className="m-0 text-xs text-muted">Se você não escolher uma foto, será usado o avatar padrão com a inicial do seu nome.</p>
+            <button disabled={salvandoPerfil} className="min-h-[44px] rounded-lg border-0 bg-marinho px-4 font-bold text-white">
+              {salvandoPerfil ? "Salvando..." : "Concluir perfil"}
             </button>
           </form>
         </div>
@@ -294,9 +358,13 @@ export function Shell({ children }) {
                 type="button"
                 className="flex items-center gap-3 rounded-xl border-0 bg-transparent px-1.5 py-1 text-left cursor-pointer transition-colors hover:bg-marinho/5 focus:bg-marinho/5 focus:outline-none"
               >
-                <span className="grid place-items-center w-[38px] h-[38px] rounded-full text-white bg-gradient-to-br from-[#3977b8] to-[#df9f57] font-extrabold">
-                  {usuario.nome?.charAt(0)}
-                </span>
+                {usuario.fotoUrl ? (
+                  <img src={usuario.fotoUrl} alt="" className="h-[38px] w-[38px] rounded-full object-cover" />
+                ) : (
+                  <span className="grid place-items-center w-[38px] h-[38px] rounded-full text-white bg-gradient-to-br from-[#3977b8] to-[#df9f57] font-extrabold">
+                    {usuario.nome?.charAt(0)}
+                  </span>
+                )}
                 <span>
                   <strong className="block max-w-[250px] truncate text-texto leading-tight">{nomeContexto}</strong>
                   <span className="block max-w-[250px] truncate text-muted text-[12px]">{detalheContexto}</span>

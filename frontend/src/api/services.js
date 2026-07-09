@@ -27,6 +27,15 @@ export async function trocarSenha(payload) {
   await api.post("/auth/trocar-senha", payload);
 }
 
+export async function salvarPerfilInicial(payload) {
+  const formData = new FormData();
+  formData.append("nome", payload.nome);
+  formData.append("whatsapp", payload.whatsapp);
+  if (payload.foto) formData.append("foto", payload.foto);
+  const { data } = await api.post("/auth/perfil-inicial", formData);
+  return data;
+}
+
 export async function getDashboard(params = {}) {
   try {
     const { data } = await api.get("/dashboard", { params });

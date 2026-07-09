@@ -1,14 +1,26 @@
 const { Router } = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const multer = require("multer");
 const { z } = require("zod");
 const prisma = require("../utils/prisma");
+const cloudinary = require("../utils/cloudinary");
 const { usuarios } = require("../data/store");
 const { autenticar, autorizar } = require("../middleware/auth");
 const asyncHandler = require("../utils/asyncHandler");
 const AppError = require("../utils/AppError");
 
 const routes = Router();
+const uploadFotoPerfil = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 3 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!file.mimetype?.startsWith("image/")) {
+      return cb(new AppError("Envie apenas arquivos de imagem", 400));
+    }
+    cb(null, true);
+  }
+});
 
 const loginSchema = z.object({
   email: z.string().email().optional(),
@@ -27,12 +39,15 @@ function payloadUsuario(usuario) {
     nome: usuario.nome,
     email: usuario.email,
     codigoAcesso: usuario.codigoAcesso || null,
+    whatsapp: usuario.whatsapp || null,
+    fotoUrl: usuario.fotoUrl || null,
     papel: usuario.papel,
     igrejaId: usuario.igrejaId,
     distritoId: usuario.distritoId || usuario.igreja?.distritoId || null,
     distritoNome: usuario.igreja?.distrito?.nome || null,
     igrejaNome: usuario.igreja?.nome,
     deveTrocarSenha: Boolean(usuario.deveTrocarSenha),
+    perfilPendente: usuario.papel === "DIRETOR" && usuario.nome === "Diretor da Escola Sabatina",
     unidadeId: usuario.unidadesProfessor?.[0]?.id || usuario.unidadeId,
     alunoId: usuario.aluno?.id || usuario.alunoId
   };
@@ -128,6 +143,53 @@ routes.post("/trocar-senha", autenticar, asyncHandler(async (req, res) => {
     }
   });
   res.status(204).send();
+}));
+
+function enviarFotoPerfil(buffer, usuarioId) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "professor-nota-10/diretores",
+        public_id: usuarioId,
+        resource_type: "image",
+        overwrite: true,
+        transformation: [
+          { width: 500, height: 500, crop: "fill", gravity: "face" },
+          { quality: "auto", fetch_format: "auto" }
+        ]
+      },
+      (error, result) => error ? reject(error) : resolve(result)
+    );
+    stream.end(buffer);
+  });
+}
+
+routes.post("/perfil-inicial", autenticar, autorizar("DIRETOR"), uploadFotoPerfil.single("foto"), asyncHandler(async (req, res) => {
+  const dados = z.object({
+    nome: z.string().trim().min(2),
+    whatsapp: z.string().trim().min(8)
+  }).parse(req.body);
+
+  let fotoUrl = null;
+  if (req.file) {
+    if (!process.env.CLOUDINARY_URL || process.env.CLOUDINARY_URL.includes("...")) {
+      throw new AppError("O envio de fotos ainda não está configurado", 500);
+    }
+    const resultado = await enviarFotoPerfil(req.file.buffer, req.usuario.id);
+    fotoUrl = resultado.secure_url;
+  }
+
+  const usuario = await prisma.usuario.update({
+    where: { id: req.usuario.id },
+    data: {
+      nome: dados.nome,
+      whatsapp: dados.whatsapp,
+      ...(fotoUrl ? { fotoUrl } : {})
+    },
+    select: { nome: true, whatsapp: true, fotoUrl: true }
+  });
+
+  res.json({ usuario: { ...usuario, perfilPendente: false } });
 }));
 
 routes.post("/registrar", autenticar, autorizar("ADMIN"), asyncHandler(async (req, res) => {
