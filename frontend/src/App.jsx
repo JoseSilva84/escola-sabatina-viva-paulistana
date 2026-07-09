@@ -11,6 +11,7 @@ import { RelatorioPage } from "./pages/RelatorioPage";
 import { AlunosPage } from "./pages/AlunosPage";
 import { ConfiguracoesPage } from "./pages/ConfiguracoesPage";
 import { ProfessoresPage } from "./pages/ProfessoresPage";
+import { MetasDiretorPage } from "./pages/MetasDiretorPage";
 import { NotificationProvider } from "./components/NotificationProvider";
 
 function Home() {
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/professor" element={<Navigate to="/professor/semanais" replace />} />
         <Route path="/professor/:aba" element={<Private><ProfessorPage /></Private>} />
         <Route path="/diretor" element={<Private><DiretorPage /></Private>} />
+        <Route path="/diretor/metas" element={<Private><MetasDiretorPage /></Private>} />
         <Route path="/ranking" element={<Private><RankingPage /></Private>} />
         <Route path="/alunos" element={<Private><AlunosPage /></Private>} />
         <Route path="/professores" element={<Private><ProfessoresPage /></Private>} />

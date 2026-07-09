@@ -93,3 +93,14 @@
     background-color: rgba(143, 184, 255, 0.12) !important;
   }
 }
+
+@layer utilities {
+  .sidebar-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .sidebar-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}

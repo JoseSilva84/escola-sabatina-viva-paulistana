@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BarChart3, Bell, BookOpen, Building2, Calendar, CalendarClock, Camera, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star } from "lucide-react";
+import { Bell, BookOpen, Building2, Calendar, CalendarClock, Camera, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -71,6 +71,7 @@ const links = [
   { to: "/diretor", label: "Dashboard", icon: Home, papeis: ["ADMIN", "DIRETOR"] },
   { to: "/professor/semanais", label: "Metas - Aluno", icon: Calendar, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
   { to: "/professor/trimestrais", label: "Metas - Professor", icon: ClipboardList, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
+  { to: "/diretor/metas", label: "Metas - Diretor", icon: ShieldCheck, papeis: ["ADMIN", "DIRETOR"] },
   { to: "/aluno", label: "Cartão do Aluno", icon: BookOpen, papeis: ["ADMIN", "ALUNO"] },
   { 
     label: "Ranking", 
@@ -85,7 +86,6 @@ const links = [
   { to: "/diretor", label: "Classes", icon: Users, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
   { to: "/alunos", label: "Alunos", icon: IdCard, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] },
   { to: "/professores", label: "Professores", icon: UserCog, papeis: ["ADMIN", "DIRETOR"] },
-  { to: "/relatorio", label: "Relatórios", icon: BarChart3, papeis: ["ADMIN", "DIRETOR", "PROFESSOR"] }
 ];
 
 const papelLabels = {
@@ -263,7 +263,7 @@ export function Shell({ children }) {
           </form>
         </div>
       )}
-      <aside className="sticky top-0 lg:h-screen flex flex-row lg:flex-col p-4 lg:p-7 text-white bg-gradient-to-br from-[#173a6a] to-[#102d55] shadow-[4px_0_24px_rgba(16,45,85,0.08)] z-40 overflow-x-auto lg:overflow-visible">
+      <aside className="sidebar-scroll sticky top-0 lg:fixed lg:inset-y-0 lg:left-0 lg:h-auto lg:w-[260px] flex flex-row lg:flex-col p-4 lg:px-7 lg:py-5 text-white bg-gradient-to-br from-[#173a6a] to-[#102d55] shadow-[4px_0_24px_rgba(16,45,85,0.08)] z-40 overflow-x-auto lg:overflow-x-hidden lg:overflow-y-auto">
         <div className="hidden lg:flex items-center gap-3 font-bold text-[22px] leading-[1.1] tracking-tight">
           <LogoIcon type={logoType} />
           <div>
@@ -271,7 +271,7 @@ export function Shell({ children }) {
             {produtoRestante} {logoType === "PROFESSOR" && <Star size={16} fill="#facc15" className="inline text-[#facc15] ml-0.5 relative -top-0.5" />}
           </div>
         </div>
-        <nav className="flex lg:flex-col gap-1.5 lg:mt-8 lg:w-full m-0">
+        <nav className="flex lg:flex-col gap-1 lg:mt-6 lg:w-full m-0">
           {visibleLinks.map((link) => {
             const { to, label, icon: Icon, onClick, subItems } = link;
             
@@ -337,7 +337,7 @@ export function Shell({ children }) {
           </button>
         </div>
       </aside>
-      <main className="min-w-0 px-3.5 lg:px-[30px] pb-10">
+      <main className="min-w-0 px-3.5 lg:col-start-2 lg:px-[30px] pb-10">
         <header className="sticky top-0 z-30 flex items-start lg:items-center justify-between min-h-[86px] -mx-3.5 lg:-mx-[30px] mb-7 px-3.5 lg:px-[30px] bg-white/75 border-b border-white/60 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.02)] pt-3 lg:pt-0">
           <div>
             <p className="m-0 mb-0.5 text-muted text-[13px]">Escola Sabatina VIVA</p>

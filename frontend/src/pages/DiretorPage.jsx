@@ -6,6 +6,7 @@ import { ProgressRing } from "../components/ProgressRing";
 import { Card } from "../components/Card";
 import { ModalInput } from "../components/ModalInput";
 import { useAuth } from "../context/AuthContext";
+import { RelatorioPage } from "./RelatorioPage";
 
 const anoAtual = new Date().getFullYear();
 
@@ -384,6 +385,10 @@ export function DiretorPage() {
           <Visit icon={<Users />} label="Igreja" value={data.igreja?.nome || "-"} />
         </div>
       </Card>
+
+      <div className="mt-6 border-t border-borda pt-6">
+        <RelatorioPage />
+      </div>
           </>
         ) : (
           <>
