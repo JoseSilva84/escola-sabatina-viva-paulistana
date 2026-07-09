@@ -374,7 +374,9 @@ export function Shell({ children }) {
                 <div className="px-3 py-2">
                   <strong className="block text-sm text-texto">{nomeContexto}</strong>
                   <span className="mt-0.5 block text-xs text-muted">{detalheContexto}</span>
-                  <span className="mt-1 block text-xs font-bold text-marinho">{papelLabel}</span>
+                  <span className="mt-1 block text-xs font-bold text-marinho">
+                    {papelLabel}{usuario.nome ? ` — ${usuario.nome}` : ""}
+                  </span>
                 </div>
                 <div className="my-1 h-px bg-borda" />
                 <div className="grid gap-1">
