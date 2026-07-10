@@ -87,32 +87,32 @@ export function RankingPage() {
           zIndex: 50
         }} 
       />
-      <div className="mb-10 text-center flex flex-col items-center">
-        <div className="flex items-end justify-center gap-2 md:gap-6 w-full max-w-3xl mx-auto pt-16">
+      <div className="mb-6 sm:mb-10 text-center flex flex-col items-center overflow-hidden">
+        <div className="touch-scroll flex items-end justify-start sm:justify-center gap-2 md:gap-6 w-full max-w-3xl mx-auto overflow-x-auto px-2 pt-12 sm:pt-16 pb-2">
           {displayTop.map((item, i) => (
             <PodiumItem key={item.aluno?.nome || i} aluno={item.aluno} place={item.place} />
           ))}
         </div>
       </div>
       
-      <Card animated delay={0.5} className="overflow-x-auto bg-white/50 backdrop-blur-sm border border-white/50 p-4 shadow-xl">
+      <Card animated delay={0.5} className="mobile-full-bleed touch-scroll table-scroll-hint overflow-x-auto bg-white/50 backdrop-blur-sm border border-white/50 p-3 sm:p-4 shadow-xl">
         <div className="flex flex-col xl:flex-row justify-between gap-4 mb-4">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex p-1 rounded-full bg-[#eef2f7] self-start border border-borda">
+            <div className="grid grid-cols-3 w-full sm:w-auto p-1 rounded-full bg-[#eef2f7] self-start border border-borda">
               <button 
                 onClick={() => atualizarPeriodo("mensal")}
-                className={`min-h-[34px] px-6 border-0 rounded-full font-bold cursor-pointer transition-colors ${periodo === "mensal" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
+                className={`min-h-[36px] px-3 sm:px-6 border-0 rounded-full font-bold cursor-pointer transition-colors text-sm sm:text-base ${periodo === "mensal" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
               >Mensal</button>
               <button 
                 onClick={() => atualizarPeriodo("trimestral")}
-                className={`min-h-[34px] px-6 border-0 rounded-full font-bold cursor-pointer transition-colors ${periodo === "trimestral" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
+                className={`min-h-[36px] px-3 sm:px-6 border-0 rounded-full font-bold cursor-pointer transition-colors text-sm sm:text-base ${periodo === "trimestral" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
               >Trimestral</button>
               <button 
                 onClick={() => atualizarPeriodo("anual")}
-                className={`min-h-[34px] px-6 border-0 rounded-full font-bold cursor-pointer transition-colors ${periodo === "anual" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
+                className={`min-h-[36px] px-3 sm:px-6 border-0 rounded-full font-bold cursor-pointer transition-colors text-sm sm:text-base ${periodo === "anual" ? "bg-white shadow-sm text-marinho" : "bg-transparent text-muted hover:text-texto"}`}
               >Anual</button>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full sm:w-auto">
               {periodo === "mensal" && (
                 <FiltroSelect value={mes} onChange={(valor) => atualizarBusca({ mes: valor })} ariaLabel="Mês do ranking">
                   {meses.map((nome, index) => <option key={nome} value={index + 1}>{nome}</option>)}
@@ -132,7 +132,7 @@ export function RankingPage() {
             <button
               type="button"
               onClick={() => setMostrarRegras((atual) => !atual)}
-              className="inline-flex items-center justify-center gap-2 min-h-[38px] px-3.5 rounded-full border border-borda bg-white text-marinho font-bold text-sm cursor-pointer hover:bg-marinho hover:text-white transition-colors"
+              className="inline-flex items-center justify-center gap-2 min-h-[40px] px-3.5 rounded-full border border-borda bg-white text-marinho font-bold text-sm cursor-pointer hover:bg-marinho hover:text-white transition-colors"
               aria-expanded={mostrarRegras}
             >
               <Info size={16} /> Regras
@@ -142,7 +142,7 @@ export function RankingPage() {
                 placeholder="Buscar..."
                 value={busca}
                 onChange={(event) => atualizarBusca({ busca: event.target.value })}
-                className="min-h-[36px] border-0 outline-none w-full md:w-[220px] text-[14px]"
+                className="min-h-[40px] border-0 outline-none w-full md:w-[220px] text-[14px]"
               />
               <Search size={16} className="text-muted" />
             </label>
@@ -161,7 +161,7 @@ export function RankingPage() {
           </div>
         )}
         
-        <table className="w-full min-w-[960px] border-collapse text-left">
+        <table className="w-full min-w-[860px] lg:min-w-[960px] border-collapse text-left">
           <thead>
             <tr>
               <th className="px-3 py-4 text-marinho text-[13px] font-bold border-b border-borda">#</th>
@@ -295,7 +295,7 @@ function FiltroSelect({ value, onChange, children, ariaLabel }) {
         aria-label={ariaLabel}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-[38px] rounded-full border border-borda bg-white px-3 pr-8 text-sm font-bold normal-case tracking-normal text-marinho outline-none transition-colors hover:border-marinho focus:border-marinho"
+        className="min-h-[40px] w-full rounded-full border border-borda bg-white px-3 pr-8 text-sm font-bold normal-case tracking-normal text-marinho outline-none transition-colors hover:border-marinho focus:border-marinho"
       >
         {children}
       </select>
@@ -359,11 +359,11 @@ function PodiumItem({ aluno, place }) {
       initial={{ y: 50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, delay: place * 0.1 }}
-      className={`flex flex-col items-center relative group cursor-default ${isFirst ? 'z-20' : 'z-10'}`}
+      className={`flex min-w-[128px] sm:min-w-0 flex-col items-center relative group cursor-default ${isFirst ? 'z-20' : 'z-10'}`}
     >
       {/* Card Info */}
-      <div className={`flex flex-col items-center bg-white rounded-2xl shadow-xl p-4 w-[160px] relative -mb-6 z-20 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-translate-y-3 group-hover:shadow-2xl ${isFirst ? 'pb-8 pt-10' : 'pb-6 pt-10'}`}>
-        <div className="absolute -top-10 w-20 h-20 rounded-full bg-white p-1 shadow-md transition-transform duration-300 group-hover:scale-110">
+      <div className={`flex flex-col items-center bg-white rounded-lg sm:rounded-2xl shadow-xl p-3 sm:p-4 w-[128px] sm:w-[160px] relative -mb-6 z-20 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-translate-y-3 group-hover:shadow-2xl ${isFirst ? 'pb-7 sm:pb-8 pt-9 sm:pt-10' : 'pb-5 sm:pb-6 pt-9 sm:pt-10'}`}>
+        <div className="absolute -top-8 sm:-top-10 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white p-1 shadow-md transition-transform duration-300 group-hover:scale-110">
           <img 
             src={fotoAluno(aluno)} 
             alt={aluno.nome} 
@@ -375,8 +375,8 @@ function PodiumItem({ aluno, place }) {
           <div className="absolute -top-12 right-1 text-4xl drop-shadow-lg transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12">🏆</div>
         )}
         
-        <strong className="text-[17px] text-marinho leading-tight text-center transition-colors duration-300 group-hover:text-[#ca8a04]">{aluno.nome}</strong>
-        <span className="text-marinho font-extrabold text-[18px] mt-1">{aluno.pontos} pts</span>
+        <strong className="text-[14px] sm:text-[17px] text-marinho leading-tight text-center transition-colors duration-300 group-hover:text-[#ca8a04] line-clamp-2">{aluno.nome}</strong>
+        <span className="text-marinho font-extrabold text-[15px] sm:text-[18px] mt-1">{aluno.pontos} pts</span>
         
         {isFirst && (
           <div className="text-[10px] text-muted text-center leading-tight mt-2">
@@ -386,7 +386,7 @@ function PodiumItem({ aluno, place }) {
       </div>
       
       {/* 3D Cylinder Podium */}
-      <div className="relative w-[180px] flex flex-col items-center z-10 drop-shadow-2xl transition-all duration-300 group-hover:brightness-110">
+      <div className="relative w-[136px] sm:w-[180px] flex flex-col items-center z-10 drop-shadow-2xl transition-all duration-300 group-hover:brightness-110">
         {/* Top face of cylinder */}
         <div 
           className="w-full h-[40px] rounded-[50%] absolute top-0 z-10 border border-white/20"

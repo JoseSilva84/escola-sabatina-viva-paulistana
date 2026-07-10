@@ -784,7 +784,7 @@ export function ProfessorPage() {
         {(!aba || aba === "semanais") && (
 <>
 <div className="mb-[2px]">
-          <h2 className="m-0 font-outfit tracking-tight text-[26px]">Painel do Professor</h2>
+          <h2 className="m-0 font-outfit tracking-tight text-[23px] sm:text-[26px] leading-tight">Painel do Professor</h2>
           <p className="m-0 mt-1.5 text-muted">Gerencie sua unidade, preencha a coleta semanal e o questionário trimestral.</p>
         </div>
 
@@ -801,7 +801,7 @@ export function ProfessorPage() {
                 <h4 className="m-0 font-outfit text-base">Cadastrar novo aluno</h4>
                 <p className="m-0 text-sm text-muted">Unidade: {card?.unidade?.nome || "Selecione"}</p>
               </div>
-              <button type="button" onClick={cadastrarAluno} disabled={saving} className="inline-flex items-center justify-center min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer">
+              <button type="button" onClick={cadastrarAluno} disabled={saving} className="inline-flex w-full md:w-auto items-center justify-center min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer">
                 Cadastrar
               </button>
             </div>
@@ -817,7 +817,7 @@ export function ProfessorPage() {
           </Card>
 
           <div className="grid gap-3">
-          <Card animated delay={0.132} className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <Card animated delay={0.132} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
             <label className="grid gap-1 text-sm font-bold">Unidade
               <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={unidadeId} onChange={(e) => setUnidadeId(e.target.value)}>
                 {unidades.map((unidade) => <option key={unidade.id} value={unidade.id}>{unidade.nome}</option>)}
@@ -843,17 +843,17 @@ export function ProfessorPage() {
           </div>
 
           <Card animated delay={0.135} className="grid gap-4">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
                 <h3 className="m-0 font-outfit text-lg">Coleta Semanal dos Alunos</h3>
                 <p className="m-0 mt-1 text-muted text-sm">Preenchimento da unidade para a semana selecionada.</p>
               </div>
-              <button type="button" onClick={salvarTudoSemana} disabled={saving} className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer">
+              <button type="button" onClick={salvarTudoSemana} disabled={saving} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer">
                 <Save size={17} /> Salvar semana
               </button>
             </div>
             
-            <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+            <div className="bg-blue-50/50 p-3 sm:p-4 rounded-xl border border-blue-100">
                 <h4 className="text-sm font-bold text-marinho mb-2">Legenda das Perguntas Semanais:</h4>
                 <ul className="text-sm text-muted grid gap-1.5 list-disc pl-4">
                   <li><strong>Estudou a lição:</strong> Estudou a lição durante a semana?</li>
@@ -864,8 +864,8 @@ export function ProfessorPage() {
                 </ul>
             </div>
 
-            <div className="overflow-x-auto border border-borda rounded-lg">
-              <table className="w-full min-w-[760px] border-collapse">
+            <div className="mobile-full-bleed touch-scroll table-scroll-hint overflow-x-auto border border-borda rounded-lg">
+              <table className="w-full min-w-[720px] sm:min-w-[760px] border-collapse">
                 <thead>
                   <tr className="bg-black/5">
                     <th className="px-3 py-3 text-left text-muted text-xs border-b border-borda font-semibold">Aluno</th>
@@ -939,7 +939,7 @@ export function ProfessorPage() {
               <h3 className="m-0 font-outfit tracking-tight text-[22px] text-marinho">Metas - Professor</h3>
               <p className="m-0 mt-1 text-sm text-muted">Preencha uma etapa por vez para a unidade selecionada.</p>
             </div>
-            <button type="button" onClick={() => { setMostrarAvaliacoes((atual) => !atual); if (!mostrarAvaliacoes) carregarAvaliacoesTrimestrais().catch(() => setAvaliacoesTrimestrais([])); }} className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border border-borda bg-white text-marinho font-bold cursor-pointer hover:bg-marinho/5 transition-colors">
+            <button type="button" onClick={() => { setMostrarAvaliacoes((atual) => !atual); if (!mostrarAvaliacoes) carregarAvaliacoesTrimestrais().catch(() => setAvaliacoesTrimestrais([])); }} className="inline-flex w-full md:w-auto items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border border-borda bg-white text-marinho font-bold cursor-pointer hover:bg-marinho/5 transition-colors">
               <Eye size={17} /> Avaliações respondidas
             </button>
           </div>

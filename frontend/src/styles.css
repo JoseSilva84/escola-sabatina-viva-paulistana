@@ -16,11 +16,16 @@
 }
 
 @layer base {
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     background: radial-gradient(circle at top right, #eef4ff 0%, #f6f9fc 50%, #eff5fb 100%);
     background-attachment: fixed;
     font-family: var(--font-outfit);
     color: var(--color-texto);
+    overflow-x: hidden;
   }
 
   button,
@@ -95,6 +100,28 @@
 }
 
 @layer utilities {
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .table-scroll-hint {
+    position: relative;
+  }
+
+  .table-scroll-hint::after {
+    content: "";
+    pointer-events: none;
+    position: sticky;
+    right: -1rem;
+    top: 0;
+    float: right;
+    width: 28px;
+    height: 1px;
+    min-height: 100%;
+    background: linear-gradient(90deg, rgba(246, 249, 252, 0), rgba(23, 58, 106, 0.08));
+  }
+
   .sidebar-scroll {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -102,5 +129,15 @@
 
   .sidebar-scroll::-webkit-scrollbar {
     display: none;
+  }
+
+  @media (max-width: 640px) {
+    .mobile-full-bleed {
+      margin-left: -0.875rem;
+      margin-right: -0.875rem;
+      border-left: 0;
+      border-right: 0;
+      border-radius: 0;
+    }
   }
 }

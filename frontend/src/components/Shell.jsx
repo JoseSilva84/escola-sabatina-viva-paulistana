@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Bell, BookOpen, Building2, Calendar, CalendarClock, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -127,6 +127,7 @@ const configAdmin = [
 export function Shell({ children }) {
   const { usuario, sair, atualizarUsuario } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const visibleLinks = links.filter((link) => link.papeis.includes(usuario.papel));
   const [openMenus, setOpenMenus] = useState({ Ranking: true });
   const [senhaAtual, setSenhaAtual] = useState("");
@@ -276,7 +277,7 @@ export function Shell({ children }) {
           </form>
         </div>
       )}
-      <aside className="sidebar-scroll sticky top-0 lg:fixed lg:inset-y-0 lg:left-0 lg:h-auto lg:w-[260px] flex flex-row lg:flex-col p-4 lg:px-7 lg:py-5 text-white bg-gradient-to-br from-[#173a6a] to-[#102d55] shadow-[4px_0_24px_rgba(16,45,85,0.08)] z-40 overflow-x-auto lg:overflow-x-hidden lg:overflow-y-auto">
+      <aside className="sidebar-scroll fixed inset-x-0 bottom-0 lg:inset-x-auto lg:top-0 lg:left-0 lg:h-auto lg:w-[260px] flex flex-row justify-center lg:justify-start lg:flex-col px-2.5 py-2 lg:px-7 lg:py-5 text-white bg-gradient-to-br from-[#173a6a] to-[#102d55] shadow-[0_-10px_30px_rgba(16,45,85,0.16)] lg:shadow-[4px_0_24px_rgba(16,45,85,0.08)] z-40 overflow-x-auto lg:overflow-x-hidden lg:overflow-y-auto">
         <div className="hidden lg:flex items-center gap-3 font-bold text-[22px] leading-[1.1] tracking-tight">
           <LogoIcon type={logoType} />
           <div>
@@ -284,7 +285,7 @@ export function Shell({ children }) {
             {produtoRestante} {logoType === "PROFESSOR" && <Star size={16} fill="#facc15" className="inline text-[#facc15] ml-0.5 relative -top-0.5" />}
           </div>
         </div>
-        <nav className="flex lg:flex-col gap-1 lg:mt-6 lg:w-full m-0">
+        <nav className="flex lg:flex-col justify-center lg:justify-start gap-1 lg:mt-6 lg:w-full m-0 min-w-max lg:min-w-0">
           {visibleLinks.map((link) => {
             const { to, label, icon: Icon, onClick, subItems } = link;
             
@@ -293,8 +294,16 @@ export function Shell({ children }) {
               return (
                 <div key={label} className="flex flex-col">
                   <button
-                    onClick={() => toggleMenu(label)}
-                    className={`group flex items-center justify-between w-full min-h-[42px] px-3.5 border-0 rounded-lg text-white/80 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/15 hover:text-white ${isOpen ? "bg-white/10 text-white" : "bg-transparent"}`}
+                    onClick={() => {
+                      if (window.innerWidth < 1024 && subItems?.[0]?.to) {
+                        navigate(subItems[0].to);
+                        return;
+                      }
+                      toggleMenu(label);
+                    }}
+                    className={`group flex items-center justify-center lg:justify-between w-12 lg:w-full min-h-[44px] px-3 lg:px-3.5 border-0 rounded-lg text-white/80 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:bg-white/15 hover:text-white ${isOpen ? "bg-white/10 text-white" : "bg-transparent"}`}
+                    title={label}
+                    aria-label={label}
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={19} className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110" />
@@ -331,13 +340,21 @@ export function Shell({ children }) {
                 key={`${to}-${label}`} 
                 to={to} 
                 onClick={onClick}
-                className={({ isActive }) => `group flex items-center justify-center lg:justify-start min-w-12 lg:min-w-0 min-h-[42px] px-3.5 gap-3 border-0 rounded-lg text-white/80 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white ${isActive && !onClick ? "bg-white/15 text-white" : ""}`}
+                className={({ isActive }) => `group flex items-center justify-center lg:justify-start min-w-12 lg:min-w-0 min-h-[44px] px-3 lg:px-3.5 gap-3 border-0 rounded-lg text-white/80 transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] lg:hover:translate-x-1.5 hover:bg-white/15 hover:text-white ${isActive && !onClick ? "bg-white/15 text-white" : ""}`}
+                title={label}
+                aria-label={label}
               >
                 <Icon size={19} className="transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:scale-110 group-hover:rotate-6" />
                 <span className="hidden lg:block">{label}</span>
               </NavLink>
             );
           })}
+          <NavLink to="/configuracoes" className={({ isActive }) => `group flex lg:hidden items-center justify-center min-w-12 min-h-[44px] px-3 border-0 rounded-lg text-white/80 transition-all duration-200 hover:bg-white/15 hover:text-white ${isActive ? "bg-white/15 text-white" : ""}`} title="Configurações" aria-label="Configurações">
+            <Settings size={19} />
+          </NavLink>
+          <button className="group flex lg:hidden items-center justify-center min-w-12 min-h-[44px] px-3 border-0 rounded-lg text-white/80 bg-transparent transition-all duration-200 hover:bg-white/15 hover:text-white" onClick={sair} type="button" title="Sair" aria-label="Sair">
+            <LogOut size={19} />
+          </button>
         </nav>
         <div className="hidden lg:block mt-auto pt-4 border-t border-white/15 space-y-1 shrink-0">
           <NavLink to="/configuracoes" className={({ isActive }) => `group flex items-center w-full min-h-[42px] px-3.5 gap-3 border-0 rounded-lg text-white/80 bg-transparent cursor-pointer transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:translate-x-1.5 hover:bg-white/15 hover:text-white ${isActive ? "bg-white/15 text-white" : ""}`}>
@@ -350,13 +367,13 @@ export function Shell({ children }) {
           </button>
         </div>
       </aside>
-      <main className="min-w-0 px-3.5 lg:col-start-2 lg:px-[30px] pb-10">
-        <header className="sticky top-0 z-30 flex items-start lg:items-center justify-between min-h-[86px] -mx-3.5 lg:-mx-[30px] mb-7 px-3.5 lg:px-[30px] bg-white/75 border-b border-white/60 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.02)] pt-3 lg:pt-0">
-          <div>
+      <main className="min-w-0 px-3.5 sm:px-5 lg:col-start-2 lg:px-[30px] pb-24 lg:pb-10">
+        <header className="sticky top-0 z-30 flex items-start sm:items-center justify-between gap-3 min-h-[72px] lg:min-h-[86px] -mx-3.5 sm:-mx-5 lg:-mx-[30px] mb-5 lg:mb-7 px-3.5 sm:px-5 lg:px-[30px] bg-white/80 border-b border-white/60 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.02)] py-3 lg:py-0">
+          <div className="min-w-0">
             <p className="m-0 mb-0.5 text-muted text-[13px]">Escola Sabatina VIVA</p>
-            <h1 className="m-0 font-outfit tracking-tight text-[22px] flex items-center gap-2">
+            <h1 className="m-0 font-outfit tracking-tight text-[19px] sm:text-[22px] flex flex-wrap items-center gap-x-2 gap-y-0.5 leading-tight">
               {produtoNome}
-              {usuario?.papel && <span className="text-muted text-base font-normal tracking-wide">| {papelLabel}</span>}
+              {usuario?.papel && <span className="text-muted text-sm sm:text-base font-normal tracking-wide">| {papelLabel}</span>}
             </h1>
           </div>
           <div className="flex items-center gap-3">

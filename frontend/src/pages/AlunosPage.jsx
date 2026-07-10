@@ -128,19 +128,19 @@ export function AlunosPage() {
           </label>
         </div>
         <div className="flex justify-end">
-          <button type="button" onClick={carregar} disabled={loading} className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-bold cursor-pointer disabled:opacity-70">
+          <button type="button" onClick={carregar} disabled={loading} className="inline-flex w-full sm:w-auto items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-bold cursor-pointer disabled:opacity-70">
             <Search size={17} /> {loading ? "Buscando..." : "Buscar"}
           </button>
         </div>
       </Card>
 
-      <Card animated delay={0.12} className="overflow-x-auto xl:overflow-x-visible p-4 [&_input]:text-xs [&_select]:text-xs [&_textarea]:text-xs [&_textarea]:!min-w-0 [&_textarea]:!w-full" hoverable={false}>
-        <div className="flex items-center justify-between gap-3 mb-3">
+      <Card animated delay={0.12} className="mobile-full-bleed touch-scroll table-scroll-hint overflow-x-auto xl:overflow-x-visible p-3 sm:p-4 [&_input]:text-xs [&_select]:text-xs [&_textarea]:text-xs [&_textarea]:!min-w-0 [&_textarea]:!w-full" hoverable={false}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3">
           <h3 className="m-0 font-outfit text-lg text-marinho">Lançamentos salvos</h3>
           <span className="inline-flex items-center gap-2 text-sm text-muted"><Users size={16} /> {registros.length} registro(s)</span>
         </div>
 
-        <table className="w-full min-w-[980px] xl:min-w-0 border-collapse text-left table-fixed">
+        <table className="w-full min-w-[920px] xl:min-w-0 border-collapse text-left table-fixed">
           <colgroup>
             <col className="w-[8%]" />
             <col className="w-[12%]" />

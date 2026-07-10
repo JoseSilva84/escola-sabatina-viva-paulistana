@@ -172,11 +172,11 @@ export function DiretorPage() {
 
   return (
     <>
-    <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-6 items-start">
-      <Card className="p-4 grid gap-3 sticky top-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-4 lg:gap-6 items-start">
+      <Card className="p-3 sm:p-4 grid gap-2 lg:gap-3 lg:sticky lg:top-4">
         <h3 className="m-0 font-outfit text-lg border-b border-borda pb-2">Unidades de Ação</h3>
         <button 
-          className={`text-left px-3 py-2 rounded-lg transition-colors cursor-pointer ${!unidadeSelecionada ? "bg-marinho text-white font-bold" : "hover:bg-black/5"}`}
+          className={`min-h-[40px] text-left px-3 py-2 rounded-lg transition-colors cursor-pointer ${!unidadeSelecionada ? "bg-marinho text-white font-bold" : "hover:bg-black/5"}`}
           onClick={() => setUnidadeSelecionada(null)}
         >
           Visão Geral
@@ -184,7 +184,7 @@ export function DiretorPage() {
         {unidades.map(un => (
           <button 
             key={un.id}
-            className={`text-left px-3 py-2 rounded-lg transition-colors cursor-pointer ${unidadeSelecionada?.id === un.id ? "bg-marinho text-white font-bold" : "hover:bg-black/5 text-texto"}`}
+            className={`min-h-[40px] text-left px-3 py-2 rounded-lg transition-colors cursor-pointer ${unidadeSelecionada?.id === un.id ? "bg-marinho text-white font-bold" : "hover:bg-black/5 text-texto"}`}
             onClick={() => setUnidadeSelecionada(un)}
           >
             {un.nome}
@@ -200,9 +200,9 @@ export function DiretorPage() {
                 <h2 className="m-0 font-outfit tracking-tight text-[26px]">Visão geral de todas as classes</h2>
           <p className="m-0 mt-1.5 text-muted">Dados vindos do questionario do diretor e das unidades da igreja.</p>
         </div>
-        <div className="flex gap-2">
-          <input className="min-h-[42px] w-[100px] rounded-lg border border-borda px-3" type="number" value={ano} onChange={(e) => setAno(Number(e.target.value))} />
-          <select className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={trimestre} onChange={(e) => setTrimestre(Number(e.target.value))}>
+        <div className="grid grid-cols-2 sm:flex gap-2 w-full md:w-auto">
+          <input className="min-h-[42px] w-full sm:w-[100px] rounded-lg border border-borda px-3" type="number" value={ano} onChange={(e) => setAno(Number(e.target.value))} />
+          <select className="min-h-[42px] w-full rounded-lg border border-borda px-3 bg-white" value={trimestre} onChange={(e) => setTrimestre(Number(e.target.value))}>
             {[1, 2, 3, 4].map((item) => <option key={item} value={item}>{item}º tri</option>)}
           </select>
         </div>
@@ -323,13 +323,13 @@ export function DiretorPage() {
       )}
 
       <div className="flex flex-col gap-4.5 mt-4.5">
-        <Card animated delay={0.5} className="overflow-x-auto w-full">
+        <Card animated delay={0.5} className="mobile-full-bleed touch-scroll table-scroll-hint overflow-x-auto w-full">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <h3 className="m-0 font-outfit text-lg">Conformidade das Classes - 10 Itens</h3>
             <button
               type="button"
               onClick={() => setMostrarRegrasConformidade((atual) => !atual)}
-              className="inline-flex items-center justify-center gap-2 min-h-[36px] px-3 rounded-full border border-borda bg-white text-marinho font-bold text-sm cursor-pointer hover:bg-marinho hover:text-white transition-colors"
+              className="inline-flex items-center justify-center gap-2 min-h-[40px] px-3 rounded-full border border-borda bg-white text-marinho font-bold text-sm cursor-pointer hover:bg-marinho hover:text-white transition-colors"
               aria-expanded={mostrarRegrasConformidade}
             >
               <Info size={16} /> Regras
@@ -345,7 +345,7 @@ export function DiretorPage() {
               </div>
             </div>
           )}
-          <table className="w-full min-w-[720px] border-collapse">
+          <table className="w-full min-w-[680px] md:min-w-[720px] border-collapse">
             <thead>
               <tr>
                 <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Classes</th>
@@ -411,7 +411,7 @@ export function DiretorPage() {
                     foto: null
                   });
                 }}
-                className="inline-flex items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer hover:bg-marinho/90 transition-colors"
+                className="inline-flex w-full sm:w-auto items-center justify-center gap-2 min-h-[42px] px-4 rounded-lg border-0 bg-marinho text-white font-extrabold cursor-pointer hover:bg-marinho/90 transition-colors"
               >
                 <Plus size={18} /> Adicionar aluno
               </button>
@@ -509,9 +509,9 @@ export function DiretorPage() {
     {/* Edição de Aluno Modal */}
     {(alunoEditando || criandoAluno) && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <Card className="w-full max-w-2xl bg-white p-6 max-h-[90vh] overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="m-0 font-outfit text-[22px] cursor-pointer">{criandoAluno ? "Adicionar Aluno" : "Editar Aluno"}</h3>
+        <Card className="w-full max-w-2xl bg-white p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+          <div className="flex justify-between items-center gap-3 mb-5 sm:mb-6">
+            <h3 className="m-0 font-outfit text-[20px] sm:text-[22px] cursor-pointer">{criandoAluno ? "Adicionar Aluno" : "Editar Aluno"}</h3>
             <button className="text-muted hover:text-texto" onClick={() => { setAlunoEditando(null); setCriandoAluno(false); setNovoAluno(null); }}>
               <X size={24} />
             </button>
@@ -528,7 +528,7 @@ export function DiretorPage() {
             </div>
 
 
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-borda">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6 pt-4 border-t border-borda">
             <button
               type="button"
               className="px-4 py-2 text-muted font-bold hover:text-texto cursor-pointer"
@@ -537,7 +537,7 @@ export function DiretorPage() {
               Cancelar
             </button>
             <button 
-                className="px-4 py-2 rounded-lg bg-marinho text-white font-extrabold hover:bg-[#102d55] flex items-center gap-2"
+                className="min-h-[42px] justify-center px-4 py-2 rounded-lg bg-marinho text-white font-extrabold hover:bg-[#102d55] flex items-center gap-2"
                 onClick={salvarEdicaoAluno}
                 disabled={saving}
               >
