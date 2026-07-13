@@ -5,9 +5,12 @@ const { Pool } = require("pg");
 function criarPrisma() {
   const connectionString = process.env.DATABASE_URL;
   if (connectionString) {
+    const ssl =
+      process.env.DATABASE_SSL === "true" ||
+      connectionString.includes("sslmode=require");
     const pool = new Pool({
       connectionString,
-      ssl: true
+      ssl
     });
     const adapter = new PrismaPg(pool);
     return new PrismaClient({ adapter });
