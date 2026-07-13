@@ -79,10 +79,6 @@ function gerarLoginIgreja(igreja, ordemDuplicada = 1) {
   return ordemDuplicada > 1 ? `${base}-${ordemDuplicada}` : base;
 }
 
-function csv(valor) {
-  return `"${String(valor).replace(/"/g, "\"\"")}"`;
-}
-
 function lerLinhaCsv(linha) {
   return [...linha.matchAll(/"((?:""|[^"])*)"/g)]
     .map((item) => item[1].replace(/""/g, "\""));
@@ -92,25 +88,88 @@ function chaveIgreja(distrito, igreja) {
   return `${distrito}\u0000${igreja}`;
 }
 
-function carregarSenhasExistentes() {
+function carregarAcessosCsv() {
   const porIgreja = new Map();
   const porLogin = new Map();
-  if (!fs.existsSync(arquivoSaida)) return { porIgreja, porLogin };
+  let admin = { login: "admin", email: "admin@nota10.com", senha: "123456" };
+
+  if (!fs.existsSync(arquivoSaida)) return { porIgreja, porLogin, admin };
 
   const linhas = fs.readFileSync(arquivoSaida, "utf8")
     .replace(/^\uFEFF/, "")
     .split(/\r?\n/)
     .filter(Boolean);
-  if (linhas.length < 2) return { porIgreja, porLogin };
+  if (linhas.length < 2) return { porIgreja, porLogin, admin };
 
   for (const campos of linhas.slice(1).map(lerLinhaCsv)) {
     const [distrito, igreja, login, senha] = campos;
-    if (!distrito || !igreja || !senha) continue;
-    porIgreja.set(chaveIgreja(distrito, igreja), senha);
-    if (login) porLogin.set(login.toLowerCase(), senha);
+    if (!distrito || !igreja || !login || !senha) continue;
+    if (distrito === "ADMIN") {
+      admin = { login, email: "admin@nota10.com", senha };
+      continue;
+    }
+    porIgreja.set(chaveIgreja(distrito, igreja), { login, senha });
+    porLogin.set(login.toLowerCase(), { distrito, igreja, login, senha });
   }
 
-  return { porIgreja, porLogin };
+  return { porIgreja, porLogin, admin };
+}
+
+function acessoInicialDiretor(acessosCsv, distrito, igreja) {
+  return acessosCsv.porIgreja.get(chaveIgreja(distrito, igreja)) || null;
+}
+
+async function garantirAdmin(acessosCsv) {
+  const distrito = await prisma.distrito.upsert({
+    where: { nome: "ADMINISTRACAO" },
+    update: {},
+    create: { id: idEstavel("distrito", "ADMINISTRACAO"), nome: "ADMINISTRACAO" }
+  });
+
+  const igreja = await prisma.igreja.upsert({
+    where: {
+      distritoId_nome: {
+        distritoId: distrito.id,
+        nome: "Escola Sabatina Viva"
+      }
+    },
+    update: {},
+    create: {
+      id: idEstavel("igreja", distrito.nome, "Escola Sabatina Viva"),
+      nome: "Escola Sabatina Viva",
+      distritoId: distrito.id
+    }
+  });
+
+  const adminExistente = await prisma.usuario.findFirst({
+    where: {
+      OR: [
+        { email: acessosCsv.admin.email },
+        { codigoAcesso: { equals: acessosCsv.admin.login, mode: "insensitive" } }
+      ],
+      papel: "ADMIN"
+    },
+    select: { id: true }
+  });
+
+  if (adminExistente) return false;
+
+  await prisma.usuario.create({
+    data: {
+      nome: "Administrador Nota 10",
+      email: acessosCsv.admin.email,
+      codigoAcesso: acessosCsv.admin.login,
+      senhaHash: await bcrypt.hash(acessosCsv.admin.senha, 12),
+      senhaTemporaria: acessosCsv.admin.senha,
+      papel: "ADMIN",
+      igrejaId: igreja.id,
+      distritoId: distrito.id,
+      ativo: true,
+      deveTrocarSenha: true
+    }
+  });
+
+  return true;
 }
 
 function gerarLoginsPorIgreja(distritos) {
@@ -140,28 +199,6 @@ function gerarLoginsPorIgreja(distritos) {
   return logins;
 }
 
-function atualizarCsvExistente(loginsPorIgreja) {
-  if (!fs.existsSync(arquivoSaida)) return;
-  const linhas = fs.readFileSync(arquivoSaida, "utf8")
-    .replace(/^\uFEFF/, "")
-    .split(/\r?\n/)
-    .filter(Boolean);
-  if (linhas.length < 2) return;
-
-  const registros = linhas.slice(1).map(lerLinhaCsv);
-  const atualizadas = [
-    ["distrito", "igreja", "login", "senha_temporaria"].map(csv).join(","),
-    ...registros.map((campos) => {
-      const [distrito, igreja] = campos;
-      const senha = campos.length >= 4 ? campos[3] : campos[2];
-      const login = loginsPorIgreja.get(chaveIgreja(distrito, igreja))
-        || gerarLoginIgreja(igreja);
-      return [distrito, igreja, login, senha].map(csv).join(",");
-    })
-  ];
-  fs.writeFileSync(arquivoSaida, `\uFEFF${atualizadas.join("\n")}\n`, "utf8");
-}
-
 async function executar() {
   if (!fs.existsSync(arquivoFonte)) {
     throw new Error(`Arquivo não encontrado: ${arquivoFonte}`);
@@ -172,10 +209,11 @@ async function executar() {
     throw new Error("Nenhum distrito com igrejas foi encontrado no arquivo.");
   }
 
-  const senhasExistentes = carregarSenhasExistentes();
+  const acessosCsv = carregarAcessosCsv();
   const acessosCriados = [];
-  const acessosProcessados = [];
   const loginsPorIgreja = gerarLoginsPorIgreja(distritos);
+  const adminCriado = await garantirAdmin(acessosCsv);
+  const normalizarLogins = process.env.NORMALIZAR_LOGINS_EXISTENTES === "true";
   let totalIgrejas = 0;
 
   for (const itemDistrito of distritos) {
@@ -203,40 +241,27 @@ async function executar() {
           distritoId: distrito.id
         }
       });
-      const codigoAcesso = loginsPorIgreja.get(chaveIgreja(distrito.nome, igreja.nome))
+      const acessoInicial = acessoInicialDiretor(acessosCsv, distrito.nome, igreja.nome);
+      const codigoAcesso = acessoInicial?.login
+        || loginsPorIgreja.get(chaveIgreja(distrito.nome, igreja.nome))
         || gerarLoginIgreja(igreja.nome);
-      const senhaExistente = senhasExistentes.porIgreja.get(chaveIgreja(distrito.nome, igreja.nome))
-        || senhasExistentes.porLogin.get(codigoAcesso.toLowerCase())
-        || null;
+      const senhaExistente = acessoInicial?.senha || null;
 
       const diretorExistente = await prisma.usuario.findFirst({
         where: { igrejaId: igreja.id, papel: "DIRETOR" },
         select: { id: true, codigoAcesso: true, senhaTemporaria: true }
       });
       if (diretorExistente) {
-        const dadosAtualizacao = {};
-        if (diretorExistente.codigoAcesso !== codigoAcesso) {
-          dadosAtualizacao.codigoAcesso = codigoAcesso;
-        }
-        if (!diretorExistente.senhaTemporaria && senhaExistente) {
-          dadosAtualizacao.senhaTemporaria = senhaExistente;
-        }
-        if (Object.keys(dadosAtualizacao).length) {
+        if (normalizarLogins && acessoInicial && diretorExistente.codigoAcesso !== codigoAcesso) {
           await prisma.usuario.update({
             where: { id: diretorExistente.id },
-            data: dadosAtualizacao
+            data: { codigoAcesso }
           });
         }
-        acessosProcessados.push({
-          distrito: distrito.nome,
-          igreja: igreja.nome,
-          login: codigoAcesso,
-          senha: diretorExistente.senhaTemporaria || senhaExistente || ""
-        });
         continue;
       }
 
-      const senha = gerarSenha();
+      const senha = senhaExistente || gerarSenha();
       await prisma.usuario.create({
         data: {
           nome: "Diretor da Escola Sabatina",
@@ -257,33 +282,23 @@ async function executar() {
         login: codigoAcesso,
         senha
       });
-      acessosProcessados.push({
-        distrito: distrito.nome,
-        igreja: igreja.nome,
-        login: codigoAcesso,
-        senha
-      });
     }
   }
 
   console.log(`${distritos.length} distritos e ${totalIgrejas} igrejas processados.`);
+  console.log(adminCriado ? "Conta admin criada." : "Conta admin preservada.");
   console.log(`${acessosCriados.length} contas de diretor criadas.`);
-  if (acessosProcessados.length) {
-    const linhas = [
-      ["distrito", "igreja", "login", "senha_temporaria"].map(csv).join(","),
-      ...acessosProcessados.map((item) => (
-        [item.distrito, item.igreja, item.login, item.senha].map(csv).join(",")
-      ))
-    ];
-    fs.writeFileSync(arquivoSaida, `\uFEFF${linhas.join("\n")}\n`, "utf8");
-    console.log(`Acessos salvos no banco e exportados em: ${arquivoSaida}`);
+  if (acessosCriados.length) {
+    console.log("Novas contas foram criadas usando os acessos do CSV.");
   } else {
-    console.log("Nenhuma senha foi alterada; o processo é seguro para reexecução.");
-    if (fs.existsSync(arquivoSaida)) {
-      console.log("O CSV existente foi preservado.");
-    }
+    console.log("Nenhum login ou senha existente foi alterado.");
   }
-  atualizarCsvExistente(loginsPorIgreja);
+  if (normalizarLogins) {
+    console.log("Normalizacao de logins existentes ativada por NORMALIZAR_LOGINS_EXISTENTES=true.");
+  }
+  if (fs.existsSync(arquivoSaida)) {
+    console.log(`Arquivo de entrega preservado em: ${arquivoSaida}`);
+  }
 }
 
 executar()
