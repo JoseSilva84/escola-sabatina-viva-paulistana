@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 
 const INTRO_DURATION_MS = 1500;
-const LOGO_SRC = "/escola-sabatina-logo.svg";
+const LOGO_SRC = "/logo-ES.png";
 
 export function Login() {
   const { usuario, entrar } = useAuth();
