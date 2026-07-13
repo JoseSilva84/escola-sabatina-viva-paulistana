@@ -125,6 +125,43 @@ routes.get("/me", autenticar, (req, res) => {
   res.json({ usuario: req.usuario });
 });
 
+routes.patch("/me", autenticar, asyncHandler(async (req, res) => {
+  const dados = z.object({
+    nome: z.string().trim().min(2).optional(),
+    whatsapp: z.string().trim().optional().nullable(),
+    sexoPerfil: z.enum(["MASCULINO", "FEMININO"]).optional().nullable(),
+    email: z.string().email().optional()
+  }).parse(req.body);
+
+  const usuario = await prisma.usuario.findUnique({
+    where: { id: req.usuario.id },
+    include: {
+      igreja: { include: { distrito: true } },
+      aluno: true,
+      unidadesProfessor: { where: { ativa: true }, take: 1 }
+    }
+  });
+
+  if (!usuario) throw new AppError("Usuario nao encontrado", 404);
+
+  const atualizado = await prisma.usuario.update({
+    where: { id: usuario.id },
+    data: {
+      ...(dados.nome !== undefined ? { nome: dados.nome } : {}),
+      ...(dados.whatsapp !== undefined ? { whatsapp: dados.whatsapp || null } : {}),
+      ...(dados.sexoPerfil !== undefined ? { sexoPerfil: dados.sexoPerfil || null } : {}),
+      ...(dados.email !== undefined ? { email: dados.email.toLowerCase() } : {})
+    },
+    include: {
+      igreja: { include: { distrito: true } },
+      aluno: true,
+      unidadesProfessor: { where: { ativa: true }, take: 1 }
+    }
+  });
+
+  res.json({ usuario: payloadUsuario(atualizado) });
+}));
+
 routes.post("/trocar-senha", autenticar, asyncHandler(async (req, res) => {
   const dados = z.object({
     senhaAtual: z.string().min(1),

@@ -37,6 +37,11 @@ export async function salvarPerfilInicial(payload) {
   return data;
 }
 
+export async function atualizarMeuPerfil(payload) {
+  const { data } = await api.patch("/auth/me", payload);
+  return data;
+}
+
 export async function getDashboard(params = {}) {
   try {
     const { data } = await api.get("/dashboard", { params });
@@ -160,6 +165,21 @@ export async function salvarCartaoDiretor(id, payload) {
 
 export async function getUnidades(params = {}) {
   const { data } = await api.get("/cadastros/unidades", { params });
+  return data;
+}
+
+export async function atualizarUnidade(id, payload) {
+  const { data } = await api.patch(`/cadastros/unidades/${id}`, payload);
+  return data;
+}
+
+export async function getIgrejas() {
+  const { data } = await api.get("/cadastros/igrejas");
+  return data;
+}
+
+export async function atualizarIgreja(id, payload) {
+  const { data } = await api.patch(`/cadastros/igrejas/${id}`, payload);
   return data;
 }
 

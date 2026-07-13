@@ -62,11 +62,37 @@ function enviarFotoAluno(buffer, publicId) {
 routes.get("/igrejas", asyncHandler(async (req, res) => {
   try {
     const where = req.usuario.papel === "ADMIN" ? {} : { id: req.usuario.igrejaId };
-    const lista = await prisma.igreja.findMany({ where, orderBy: { nome: "asc" } });
+    const lista = await prisma.igreja.findMany({
+      where,
+      include: { distrito: true, _count: { select: { usuarios: true, unidades: true } } },
+      orderBy: { nome: "asc" }
+    });
     return res.json(lista);
   } catch {
     return res.json(igrejas);
   }
+}));
+
+routes.patch("/igrejas/:id", autorizar("ADMIN", "DIRETOR"), asyncHandler(async (req, res) => {
+  const dados = z.object({
+    nome: z.string().trim().min(2)
+  }).parse(req.body);
+
+  const igreja = await prisma.igreja.findFirst({
+    where: {
+      id: req.params.id,
+      ...(req.usuario.papel === "ADMIN" ? {} : { id: req.usuario.igrejaId })
+    }
+  });
+  if (!igreja) throw new AppError("Igreja nao encontrada ou sem permissao", 404);
+
+  const atualizada = await prisma.igreja.update({
+    where: { id: igreja.id },
+    data: { nome: dados.nome },
+    include: { distrito: true, _count: { select: { usuarios: true, unidades: true } } }
+  });
+
+  res.json(atualizada);
 }));
 
 routes.get("/professores", asyncHandler(async (req, res) => {
