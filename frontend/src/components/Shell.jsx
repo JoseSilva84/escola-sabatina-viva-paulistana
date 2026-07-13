@@ -111,15 +111,15 @@ const configComum = [
 ];
 
 const configAdmin = [
-  { label: "Notificacoes", icon: Bell, secao: "notificacoes" },
+  { label: "Notificações", icon: Bell, secao: "notificacoes" },
   { label: "Perfil e conta", icon: UserCog, secao: "perfil" },
   { label: "Dados da igreja", icon: Building2, secao: "igreja" },
-  { label: "Unidades de Acao", icon: Users, secao: "unidades" },
-  { label: "Ano e trimestre padrao", icon: CalendarClock, secao: "periodo" },
-  { label: "Usuarios e permissoes", icon: ShieldCheck, secao: "usuarios" },
+  { label: "Unidades de Ação", icon: Users, secao: "unidades" },
+  { label: "Ano e trimestre padrão", icon: CalendarClock, secao: "periodo" },
+  { label: "Usuários e permissões", icon: ShieldCheck, secao: "usuarios" },
   { label: "Identidade do sistema", icon: Image, secao: "identidade" },
   { label: "Importar/Exportar dados", icon: UploadCloud, secao: "importar-exportar" },
-  { label: "Criterios de pontuacao", icon: SlidersHorizontal, secao: "pontuacao" },
+  { label: "Critérios de pontuação", icon: SlidersHorizontal, secao: "pontuacao" },
   { label: "Ajuda e suporte", icon: HelpCircle, secao: "ajuda" },
   { label: "Tema do sistema", icon: Palette, secao: "tema" }
 ];

@@ -53,17 +53,17 @@ const perfilLabels = {
 };
 
 const relatorioPorPerfil = {
-  ADMIN: "Relatorios gerais do Departamental Mipes",
-  DIRETOR: "Relatorios das classes e unidades de acao",
-  PROFESSOR: "Relatorios da sua unidade de acao",
-  ALUNO: "Relatorio do acompanhamento do aluno"
+  ADMIN: "Relatórios gerais do Departamental Mipes",
+  DIRETOR: "Relatórios das classes e unidades de ação",
+  PROFESSOR: "Relatórios da sua unidade de ação",
+  ALUNO: "Relatório do acompanhamento do aluno"
 };
 
 const opcoesComuns = [
   {
     id: "notificacoes",
     titulo: "Notificações",
-    descricao: "Lembretes de coleta semanal, avaliacao trimestral e pendências do seu perfil.",
+    descricao: "Lembretes de coleta semanal, avaliação trimestral e pendências do seu perfil.",
     icon: Bell
   },
   {
@@ -649,8 +649,8 @@ export function ConfiguracoesPage() {
             {[
               ["receber", "Receber lembretes do sistema"],
               ["coleta", "Coleta semanal"],
-              ["trimestral", "Avaliacao trimestral"],
-              ["pendencias", "Pendencias do perfil"]
+              ["trimestral", "Avaliação trimestral"],
+              ["pendências", "Pendências do perfil"]
             ].map(([campo, label]) => (
               <label key={campo} className="flex items-center gap-3 rounded-lg border border-borda bg-white px-3 py-2 text-sm font-bold text-texto">
                 <input
