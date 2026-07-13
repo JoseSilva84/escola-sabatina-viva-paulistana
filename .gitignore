@@ -16,3 +16,4 @@ Thumbs.db
 
 # Contém senhas temporárias geradas localmente.
 backend/acessos-diretores.csv
+backend/sincronizar-acessos-diretores.sql
