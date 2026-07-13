@@ -91,7 +91,7 @@ function chaveIgreja(distrito, igreja) {
 function carregarAcessosCsv() {
   const porIgreja = new Map();
   const porLogin = new Map();
-  let admin = { login: "admin", email: "admin@nota10.com", senha: "123456" };
+  let admin = { login: "admin", email: "admin@nota10.com", senha: "Adm#Sabatina@2026-K9qT!7" };
 
   if (!fs.existsSync(arquivoSaida)) return { porIgreja, porLogin, admin };
 
