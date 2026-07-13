@@ -680,23 +680,25 @@ export function ConfiguracoesPage() {
           <Card hoverable={false}>
             <form onSubmit={salvarPerfil} className="grid gap-3">
               <h3 className="m-0 font-outfit text-xl text-marinho">Perfil e conta</h3>
-              <div className="flex flex-col gap-3 rounded-lg border border-borda bg-white p-3 sm:flex-row sm:items-center">
-                <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full bg-marinho/10 text-marinho">
-                  {fotoPerfilPreview ? (
-                    <img src={fotoPerfilPreview} alt="Foto do perfil" className="h-full w-full object-cover" />
-                  ) : (
-                    <UserCog size={30} />
-                  )}
+              <div className="grid gap-3 rounded-lg border border-borda bg-white p-3">
+                <div className="grid grid-cols-[64px_1fr] items-center gap-3">
+                  <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-marinho/10 text-marinho">
+                    {fotoPerfilPreview ? (
+                      <img src={fotoPerfilPreview} alt="Foto do perfil" className="h-full w-full object-cover" />
+                    ) : (
+                      <UserCog size={26} />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="m-0 text-sm font-bold text-marinho">Imagem do perfil</p>
+                    <p className="m-0 mt-1 break-words text-xs leading-relaxed text-muted">
+                      {perfilForm.foto ? perfilForm.foto.name : "Importe uma foto para aparecer no topo do sistema."}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="m-0 text-sm font-bold text-marinho">Imagem do perfil</p>
-                  <p className="m-0 mt-1 truncate text-xs text-muted">
-                    {perfilForm.foto ? perfilForm.foto.name : "Importe uma foto para aparecer no topo do sistema."}
-                  </p>
-                </div>
-                <label className="inline-flex min-h-[36px] w-fit cursor-pointer items-center justify-center gap-2 rounded-lg border border-borda bg-white px-3 text-xs font-bold text-marinho transition-colors hover:bg-marinho/5">
-                  <UploadCloud size={14} />
-                  Importar imagem
+                <label className="inline-flex min-h-[36px] w-fit max-w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-borda bg-white px-3 text-xs font-bold text-marinho transition-colors hover:bg-marinho/5">
+                  <UploadCloud size={14} className="shrink-0" />
+                  <span className="truncate">Importar imagem</span>
                   <input type="file" accept="image/*" onChange={selecionarFotoPerfil} className="sr-only" />
                 </label>
               </div>
