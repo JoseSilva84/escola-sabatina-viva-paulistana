@@ -124,6 +124,12 @@ const configAdmin = [
   { label: "Tema do sistema", icon: Palette, secao: "tema" }
 ];
 
+function formatarDistrito(nome) {
+  if (!nome) return "";
+  if (String(nome).toUpperCase() === "ADMINISTRACAO") return "ADMINISTRAÇÃO";
+  return nome;
+}
+
 export function Shell({ children }) {
   const { usuario, sair, atualizarUsuario } = useAuth();
   const location = useLocation();
@@ -146,8 +152,9 @@ export function Shell({ children }) {
   const produtoRestante = produtoOutrasLinhas.join(" ");
   const configItens = usuario.papel === "ADMIN" ? configAdmin : configComum;
   const nomeContexto = usuario.igrejaNome || usuario.nome;
+  const distritoNome = formatarDistrito(usuario.distritoNome);
   const detalheContexto = usuario.distritoNome
-    ? `Distrito ${usuario.distritoNome}`
+    ? `Distrito ${distritoNome}`
     : papelLabel;
   const nomePareceMasculino = /^(carlos|jo[aã]o|jos[eé]|paulo|pedro|marcos|lucas|mateus|rafael|gabriel|daniel|andre|ant[oô]nio)\b/i.test(usuario.nome || "");
   const avatarPadrao = usuario.sexoPerfil === "MASCULINO" || (!usuario.sexoPerfil && nomePareceMasculino)
@@ -402,7 +409,7 @@ export function Shell({ children }) {
                 <div className="px-3 py-2">
                   <strong className="block text-sm text-texto">{nomeContexto}</strong>
                   <span className="mt-0.5 block text-xs text-muted">{detalheContexto}</span>
-                  <span className="mt-1 block text-xs font-bold text-marinho">
+                  <span className="hidden">
                     {papelLabel}{usuario.nome ? ` — ${usuario.nome}` : ""}
                   </span>
                 </div>
