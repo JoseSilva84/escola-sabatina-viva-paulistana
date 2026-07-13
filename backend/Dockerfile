@@ -11,6 +11,7 @@ COPY prisma ./prisma
 RUN npx prisma generate
 
 COPY src ./src
+COPY regiaoDistritoIgreja.md ./regiaoDistritoIgreja.md
 
 ENV NODE_ENV=production
 EXPOSE 3001

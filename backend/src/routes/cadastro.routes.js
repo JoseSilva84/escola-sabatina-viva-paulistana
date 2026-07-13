@@ -149,6 +149,7 @@ routes.post("/professores", autorizar("ADMIN", "DIRETOR"), asyncHandler(async (r
       email,
       codigoAcesso,
       senhaHash: await bcrypt.hash(dados.senha, 12),
+      senhaTemporaria: dados.senha,
       papel: "PROFESSOR",
       igrejaId: req.usuario.igrejaId,
       distritoId: req.usuario.distritoId || null,
@@ -203,6 +204,7 @@ routes.post("/professores/:id/redefinir-senha", autorizar("ADMIN", "DIRETOR"), a
     where: { id: professor.id },
     data: {
       senhaHash: await bcrypt.hash(senhaTemporaria, 12),
+      senhaTemporaria,
       deveTrocarSenha: true,
       ativo: true
     }

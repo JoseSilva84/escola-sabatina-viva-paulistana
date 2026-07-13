@@ -4,7 +4,9 @@ const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const prisma = require("../utils/prisma");
 
-const arquivoFonte = path.resolve(__dirname, "../../../regiaoDistritoIgreja.md");
+const arquivoFonteBackend = path.resolve(__dirname, "../../regiaoDistritoIgreja.md");
+const arquivoFonteRaiz = path.resolve(__dirname, "../../../regiaoDistritoIgreja.md");
+const arquivoFonte = fs.existsSync(arquivoFonteBackend) ? arquivoFonteBackend : arquivoFonteRaiz;
 const arquivoSaida = path.resolve(__dirname, "../../acessos-diretores.csv");
 
 function corrigirMojibake(texto) {
@@ -72,8 +74,9 @@ function gerarSenha() {
     .join("");
 }
 
-function gerarLoginIgreja(distrito, igreja) {
-  return `${slug(distrito)}.${slug(igreja)}`;
+function gerarLoginIgreja(igreja, ordemDuplicada = 1) {
+  const base = slug(igreja) || "igreja";
+  return ordemDuplicada > 1 ? `${base}-${ordemDuplicada}` : base;
 }
 
 function csv(valor) {
@@ -83,6 +86,58 @@ function csv(valor) {
 function lerLinhaCsv(linha) {
   return [...linha.matchAll(/"((?:""|[^"])*)"/g)]
     .map((item) => item[1].replace(/""/g, "\""));
+}
+
+function chaveIgreja(distrito, igreja) {
+  return `${distrito}\u0000${igreja}`;
+}
+
+function carregarSenhasExistentes() {
+  const porIgreja = new Map();
+  const porLogin = new Map();
+  if (!fs.existsSync(arquivoSaida)) return { porIgreja, porLogin };
+
+  const linhas = fs.readFileSync(arquivoSaida, "utf8")
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .filter(Boolean);
+  if (linhas.length < 2) return { porIgreja, porLogin };
+
+  for (const campos of linhas.slice(1).map(lerLinhaCsv)) {
+    const [distrito, igreja, login, senha] = campos;
+    if (!distrito || !igreja || !senha) continue;
+    porIgreja.set(chaveIgreja(distrito, igreja), senha);
+    if (login) porLogin.set(login.toLowerCase(), senha);
+  }
+
+  return { porIgreja, porLogin };
+}
+
+function gerarLoginsPorIgreja(distritos) {
+  const totaisPorNome = new Map();
+  for (const distrito of distritos) {
+    for (const igreja of distrito.igrejas) {
+      const chaveNome = slug(igreja) || "igreja";
+      totaisPorNome.set(chaveNome, (totaisPorNome.get(chaveNome) || 0) + 1);
+    }
+  }
+
+  const ocorrenciasPorNome = new Map();
+  const logins = new Map();
+  for (const distrito of distritos) {
+    for (const igreja of distrito.igrejas) {
+      const chaveNome = slug(igreja) || "igreja";
+      const repetida = totaisPorNome.get(chaveNome) > 1;
+      const ocorrencia = (ocorrenciasPorNome.get(chaveNome) || 0) + 1;
+      ocorrenciasPorNome.set(chaveNome, ocorrencia);
+      logins.set(
+        chaveIgreja(distrito.nome, igreja),
+        gerarLoginIgreja(igreja, repetida ? ocorrencia : 1)
+      );
+    }
+  }
+
+  return logins;
 }
 
 function atualizarCsvExistente(loginsPorIgreja) {
@@ -99,8 +154,8 @@ function atualizarCsvExistente(loginsPorIgreja) {
     ...registros.map((campos) => {
       const [distrito, igreja] = campos;
       const senha = campos.length >= 4 ? campos[3] : campos[2];
-      const login = loginsPorIgreja.get(`${distrito}\u0000${igreja}`)
-        || gerarLoginIgreja(distrito, igreja);
+      const login = loginsPorIgreja.get(chaveIgreja(distrito, igreja))
+        || gerarLoginIgreja(igreja);
       return [distrito, igreja, login, senha].map(csv).join(",");
     })
   ];
@@ -117,8 +172,10 @@ async function executar() {
     throw new Error("Nenhum distrito com igrejas foi encontrado no arquivo.");
   }
 
+  const senhasExistentes = carregarSenhasExistentes();
   const acessosCriados = [];
-  const loginsPorIgreja = new Map();
+  const acessosProcessados = [];
+  const loginsPorIgreja = gerarLoginsPorIgreja(distritos);
   let totalIgrejas = 0;
 
   for (const itemDistrito of distritos) {
@@ -146,20 +203,36 @@ async function executar() {
           distritoId: distrito.id
         }
       });
-      const codigoAcesso = gerarLoginIgreja(distrito.nome, igreja.nome);
-      loginsPorIgreja.set(`${distrito.nome}\u0000${igreja.nome}`, codigoAcesso);
+      const codigoAcesso = loginsPorIgreja.get(chaveIgreja(distrito.nome, igreja.nome))
+        || gerarLoginIgreja(igreja.nome);
+      const senhaExistente = senhasExistentes.porIgreja.get(chaveIgreja(distrito.nome, igreja.nome))
+        || senhasExistentes.porLogin.get(codigoAcesso.toLowerCase())
+        || null;
 
       const diretorExistente = await prisma.usuario.findFirst({
         where: { igrejaId: igreja.id, papel: "DIRETOR" },
-        select: { id: true, codigoAcesso: true }
+        select: { id: true, codigoAcesso: true, senhaTemporaria: true }
       });
       if (diretorExistente) {
+        const dadosAtualizacao = {};
         if (diretorExistente.codigoAcesso !== codigoAcesso) {
+          dadosAtualizacao.codigoAcesso = codigoAcesso;
+        }
+        if (!diretorExistente.senhaTemporaria && senhaExistente) {
+          dadosAtualizacao.senhaTemporaria = senhaExistente;
+        }
+        if (Object.keys(dadosAtualizacao).length) {
           await prisma.usuario.update({
             where: { id: diretorExistente.id },
-            data: { codigoAcesso }
+            data: dadosAtualizacao
           });
         }
+        acessosProcessados.push({
+          distrito: distrito.nome,
+          igreja: igreja.nome,
+          login: codigoAcesso,
+          senha: diretorExistente.senhaTemporaria || senhaExistente || ""
+        });
         continue;
       }
 
@@ -170,6 +243,7 @@ async function executar() {
           email: `diretor+${igreja.id}@acesso.nota10.local`,
           codigoAcesso,
           senhaHash: await bcrypt.hash(senha, 12),
+          senhaTemporaria: senha,
           papel: "DIRETOR",
           igrejaId: igreja.id,
           distritoId: distrito.id,
@@ -183,20 +257,26 @@ async function executar() {
         login: codigoAcesso,
         senha
       });
+      acessosProcessados.push({
+        distrito: distrito.nome,
+        igreja: igreja.nome,
+        login: codigoAcesso,
+        senha
+      });
     }
   }
 
   console.log(`${distritos.length} distritos e ${totalIgrejas} igrejas processados.`);
   console.log(`${acessosCriados.length} contas de diretor criadas.`);
-  if (acessosCriados.length) {
+  if (acessosProcessados.length) {
     const linhas = [
       ["distrito", "igreja", "login", "senha_temporaria"].map(csv).join(","),
-      ...acessosCriados.map((item) => (
+      ...acessosProcessados.map((item) => (
         [item.distrito, item.igreja, item.login, item.senha].map(csv).join(",")
       ))
     ];
     fs.writeFileSync(arquivoSaida, `\uFEFF${linhas.join("\n")}\n`, "utf8");
-    console.log(`Acessos novos: ${arquivoSaida}`);
+    console.log(`Acessos salvos no banco e exportados em: ${arquivoSaida}`);
   } else {
     console.log("Nenhuma senha foi alterada; o processo é seguro para reexecução.");
     if (fs.existsSync(arquivoSaida)) {

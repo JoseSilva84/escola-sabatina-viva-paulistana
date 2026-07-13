@@ -140,6 +140,7 @@ routes.post("/trocar-senha", autenticar, asyncHandler(async (req, res) => {
     where: { id: usuario.id },
     data: {
       senhaHash: bcrypt.hashSync(dados.novaSenha, 12),
+      senhaTemporaria: null,
       deveTrocarSenha: false
     }
   });
