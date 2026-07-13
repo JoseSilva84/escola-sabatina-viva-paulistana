@@ -105,23 +105,23 @@ const produtoPorPapel = {
 };
 
 const configComum = [
-  { label: "Notificacoes", icon: Bell },
-  { label: "Exportar relatorios", icon: Download },
-  { label: "Tema do sistema", icon: Palette }
+  { label: "Notificacoes", icon: Bell, secao: "notificacoes" },
+  { label: "Exportar relatorios", icon: Download, secao: "exportar" },
+  { label: "Tema do sistema", icon: Palette, secao: "tema" }
 ];
 
 const configAdmin = [
-  { label: "Notificacoes", icon: Bell },
-  { label: "Perfil e conta", icon: UserCog },
-  { label: "Dados da igreja", icon: Building2 },
-  { label: "Unidades de Acao", icon: Users },
-  { label: "Ano e trimestre padrao", icon: CalendarClock },
-  { label: "Usuarios e permissoes", icon: ShieldCheck },
-  { label: "Identidade do sistema", icon: Image },
-  { label: "Importar/Exportar dados", icon: UploadCloud },
-  { label: "Criterios de pontuacao", icon: SlidersHorizontal },
-  { label: "Ajuda e suporte", icon: HelpCircle },
-  { label: "Tema do sistema", icon: Palette }
+  { label: "Notificacoes", icon: Bell, secao: "notificacoes" },
+  { label: "Perfil e conta", icon: UserCog, secao: "perfil" },
+  { label: "Dados da igreja", icon: Building2, secao: "igreja" },
+  { label: "Unidades de Acao", icon: Users, secao: "unidades" },
+  { label: "Ano e trimestre padrao", icon: CalendarClock, secao: "periodo" },
+  { label: "Usuarios e permissoes", icon: ShieldCheck, secao: "usuarios" },
+  { label: "Identidade do sistema", icon: Image, secao: "identidade" },
+  { label: "Importar/Exportar dados", icon: UploadCloud, secao: "importar-exportar" },
+  { label: "Criterios de pontuacao", icon: SlidersHorizontal, secao: "pontuacao" },
+  { label: "Ajuda e suporte", icon: HelpCircle, secao: "ajuda" },
+  { label: "Tema do sistema", icon: Palette, secao: "tema" }
 ];
 
 export function Shell({ children }) {
@@ -413,7 +413,7 @@ export function Shell({ children }) {
                     return (
                       <NavLink
                         key={item.label}
-                        to="/configuracoes"
+                        to={`/configuracoes?secao=${item.secao}`}
                         className="flex min-h-[38px] items-center gap-3 rounded-lg px-3 text-sm font-bold text-marinho transition-colors hover:bg-marinho/10"
                       >
                         <Icon size={16} />

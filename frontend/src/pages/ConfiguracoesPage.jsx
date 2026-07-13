@@ -17,8 +17,10 @@ import {
   UploadCloud,
   UserCog,
   UserPlus,
-  Users
+  Users,
+  X
 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "../components/Card";
 import { useAuth } from "../context/AuthContext";
@@ -278,12 +280,56 @@ function ConfigCard({ item, active, children, onClick }) {
   );
 }
 
+function ConfigModal({ item, children, onClose }) {
+  if (!item) return null;
+  const Icon = item.icon;
+
+  return (
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 p-3 sm:p-5 backdrop-blur-sm"
+      onMouseDown={onClose}
+    >
+      <div
+        className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-borda bg-white shadow-2xl shadow-slate-950/20"
+        onMouseDown={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="config-modal-title"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-borda bg-white px-4 py-4 sm:px-6">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-marinho/10 text-marinho">
+              <Icon size={22} />
+            </span>
+            <div className="min-w-0">
+              <h3 id="config-modal-title" className="m-0 font-outfit text-xl text-texto">{item.titulo}</h3>
+              <p className="m-0 mt-1 text-sm leading-relaxed text-muted">{item.descricao}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border-0 bg-slate-100 text-muted transition-colors hover:bg-slate-200 hover:text-texto"
+            aria-label="Fechar configuracao"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="min-h-0 overflow-y-auto bg-slate-50/80 p-4 sm:p-6">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ConfiguracoesPage() {
   const { usuario, atualizarUsuario } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tema, setTema] = useState(() => (
     document.documentElement.classList.contains("dark") ? "dark" : "light"
   ));
-  const [ativo, setAtivo] = useState("notificacoes");
+  const [ativo, setAtivo] = useState(null);
   const [notificacoes, setNotificacoes] = useState(() => storageGet(notificacoesKey, {
     receber: true,
     coleta: true,
@@ -347,6 +393,25 @@ export function ConfiguracoesPage() {
       ? [opcoesComuns[0], ...opcoesAdmin, opcoesComuns[1], opcoesComuns[2]]
       : opcoesComuns
   ), [isAdmin]);
+  const itemAtivo = opcoes.find((item) => item.id === ativo) || null;
+
+  useEffect(() => {
+    const secao = searchParams.get("secao");
+    if (secao && opcoes.some((item) => item.id === secao)) {
+      setAtivo(secao);
+    }
+  }, [opcoes, searchParams]);
+
+  function abrirModal(id) {
+    setAtivo(id);
+  }
+
+  function fecharModal() {
+    setAtivo(null);
+    const proximosParams = new URLSearchParams(searchParams);
+    proximosParams.delete("secao");
+    setSearchParams(proximosParams, { replace: true });
+  }
 
   function exportarRelatorio() {
     const titulo = relatorioPorPerfil[usuario?.papel] || "Relatorio";
@@ -890,20 +955,26 @@ export function ConfiguracoesPage() {
           if (item.id === "notificacoes") {
             return (
               <ConfigCard key={item.id} item={item} active={ativo === item.id}>
-                <label className="flex w-fit items-center gap-3 rounded-lg border border-borda bg-white px-3 py-2 text-sm font-bold text-texto">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-marinho"
-                    checked={Boolean(notificacoes.receber)}
-                    onChange={(event) => {
-                      const atualizado = { ...notificacoes, receber: event.target.checked };
-                      setNotificacoes(atualizado);
-                      storageSet(notificacoesKey, atualizado);
-                      toast.success(event.target.checked ? "Lembretes ativados." : "Lembretes desativados.");
-                    }}
-                  />
-                  Receber lembretes do sistema
-                </label>
+                <div className="flex flex-wrap gap-2">
+                  <label className="flex w-fit items-center gap-3 rounded-lg border border-borda bg-white px-3 py-2 text-sm font-bold text-texto">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-marinho"
+                      checked={Boolean(notificacoes.receber)}
+                      onChange={(event) => {
+                        const atualizado = { ...notificacoes, receber: event.target.checked };
+                        setNotificacoes(atualizado);
+                        storageSet(notificacoesKey, atualizado);
+                        toast.success(event.target.checked ? "Lembretes ativados." : "Lembretes desativados.");
+                      }}
+                    />
+                    Receber lembretes do sistema
+                  </label>
+                  <Botao variant={ativo === item.id ? "primary" : "secondary"} onClick={() => abrirModal(item.id)}>
+                    {ativo === item.id ? <CheckCircle2 size={16} /> : null}
+                    {ativo === item.id ? "Aberto" : "Configurar"}
+                  </Botao>
+                </div>
               </ConfigCard>
             );
           }
@@ -911,7 +982,7 @@ export function ConfiguracoesPage() {
           if (item.id === "exportar") {
             return (
               <ConfigCard key={item.id} item={item} active={ativo === item.id}>
-                <Botao onClick={() => setAtivo(item.id)}>
+                <Botao onClick={() => abrirModal(item.id)}>
                   <Download size={16} /> Abrir exportacao
                 </Botao>
               </ConfigCard>
@@ -921,7 +992,13 @@ export function ConfiguracoesPage() {
           if (item.id === "tema") {
             return (
               <ConfigCard key={item.id} item={item} active={ativo === item.id}>
-                <ToggleTema tema={tema} onChange={setTema} />
+                <div className="flex flex-wrap gap-2">
+                  <ToggleTema tema={tema} onChange={setTema} />
+                  <Botao variant={ativo === item.id ? "primary" : "secondary"} onClick={() => abrirModal(item.id)}>
+                    {ativo === item.id ? <CheckCircle2 size={16} /> : null}
+                    {ativo === item.id ? "Aberto" : "Configurar"}
+                  </Botao>
+                </div>
               </ConfigCard>
             );
           }
@@ -931,13 +1008,15 @@ export function ConfiguracoesPage() {
               key={item.id}
               item={item}
               active={ativo === item.id}
-              onClick={() => setAtivo(item.id)}
+              onClick={() => abrirModal(item.id)}
             />
           );
         })}
       </div>
 
-      {renderPainelAtivo()}
+      <ConfigModal item={itemAtivo} onClose={fecharModal}>
+        {renderPainelAtivo()}
+      </ConfigModal>
     </section>
   );
 }
