@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { BookOpenCheck, Eye, EyeOff } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
@@ -175,12 +175,7 @@ export function Login() {
           custom={{ x: -100, y: -100, rotate: -45 }}
           className="flex items-center gap-3 font-bold text-[22px] leading-[1.1] tracking-tight text-center justify-center"
         >
-          <img
-            src={LOGO_SRC}
-            alt=""
-            aria-hidden="true"
-            className="h-10 w-10 shrink-0 object-contain drop-shadow-[0_8px_14px_rgba(0,0,0,0.18)]"
-          />
+          <BookOpenCheck size={34} className="shrink-0 text-[#f4c21f]" />
           <span>ESCOLA SABATINA VIVA</span>
         </motion.div>
 
