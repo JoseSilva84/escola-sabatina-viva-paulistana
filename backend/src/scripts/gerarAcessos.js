@@ -201,7 +201,9 @@ function gerarLoginsPorIgreja(distritos) {
 
 async function executar() {
   if (!fs.existsSync(arquivoFonte)) {
-    throw new Error(`Arquivo não encontrado: ${arquivoFonte}`);
+    console.warn(`Arquivo de distritos e igrejas nao encontrado: ${arquivoFonte}`);
+    console.warn("Geracao de acessos ignorada. O backend continuara iniciando normalmente.");
+    return;
   }
 
   const distritos = lerDistritos(fs.readFileSync(arquivoFonte, "utf8"));
