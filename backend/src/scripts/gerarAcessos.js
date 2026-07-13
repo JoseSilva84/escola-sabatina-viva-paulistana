@@ -152,7 +152,22 @@ async function garantirAdmin(acessosCsv) {
     select: { id: true }
   });
 
-  if (adminExistente) return false;
+  if (adminExistente) {
+    if (process.env.RESET_ADMIN_PASSWORD === "true") {
+      await prisma.usuario.update({
+        where: { id: adminExistente.id },
+        data: {
+          codigoAcesso: acessosCsv.admin.login,
+          senhaHash: await bcrypt.hash(acessosCsv.admin.senha, 12),
+          senhaTemporaria: acessosCsv.admin.senha,
+          deveTrocarSenha: true,
+          ativo: true
+        }
+      });
+      console.log("Senha do admin redefinida a partir do CSV.");
+    }
+    return false;
+  }
 
   await prisma.usuario.create({
     data: {
