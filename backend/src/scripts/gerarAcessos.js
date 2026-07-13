@@ -215,9 +215,13 @@ function gerarLoginsPorIgreja(distritos) {
 }
 
 async function executar() {
+  const acessosCsv = carregarAcessosCsv();
+  const adminCriado = await garantirAdmin(acessosCsv);
+
   if (!fs.existsSync(arquivoFonte)) {
     console.warn(`Arquivo de distritos e igrejas nao encontrado: ${arquivoFonte}`);
     console.warn("Geracao de acessos ignorada. O backend continuara iniciando normalmente.");
+    console.log(adminCriado ? "Conta admin criada." : "Conta admin preservada.");
     return;
   }
 
@@ -226,10 +230,8 @@ async function executar() {
     throw new Error("Nenhum distrito com igrejas foi encontrado no arquivo.");
   }
 
-  const acessosCsv = carregarAcessosCsv();
   const acessosCriados = [];
   const loginsPorIgreja = gerarLoginsPorIgreja(distritos);
-  const adminCriado = await garantirAdmin(acessosCsv);
   const normalizarLogins = process.env.NORMALIZAR_LOGINS_EXISTENTES === "true";
   let totalIgrejas = 0;
 
