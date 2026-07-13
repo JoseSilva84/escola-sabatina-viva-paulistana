@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
+require("dotenv").config();
 const prisma = require("../utils/prisma");
 
 const arquivoFonteBackend = path.resolve(__dirname, "../../regiaoDistritoIgreja.md");
@@ -233,6 +234,7 @@ async function executar() {
   const acessosCriados = [];
   const loginsPorIgreja = gerarLoginsPorIgreja(distritos);
   const normalizarLogins = process.env.NORMALIZAR_LOGINS_EXISTENTES === "true";
+  const resetarSenhasDiretores = process.env.RESET_DIRETOR_PASSWORDS === "true";
   let totalIgrejas = 0;
 
   for (const itemDistrito of distritos) {
@@ -271,7 +273,18 @@ async function executar() {
         select: { id: true, codigoAcesso: true, senhaTemporaria: true }
       });
       if (diretorExistente) {
-        if (normalizarLogins && acessoInicial && diretorExistente.codigoAcesso !== codigoAcesso) {
+        if (resetarSenhasDiretores && acessoInicial) {
+          await prisma.usuario.update({
+            where: { id: diretorExistente.id },
+            data: {
+              codigoAcesso,
+              senhaHash: await bcrypt.hash(acessoInicial.senha, 12),
+              senhaTemporaria: acessoInicial.senha,
+              deveTrocarSenha: true,
+              ativo: true
+            }
+          });
+        } else if (normalizarLogins && acessoInicial && diretorExistente.codigoAcesso !== codigoAcesso) {
           await prisma.usuario.update({
             where: { id: diretorExistente.id },
             data: { codigoAcesso }
@@ -314,6 +327,9 @@ async function executar() {
   }
   if (normalizarLogins) {
     console.log("Normalizacao de logins existentes ativada por NORMALIZAR_LOGINS_EXISTENTES=true.");
+  }
+  if (resetarSenhasDiretores) {
+    console.log("Reset de senhas dos diretores ativado por RESET_DIRETOR_PASSWORDS=true.");
   }
   if (fs.existsSync(arquivoSaida)) {
     console.log(`Arquivo de entrega preservado em: ${arquivoSaida}`);
