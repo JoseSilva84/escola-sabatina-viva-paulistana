@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { BookOpenCheck, Eye, EyeOff } from "lucide-react";
-import { motion } from "framer-motion";
+import { Eye, EyeOff } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
+
+const INTRO_DURATION_MS = 1500;
+const LOGO_SRC = "/escola-sabatina-logo.svg";
 
 export function Login() {
   const { usuario, entrar } = useAuth();
@@ -11,6 +14,22 @@ export function Login() {
   const [senha, setSenha] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [carregando, setCarregando] = useState(false);
+  const [mostrarIntro, setMostrarIntro] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.sessionStorage.getItem("esvIntroSeen") !== "true";
+  });
+
+  useEffect(() => {
+    if (!mostrarIntro || typeof window === "undefined") return undefined;
+
+    const reduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => {
+      window.sessionStorage.setItem("esvIntroSeen", "true");
+      setMostrarIntro(false);
+    }, reduzirMovimento ? 300 : INTRO_DURATION_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [mostrarIntro]);
 
   if (usuario) return <Navigate to="/" replace />;
 
@@ -96,18 +115,72 @@ export function Login() {
         <div className="absolute inset-0 bg-white/10 bg-[radial-gradient(#64748b_1px,transparent_1px)] [background-size:24px_24px] opacity-40" />
       </div>
 
+      <AnimatePresence>
+        {mostrarIntro && (
+          <motion.div
+            className="absolute inset-0 z-20 grid place-items-center px-6 backdrop-blur-[2px]"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, filter: "blur(10px)" }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          >
+            <motion.div
+              className="grid place-items-center"
+              initial={{ opacity: 0, y: 18, scale: 0.88 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -18, scale: 1.04 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <motion.img
+                src={LOGO_SRC}
+                alt="Escola Sabatina Viva"
+                className="h-40 w-40 object-contain drop-shadow-[0_22px_45px_rgba(16,34,61,0.32)] sm:h-52 sm:w-52"
+                animate={{
+                  scale: [1, 1.035, 1],
+                  y: [0, -5, 0]
+                }}
+                transition={{
+                  duration: 1.25,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+              <motion.div
+                className="mt-5 h-px w-28 bg-gradient-to-r from-transparent via-[#f4c21f] to-transparent"
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{ scaleX: 1, opacity: 1 }}
+                transition={{ delay: 0.25, duration: 0.45, ease: "easeOut" }}
+              />
+              <motion.p
+                className="mt-4 text-center font-outfit text-sm font-extrabold text-[#10223d] sm:text-base"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.45, ease: "easeOut" }}
+              >
+                ESCOLA SABATINA VIVA
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.section
         className="relative z-10 w-full max-w-[440px] p-8 md:p-9 rounded-2xl text-white bg-gradient-to-br from-[#173a6a]/95 to-[#0d2444]/95 backdrop-blur-xl border border-white/10 shadow-[0_30px_80px_rgba(10,31,59,0.3)]"
         variants={containerVariants}
         initial="hidden"
-        animate="visible"
+        animate={mostrarIntro ? "hidden" : "visible"}
       >
         <motion.div
           variants={shardVariants}
           custom={{ x: -100, y: -100, rotate: -45 }}
           className="flex items-center gap-3 font-bold text-[22px] leading-[1.1] tracking-tight text-center justify-center"
         >
-          <BookOpenCheck size={34} className="text-[#f4c21f]" />
+          <img
+            src={LOGO_SRC}
+            alt=""
+            aria-hidden="true"
+            className="h-10 w-10 shrink-0 object-contain drop-shadow-[0_8px_14px_rgba(0,0,0,0.18)]"
+          />
           <span>ESCOLA SABATINA VIVA</span>
         </motion.div>
 
