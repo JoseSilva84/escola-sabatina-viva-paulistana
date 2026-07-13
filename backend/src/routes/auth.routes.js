@@ -125,11 +125,11 @@ routes.get("/me", autenticar, (req, res) => {
   res.json({ usuario: req.usuario });
 });
 
-routes.patch("/me", autenticar, asyncHandler(async (req, res) => {
+routes.patch("/me", autenticar, uploadFotoPerfil.single("foto"), asyncHandler(async (req, res) => {
   const dados = z.object({
     nome: z.string().trim().min(2).optional(),
     whatsapp: z.string().trim().optional().nullable(),
-    sexoPerfil: z.enum(["MASCULINO", "FEMININO"]).optional().nullable(),
+    sexoPerfil: z.enum(["MASCULINO", "FEMININO"]).optional().or(z.literal("")).nullable(),
     email: z.string().email().optional()
   }).parse(req.body);
 
@@ -144,13 +144,23 @@ routes.patch("/me", autenticar, asyncHandler(async (req, res) => {
 
   if (!usuario) throw new AppError("Usuario nao encontrado", 404);
 
+  let fotoUrl = null;
+  if (req.file) {
+    if (!process.env.CLOUDINARY_URL || process.env.CLOUDINARY_URL.includes("...")) {
+      throw new AppError("O envio de fotos ainda nao esta configurado", 500);
+    }
+    const resultado = await enviarFotoPerfil(req.file.buffer, req.usuario.id);
+    fotoUrl = resultado.secure_url;
+  }
+
   const atualizado = await prisma.usuario.update({
     where: { id: usuario.id },
     data: {
       ...(dados.nome !== undefined ? { nome: dados.nome } : {}),
       ...(dados.whatsapp !== undefined ? { whatsapp: dados.whatsapp || null } : {}),
       ...(dados.sexoPerfil !== undefined ? { sexoPerfil: dados.sexoPerfil || null } : {}),
-      ...(dados.email !== undefined ? { email: dados.email.toLowerCase() } : {})
+      ...(dados.email !== undefined ? { email: dados.email.toLowerCase() } : {}),
+      ...(fotoUrl ? { fotoUrl } : {})
     },
     include: {
       igreja: { include: { distrito: true } },

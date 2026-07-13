@@ -38,6 +38,17 @@ export async function salvarPerfilInicial(payload) {
 }
 
 export async function atualizarMeuPerfil(payload) {
+  if (payload.foto) {
+    const formData = new FormData();
+    formData.append("nome", payload.nome);
+    formData.append("email", payload.email);
+    formData.append("whatsapp", payload.whatsapp || "");
+    formData.append("sexoPerfil", payload.sexoPerfil || "");
+    formData.append("foto", payload.foto);
+    const { data } = await api.patch("/auth/me", formData);
+    return data;
+  }
+
   const { data } = await api.patch("/auth/me", payload);
   return data;
 }

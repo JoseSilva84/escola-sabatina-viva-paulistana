@@ -62,14 +62,14 @@ const relatorioPorPerfil = {
 const opcoesComuns = [
   {
     id: "notificacoes",
-    titulo: "Notificacoes",
-    descricao: "Lembretes de coleta semanal, avaliacao trimestral e pendencias do seu perfil.",
+    titulo: "Notificações",
+    descricao: "Lembretes de coleta semanal, avaliacao trimestral e pendências do seu perfil.",
     icon: Bell
   },
   {
     id: "exportar",
-    titulo: "Exportar relatorios",
-    descricao: "Baixe somente os relatorios permitidos para o seu nivel de acesso.",
+    titulo: "Exportar relatórios",
+    descricao: "Baixe somente os relatórios permitidos para o seu nível de acesso.",
     icon: Download
   },
   {
@@ -84,7 +84,7 @@ const opcoesAdmin = [
   {
     id: "perfil",
     titulo: "Perfil e conta",
-    descricao: "Editar nome, e-mail, senha, avatar e preferencias do usuário.",
+    descricao: "Editar nome, e-mail, senha, avatar e preferências do usuário.",
     icon: UserCog
   },
   {
@@ -125,7 +125,7 @@ const opcoesAdmin = [
   },
   {
     id: "pontuacao",
-    titulo: "Criterios de pontuação",
+    titulo: "Critérios de pontuação",
     descricao: "Editar pesos das metas, ranking, desempenho e regras de conformidade.",
     icon: SlidersHorizontal
   },
@@ -264,22 +264,29 @@ function ToggleTema({ tema, onChange }) {
 function ConfigCard({ item, active, children, onClick }) {
   const Icon = item.icon;
   return (
-    <Card hoverable={false} className={`grid gap-4 ${active ? "ring-2 ring-marinho/30" : ""}`}>
-      <div className="flex items-start gap-3">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-marinho/10 text-marinho">
-          <Icon size={22} />
+    <Card
+      hoverable={false}
+      className={`relative grid gap-4 overflow-hidden transition-all duration-300 ease-out hover:-translate-y-1 hover:border-marinho/25 hover:bg-white hover:shadow-[0_18px_42px_rgba(23,58,106,0.13),0_3px_10px_rgba(15,23,42,0.04)] ${active ? "ring-2 ring-marinho/30" : ""}`}
+    >
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-1 origin-left scale-x-0 bg-marinho transition-transform duration-300 ease-out group-hover:scale-x-100" />
+      <span className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-marinho/[0.06] opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100" />
+      <div className="relative z-10 flex items-start gap-3">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-marinho/10 text-marinho transition-all duration-300 ease-out group-hover:scale-105 group-hover:bg-marinho group-hover:text-white group-hover:shadow-[0_10px_24px_rgba(23,58,106,0.22)]">
+          <Icon size={22} className="transition-transform duration-300 ease-out group-hover:-rotate-3 group-hover:scale-110" />
         </span>
         <div className="min-w-0">
-          <h3 className="m-0 font-outfit text-lg text-texto">{item.titulo}</h3>
+          <h3 className="m-0 font-outfit text-lg text-texto transition-colors duration-300 group-hover:text-marinho">{item.titulo}</h3>
           <p className="m-0 mt-1 text-sm leading-relaxed text-muted">{item.descricao}</p>
         </div>
       </div>
-      {children || (
-        <Botao size="sm" variant={active ? "primary" : "secondary"} onClick={onClick}>
-          {active ? <CheckCircle2 size={16} /> : null}
-          {active ? "Aberto" : "Configurar"}
-        </Botao>
-      )}
+      <div className="relative z-10">
+        {children || (
+          <Botao size="sm" variant={active ? "primary" : "secondary"} onClick={onClick}>
+            {active ? <CheckCircle2 size={16} /> : null}
+            {active ? "Aberto" : "Configurar"}
+          </Botao>
+        )}
+      </div>
     </Card>
   );
 }
@@ -368,8 +375,10 @@ export function ConfiguracoesPage() {
     nome: usuario?.nome || "",
     email: usuario?.email || "",
     whatsapp: usuario?.whatsapp || "",
-    sexoPerfil: usuario?.sexoPerfil || ""
+    sexoPerfil: usuario?.sexoPerfil || "",
+    foto: null
   });
+  const [fotoPerfilPreview, setFotoPerfilPreview] = useState(usuario?.fotoUrl || "");
   const [senhaForm, setSenhaForm] = useState({ senhaAtual: "", novaSenha: "", confirmar: "" });
   const [igrejas, setIgrejas] = useState([]);
   const [igrejaNome, setIgrejaNome] = useState(usuario?.igrejaNome || "");
@@ -385,6 +394,12 @@ export function ConfiguracoesPage() {
   useEffect(() => {
     aplicarTema(tema);
   }, [tema]);
+
+  useEffect(() => {
+    return () => {
+      if (fotoPerfilPreview?.startsWith("blob:")) URL.revokeObjectURL(fotoPerfilPreview);
+    };
+  }, [fotoPerfilPreview]);
 
   useEffect(() => {
     if (ativo === "igreja") carregarIgrejas();
@@ -489,8 +504,11 @@ export function ConfiguracoesPage() {
         nome: perfilForm.nome,
         email: perfilForm.email,
         whatsapp: perfilForm.whatsapp,
-        sexoPerfil: perfilForm.sexoPerfil || null
+        sexoPerfil: perfilForm.sexoPerfil || null,
+        foto: perfilForm.foto
       });
+      setPerfilForm((atual) => ({ ...atual, foto: null }));
+      if (data.usuario?.fotoUrl) setFotoPerfilPreview(data.usuario.fotoUrl);
       atualizarUsuario(data.usuario);
       toast.success("Perfil atualizado.");
     } catch (error) {
@@ -498,6 +516,19 @@ export function ConfiguracoesPage() {
     } finally {
       setSalvando("");
     }
+  }
+
+  function selecionarFotoPerfil(event) {
+    const arquivo = event.target.files?.[0] || null;
+    setPerfilForm((atual) => ({ ...atual, foto: arquivo }));
+    if (!arquivo) {
+      setFotoPerfilPreview(usuario?.fotoUrl || "");
+      return;
+    }
+    setFotoPerfilPreview((previewAtual) => {
+      if (previewAtual?.startsWith("blob:")) URL.revokeObjectURL(previewAtual);
+      return URL.createObjectURL(arquivo);
+    });
   }
 
   async function salvarSenha(event) {
@@ -649,6 +680,26 @@ export function ConfiguracoesPage() {
           <Card hoverable={false}>
             <form onSubmit={salvarPerfil} className="grid gap-3">
               <h3 className="m-0 font-outfit text-xl text-marinho">Perfil e conta</h3>
+              <div className="flex flex-col gap-3 rounded-lg border border-borda bg-white p-3 sm:flex-row sm:items-center">
+                <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full bg-marinho/10 text-marinho">
+                  {fotoPerfilPreview ? (
+                    <img src={fotoPerfilPreview} alt="Foto do perfil" className="h-full w-full object-cover" />
+                  ) : (
+                    <UserCog size={30} />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="m-0 text-sm font-bold text-marinho">Imagem do perfil</p>
+                  <p className="m-0 mt-1 truncate text-xs text-muted">
+                    {perfilForm.foto ? perfilForm.foto.name : "Importe uma foto para aparecer no topo do sistema."}
+                  </p>
+                </div>
+                <label className="inline-flex min-h-[36px] w-fit cursor-pointer items-center justify-center gap-2 rounded-lg border border-borda bg-white px-3 text-xs font-bold text-marinho transition-colors hover:bg-marinho/5">
+                  <UploadCloud size={14} />
+                  Importar imagem
+                  <input type="file" accept="image/*" onChange={selecionarFotoPerfil} className="sr-only" />
+                </label>
+              </div>
               <label className="grid gap-1 text-sm font-bold text-marinho">Nome
                 <input className={campoClasse()} value={perfilForm.nome} onChange={(e) => setPerfilForm({ ...perfilForm, nome: e.target.value })} required />
               </label>
@@ -658,7 +709,7 @@ export function ConfiguracoesPage() {
               <label className="grid gap-1 text-sm font-bold text-marinho">WhatsApp
                 <input className={campoClasse()} value={perfilForm.whatsapp} onChange={(e) => setPerfilForm({ ...perfilForm, whatsapp: e.target.value })} />
               </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho">Avatar
+              <label className="grid gap-1 text-sm font-bold text-marinho">Avatar padrão
                 <select className={campoClasse()} value={perfilForm.sexoPerfil} onChange={(e) => setPerfilForm({ ...perfilForm, sexoPerfil: e.target.value })}>
                   <option value="">Padrão automático</option>
                   <option value="MASCULINO">Masculino</option>
