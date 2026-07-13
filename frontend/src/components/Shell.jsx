@@ -105,8 +105,10 @@ const produtoPorPapel = {
 };
 
 const configComum = [
-  { label: "Notificacoes", icon: Bell, secao: "notificacoes" },
-  { label: "Exportar relatorios", icon: Download, secao: "exportar" },
+  { label: "Perfil e conta", icon: UserCog, secao: "perfil" },
+  { label: "Identidade do sistema", icon: Image, secao: "identidade" },
+  { label: "Notificações", icon: Bell, secao: "notificacoes" },
+  { label: "Exportar relatórios", icon: Download, secao: "exportar" },
   { label: "Tema do sistema", icon: Palette, secao: "tema" }
 ];
 
@@ -121,6 +123,19 @@ const configAdmin = [
   { label: "Importar/Exportar dados", icon: UploadCloud, secao: "importar-exportar" },
   { label: "Critérios de pontuação", icon: SlidersHorizontal, secao: "pontuacao" },
   { label: "Ajuda e suporte", icon: HelpCircle, secao: "ajuda" },
+  { label: "Exportar relatorios", icon: Download, secao: "exportar" },
+  { label: "Tema do sistema", icon: Palette, secao: "tema" }
+];
+
+const configDiretor = [
+  { label: "Notificacoes", icon: Bell, secao: "notificacoes" },
+  { label: "Perfil e conta", icon: UserCog, secao: "perfil" },
+  { label: "Dados da igreja", icon: Building2, secao: "igreja" },
+  { label: "Unidades de Acao", icon: Users, secao: "unidades" },
+  { label: "Usuarios e permissoes", icon: ShieldCheck, secao: "usuarios" },
+  { label: "Identidade do sistema", icon: Image, secao: "identidade" },
+  { label: "Ajuda e suporte", icon: HelpCircle, secao: "ajuda" },
+  { label: "Exportar relatorios", icon: Download, secao: "exportar" },
   { label: "Tema do sistema", icon: Palette, secao: "tema" }
 ];
 
@@ -150,7 +165,11 @@ export function Shell({ children }) {
   const produtoNome = produtoPorPapel[usuario.papel] || "Escola Sabatina Viva";
   const [produtoPrimeiraLinha, ...produtoOutrasLinhas] = produtoNome.split(" ");
   const produtoRestante = produtoOutrasLinhas.join(" ");
-  const configItens = usuario.papel === "ADMIN" ? configAdmin : configComum;
+  const configItens = usuario.papel === "ADMIN"
+    ? configAdmin
+    : usuario.papel === "DIRETOR"
+      ? configDiretor
+      : configComum;
   const nomeContexto = usuario.igrejaNome || usuario.nome;
   const distritoNome = formatarDistrito(usuario.distritoNome);
   const detalheContexto = usuario.distritoNome

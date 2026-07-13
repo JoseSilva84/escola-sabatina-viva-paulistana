@@ -137,6 +137,38 @@ const opcoesAdmin = [
   }
 ];
 
+const opcoesPorPerfil = {
+  ADMIN: [
+    "notificacoes",
+    "perfil",
+    "igreja",
+    "unidades",
+    "periodo",
+    "usuarios",
+    "identidade",
+    "importar-exportar",
+    "pontuacao",
+    "ajuda",
+    "exportar",
+    "tema"
+  ],
+  DIRETOR: [
+    "notificacoes",
+    "perfil",
+    "igreja",
+    "unidades",
+    "usuarios",
+    "identidade",
+    "ajuda",
+    "exportar",
+    "tema"
+  ],
+  PROFESSOR: ["notificacoes", "perfil", "identidade", "exportar", "tema"],
+  ALUNO: ["notificacoes", "perfil", "identidade", "exportar", "tema"]
+};
+
+const todasOpcoes = [...opcoesComuns, ...opcoesAdmin];
+
 function storageGet(key, fallback) {
   try {
     const valor = window.localStorage.getItem(key);
@@ -388,7 +420,8 @@ export function ConfiguracoesPage() {
   const [novoProfessor, setNovoProfessor] = useState({ nome: "", senha: "" });
   const [acessoCriado, setAcessoCriado] = useState(null);
   const [salvando, setSalvando] = useState("");
-  const isAdmin = usuario?.papel === "ADMIN" || usuario?.papel === "DIRETOR";
+  const isAdmin = usuario?.papel === "ADMIN";
+  const isGestor = usuario?.papel === "ADMIN" || usuario?.papel === "DIRETOR";
   const perfil = perfilLabels[usuario?.papel] || usuario?.papel || "Usuario";
 
   useEffect(() => {
@@ -407,11 +440,12 @@ export function ConfiguracoesPage() {
     if (ativo === "usuarios") carregarProfessores();
   }, [ativo]);
 
-  const opcoes = useMemo(() => (
-    isAdmin
-      ? [opcoesComuns[0], ...opcoesAdmin, opcoesComuns[1], opcoesComuns[2]]
-      : opcoesComuns
-  ), [isAdmin]);
+  const opcoes = useMemo(() => {
+    const ids = opcoesPorPerfil[usuario?.papel] || opcoesPorPerfil.ALUNO;
+    return ids
+      .map((id) => todasOpcoes.find((item) => item.id === id))
+      .filter(Boolean);
+  }, [usuario?.papel]);
   const itemAtivo = opcoes.find((item) => item.id === ativo) || null;
 
   useEffect(() => {
@@ -1003,6 +1037,8 @@ export function ConfiguracoesPage() {
         <p className="m-0 mt-1 text-muted">
           {isAdmin
             ? "Acesso completo de administração do sistema Escola Sabatina Viva."
+            : isGestor
+              ? "Acesso administrativo da igreja às configurações operacionais permitidas."
             : "Acesso limitado a notificações, exportação de relatórios do perfil e tema do sistema."}
         </p>
       </div>
