@@ -84,55 +84,55 @@ const opcoesAdmin = [
   {
     id: "perfil",
     titulo: "Perfil e conta",
-    descricao: "Editar nome, e-mail, senha, avatar e preferencias do usuario.",
+    descricao: "Editar nome, e-mail, senha, avatar e preferencias do usuário.",
     icon: UserCog
   },
   {
     id: "igreja",
     titulo: "Dados da igreja",
-    descricao: "Nome da igreja, distrito, endereco e contatos oficiais.",
+    descricao: "Nome da igreja, distrito, endereço e contatos oficiais.",
     icon: Building2
   },
   {
     id: "unidades",
-    titulo: "Unidades de Acao",
-    descricao: "Criar ou editar unidades, vincular professor responsavel e ativar classes.",
+    titulo: "Unidades de Ação",
+    descricao: "Criar ou editar unidades, vincular professor responsável e ativar classes.",
     icon: Users
   },
   {
     id: "periodo",
-    titulo: "Ano e trimestre padrao",
-    descricao: "Definir ano atual, trimestre atual e semana padrao de abertura.",
+    titulo: "Ano e trimestre padrão",
+    descricao: "Definir ano atual, trimestre atual e semana padrão de abertura.",
     icon: CalendarClock
   },
   {
     id: "usuarios",
-    titulo: "Usuarios e permissoes",
+    titulo: "Usuários e permissões",
     descricao: "Gerenciar professores e perfis de acesso da igreja.",
     icon: ShieldCheck
   },
   {
     id: "identidade",
     titulo: "Identidade do sistema",
-    descricao: "Nome exibido, cor principal e preferencias visuais do sistema.",
+    descricao: "Nome exibido, cor principal e preferências visuais do sistema.",
     icon: Image
   },
   {
     id: "importar-exportar",
     titulo: "Importar/Exportar dados",
-    descricao: "Baixar backups locais e exportar relatorios operacionais.",
+    descricao: "Baixar backups locais e exportar relatórios operacionais.",
     icon: UploadCloud
   },
   {
     id: "pontuacao",
-    titulo: "Criterios de pontuacao",
+    titulo: "Criterios de pontuação",
     descricao: "Editar pesos das metas, ranking, desempenho e regras de conformidade.",
     icon: SlidersHorizontal
   },
   {
     id: "ajuda",
     titulo: "Ajuda e suporte",
-    descricao: "Manual rapido, duvidas frequentes, contato do suporte e versao do sistema.",
+    descricao: "Manual rápido, dúvidas frequentes, contato do suporte e versão do sistema.",
     icon: HelpCircle
   }
 ];
@@ -150,7 +150,7 @@ function storageSet(key, value) {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch {
-    toast.error("Nao foi possivel salvar no navegador.");
+    toast.error("Não foi possivel salvar no navegador.");
   }
 }
 
@@ -185,10 +185,10 @@ function escaparPdf(texto) {
 function criarPdfRelatorio({ perfil, titulo, geradoEm }) {
   const linhas = [
     "Escola Sabatina Viva",
-    "Relatorio exportado",
+    "Relatório exportado",
     "",
     `Perfil: ${perfil}`,
-    `Relatorio: ${titulo}`,
+    `Relatório: ${titulo}`,
     `Gerado em: ${geradoEm}`
   ];
   const conteudo = linhas.map((linha, index) => `BT /F1 14 Tf 72 ${740 - index * 26} Td (${escaparPdf(linha)}) Tj ET`).join("\n");
@@ -219,16 +219,20 @@ function campoClasse() {
   return "min-h-[42px] rounded-lg border border-borda bg-white px-3 text-sm text-texto";
 }
 
-function Botao({ children, variant = "primary", type = "button", ...props }) {
+function Botao({ children, variant = "primary", type = "button", size = "md", className = "", ...props }) {
   const estilos = variant === "secondary"
     ? "border border-borda bg-white text-marinho hover:bg-marinho/5"
     : variant === "danger"
       ? "border-0 bg-red-600 text-white hover:bg-red-700"
       : "border-0 bg-marinho text-white hover:bg-marinho-escuro";
+  const tamanho = size === "sm"
+    ? "min-h-[34px] px-3 text-xs"
+    : "min-h-[40px] px-4 text-sm";
+
   return (
     <button
       type={type}
-      className={`inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg px-4 text-sm font-bold transition-colors disabled:opacity-60 ${estilos}`}
+      className={`inline-flex w-fit max-w-full items-center justify-center gap-2 rounded-lg font-bold transition-colors disabled:opacity-60 ${tamanho} ${estilos} ${className}`}
       {...props}
     >
       {children}
@@ -271,7 +275,7 @@ function ConfigCard({ item, active, children, onClick }) {
         </div>
       </div>
       {children || (
-        <Botao variant={active ? "primary" : "secondary"} onClick={onClick}>
+        <Botao size="sm" variant={active ? "primary" : "secondary"} onClick={onClick}>
           {active ? <CheckCircle2 size={16} /> : null}
           {active ? "Aberto" : "Configurar"}
         </Botao>
@@ -421,7 +425,7 @@ export function ConfiguracoesPage() {
       geradoEm: new Date().toLocaleString("pt-BR")
     });
     baixarArquivo(`relatorio-${String(usuario?.papel || "usuario").toLowerCase()}.pdf`, conteudo, "application/pdf");
-    toast.success("PDF exportado para o seu nivel de acesso.");
+    toast.success("PDF exportado para o seu nível de acesso.");
   }
 
   function exportarBackup() {
@@ -445,7 +449,7 @@ export function ConfiguracoesPage() {
       const atual = lista.find((item) => item.id === usuario?.igrejaId) || lista[0];
       if (atual) setIgrejaNome(atual.nome);
     } catch {
-      toast.error("Nao foi possivel carregar os dados da igreja.");
+      toast.error("Não foi possível carregar os dados da igreja.");
     }
   }
 
@@ -454,7 +458,7 @@ export function ConfiguracoesPage() {
       setProfessores(await getProfessores());
     } catch {
       setProfessores([]);
-      toast.error("Nao foi possivel carregar os professores.");
+      toast.error("Não foi possível carregar os professores.");
     }
   }
 
@@ -468,7 +472,7 @@ export function ConfiguracoesPage() {
       setProfessores(listaProfessores);
       setNovaUnidade((atual) => ({ ...atual, professorId: atual.professorId || listaProfessores[0]?.id || "" }));
     } catch {
-      toast.error("Nao foi possivel carregar unidades e professores.");
+      toast.error("Não foi possível carregar unidades e professores.");
     }
   }
 
@@ -490,7 +494,7 @@ export function ConfiguracoesPage() {
       atualizarUsuario(data.usuario);
       toast.success("Perfil atualizado.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Nao foi possivel atualizar o perfil.");
+      toast.error(error.response?.data?.message || "Não foi possível atualizar o perfil.");
     } finally {
       setSalvando("");
     }
@@ -499,7 +503,7 @@ export function ConfiguracoesPage() {
   async function salvarSenha(event) {
     event.preventDefault();
     if (senhaForm.novaSenha !== senhaForm.confirmar) {
-      toast.error("A confirmacao nao corresponde a nova senha.");
+      toast.error("A confirmação nao corresponde a nova senha.");
       return;
     }
     setSalvando("senha");
@@ -509,7 +513,7 @@ export function ConfiguracoesPage() {
       atualizarUsuario({ deveTrocarSenha: false });
       toast.success("Senha alterada.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Nao foi possivel alterar a senha.");
+      toast.error(error.response?.data?.message || "Não foi possível alterar a senha.");
     } finally {
       setSalvando("");
     }
@@ -527,7 +531,7 @@ export function ConfiguracoesPage() {
       storageSet(igrejaExtraKey, igrejaExtra);
       toast.success("Dados da igreja salvos.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Nao foi possivel salvar a igreja.");
+      toast.error(error.response?.data?.message || "Não foi possível salvar a igreja.");
     } finally {
       setSalvando("");
     }
@@ -540,7 +544,7 @@ export function ConfiguracoesPage() {
       await carregarUnidadesEProfessores();
       toast.success("Unidade atualizada.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Nao foi possivel atualizar a unidade.");
+      toast.error(error.response?.data?.message || "Não foi possível atualizar a unidade.");
     } finally {
       setSalvando("");
     }
@@ -555,7 +559,7 @@ export function ConfiguracoesPage() {
       await carregarUnidadesEProfessores();
       toast.success("Unidade criada.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Nao foi possivel criar a unidade.");
+      toast.error(error.response?.data?.message || "Não foi possível criar a unidade.");
     } finally {
       setSalvando("");
     }
@@ -575,7 +579,7 @@ export function ConfiguracoesPage() {
       await carregarProfessores();
       toast.success("Conta do professor criada.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Nao foi possivel criar o professor.");
+      toast.error(error.response?.data?.message || "Não foi possível criar o professor.");
     } finally {
       setSalvando("");
     }
@@ -587,7 +591,7 @@ export function ConfiguracoesPage() {
       await carregarProfessores();
       toast.success(professorItem.ativo ? "Acesso bloqueado." : "Acesso reativado.");
     } catch {
-      toast.error("Nao foi possivel alterar o acesso.");
+      toast.error("Não foi possível alterar o acesso.");
     }
   }
 
@@ -601,7 +605,7 @@ export function ConfiguracoesPage() {
       });
       await carregarProfessores();
     } catch {
-      toast.error("Nao foi possivel redefinir a senha.");
+      toast.error("Não foi possível redefinir a senha.");
     }
   }
 
@@ -632,8 +636,8 @@ export function ConfiguracoesPage() {
               <input className={campoClasse()} type="time" value={notificacoes.horario} onChange={(e) => setNotificacoes({ ...notificacoes, horario: e.target.value })} />
             </label>
           </div>
-          <Botao onClick={() => salvarLocal(notificacoesKey, notificacoes, "Preferencias de notificacao salvas.")}>
-            <Save size={16} /> Salvar notificacoes
+          <Botao onClick={() => salvarLocal(notificacoesKey, notificacoes, "Prefêrencias de notificação salvas.")}>
+            <Save size={16} /> Salvar notificações
           </Botao>
         </Card>
       );
@@ -656,7 +660,7 @@ export function ConfiguracoesPage() {
               </label>
               <label className="grid gap-1 text-sm font-bold text-marinho">Avatar
                 <select className={campoClasse()} value={perfilForm.sexoPerfil} onChange={(e) => setPerfilForm({ ...perfilForm, sexoPerfil: e.target.value })}>
-                  <option value="">Padrao automatico</option>
+                  <option value="">Padrão automático</option>
                   <option value="MASCULINO">Masculino</option>
                   <option value="FEMININO">Feminino</option>
                 </select>
@@ -701,7 +705,7 @@ export function ConfiguracoesPage() {
               <label className="grid gap-1 text-sm font-bold text-marinho">Distrito
                 <input className={campoClasse()} value={igrejaAtual?.distrito?.nome || usuario?.distritoNome || ""} readOnly />
               </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho">Endereco
+              <label className="grid gap-1 text-sm font-bold text-marinho">Endereço
                 <input className={campoClasse()} value={igrejaExtra.endereco} onChange={(e) => setIgrejaExtra({ ...igrejaExtra, endereco: e.target.value })} />
               </label>
               <label className="grid gap-1 text-sm font-bold text-marinho">Telefone
@@ -710,7 +714,7 @@ export function ConfiguracoesPage() {
               <label className="grid gap-1 text-sm font-bold text-marinho">E-mail oficial
                 <input className={campoClasse()} type="email" value={igrejaExtra.email} onChange={(e) => setIgrejaExtra({ ...igrejaExtra, email: e.target.value })} />
               </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho">Responsavel
+              <label className="grid gap-1 text-sm font-bold text-marinho">Responsável
                 <input className={campoClasse()} value={igrejaExtra.responsavel} onChange={(e) => setIgrejaExtra({ ...igrejaExtra, responsavel: e.target.value })} />
               </label>
             </div>
@@ -730,7 +734,7 @@ export function ConfiguracoesPage() {
               <label className="grid gap-1 text-sm font-bold text-marinho">Nova unidade
                 <input className={campoClasse()} value={novaUnidade.nome} onChange={(e) => setNovaUnidade({ ...novaUnidade, nome: e.target.value })} required />
               </label>
-              <label className="grid gap-1 text-sm font-bold text-marinho">Professor responsavel
+              <label className="grid gap-1 text-sm font-bold text-marinho">Professor responsável
                 <select className={campoClasse()} value={novaUnidade.professorId} onChange={(e) => setNovaUnidade({ ...novaUnidade, professorId: e.target.value })} required>
                   <option value="">Selecione</option>
                   {professores.map((professorItem) => <option key={professorItem.id} value={professorItem.id}>{professorItem.nome}</option>)}
@@ -769,7 +773,7 @@ export function ConfiguracoesPage() {
     if (ativo === "periodo") {
       return (
         <Card hoverable={false} className="grid gap-4">
-          <h3 className="m-0 font-outfit text-xl text-marinho">Ano e trimestre padrao</h3>
+          <h3 className="m-0 font-outfit text-xl text-marinho">Ano e trimestre padrão</h3>
           <div className="grid gap-3 md:grid-cols-3">
             <label className="grid gap-1 text-sm font-bold text-marinho">Ano atual
               <input className={campoClasse()} type="number" min="2020" max="2100" value={periodo.ano} onChange={(e) => setPeriodo({ ...periodo, ano: Number(e.target.value) })} />
@@ -779,12 +783,12 @@ export function ConfiguracoesPage() {
                 {[1, 2, 3, 4].map((item) => <option key={item} value={item}>{item} trimestre</option>)}
               </select>
             </label>
-            <label className="grid gap-1 text-sm font-bold text-marinho">Semana padrao
+            <label className="grid gap-1 text-sm font-bold text-marinho">Semana padrão
               <input className={campoClasse()} type="number" min="1" max="53" value={periodo.semana} onChange={(e) => setPeriodo({ ...periodo, semana: Number(e.target.value) })} />
             </label>
           </div>
-          <Botao onClick={() => salvarLocal(periodoKey, periodo, "Periodo padrao salvo.")}>
-            <Save size={16} /> Salvar periodo
+          <Botao onClick={() => salvarLocal(periodoKey, periodo, "Período padrão salvo.")}>
+            <Save size={16} /> Salvar período
           </Botao>
         </Card>
       );
@@ -852,7 +856,7 @@ export function ConfiguracoesPage() {
             </label>
             <label className="flex items-center gap-3 rounded-lg border border-borda bg-white px-3 py-2 text-sm font-bold text-texto md:col-span-3">
               <input type="checkbox" className="h-4 w-4 accent-marinho" checked={identidade.mostrarDistrito} onChange={(e) => setIdentidade({ ...identidade, mostrarDistrito: e.target.checked })} />
-              Mostrar distrito no cabecalho
+              Mostrar distrito no cabeçalho
             </label>
           </div>
           <div className="rounded-lg border border-borda bg-white p-4" style={{ borderTopColor: identidade.cor, borderTopWidth: 4 }}>
@@ -878,7 +882,7 @@ export function ConfiguracoesPage() {
               <UploadCloud size={16} /> Exportar backup local
             </Botao>
           </div>
-          <p className="m-0 text-sm text-muted">O backup inclui preferencias desta tela. Dados oficiais de alunos, professores e unidades continuam salvos pela API.</p>
+          <p className="m-0 text-sm text-muted">O backup inclui preferências desta tela. Dados oficiais de alunos, professores e unidades continuam salvos pela API.</p>
         </Card>
       );
     }
@@ -904,7 +908,7 @@ export function ConfiguracoesPage() {
           </div>
           <p className="m-0 text-sm font-bold text-muted">Total configurado: {total} pontos</p>
           <Botao onClick={() => salvarLocal(pontuacaoKey, pontuacao, "Criterios de pontuacao salvos.")}>
-            <Save size={16} /> Salvar criterios
+            <Save size={16} /> Salvar critérios
           </Botao>
         </Card>
       );
@@ -924,7 +928,7 @@ export function ConfiguracoesPage() {
         <Card hoverable={false} className="grid gap-4">
           <h3 className="m-0 font-outfit text-xl text-marinho">Ajuda e suporte</h3>
           <div className="grid gap-2 text-sm text-muted">
-            <p className="m-0"><strong className="text-texto">Versao:</strong> Professor Nota 10 / Escola Sabatina Viva</p>
+            <p className="m-0"><strong className="text-texto">Versão:</strong> Professor Nota 10 / Escola Sabatina Viva</p>
             <p className="m-0"><strong className="text-texto">Atalho:</strong> use o menu lateral para acessar alunos, professores, ranking e metas.</p>
             <p className="m-0"><strong className="text-texto">Suporte:</strong> confira os dados da igreja e exporte um backup local antes de solicitar ajuda.</p>
           </div>
@@ -942,11 +946,11 @@ export function ConfiguracoesPage() {
     <section className="grid gap-5">
       <div>
         <p className="m-0 text-sm font-bold text-marinho">{perfil}</p>
-        <h2 className="m-0 mt-1 font-outfit text-[28px] tracking-tight text-texto">Configuracoes</h2>
+        <h2 className="m-0 mt-1 font-outfit text-[28px] tracking-tight text-texto">Configurações</h2>
         <p className="m-0 mt-1 text-muted">
           {isAdmin
-            ? "Acesso completo de administracao do sistema Escola Sabatina Viva."
-            : "Acesso limitado a notificacoes, exportacao de relatorios do perfil e tema do sistema."}
+            ? "Acesso completo de administração do sistema Escola Sabatina Viva."
+            : "Acesso limitado a notificações, exportação de relatórios do perfil e tema do sistema."}
         </p>
       </div>
 
@@ -970,7 +974,7 @@ export function ConfiguracoesPage() {
                     />
                     Receber lembretes do sistema
                   </label>
-                  <Botao variant={ativo === item.id ? "primary" : "secondary"} onClick={() => abrirModal(item.id)}>
+                  <Botao size="sm" variant={ativo === item.id ? "primary" : "secondary"} onClick={() => abrirModal(item.id)}>
                     {ativo === item.id ? <CheckCircle2 size={16} /> : null}
                     {ativo === item.id ? "Aberto" : "Configurar"}
                   </Botao>
@@ -982,8 +986,8 @@ export function ConfiguracoesPage() {
           if (item.id === "exportar") {
             return (
               <ConfigCard key={item.id} item={item} active={ativo === item.id}>
-                <Botao onClick={() => abrirModal(item.id)}>
-                  <Download size={16} /> Abrir exportacao
+                <Botao size="sm" onClick={() => abrirModal(item.id)}>
+                  <Download size={14} /> Abrir
                 </Botao>
               </ConfigCard>
             );
@@ -994,7 +998,7 @@ export function ConfiguracoesPage() {
               <ConfigCard key={item.id} item={item} active={ativo === item.id}>
                 <div className="flex flex-wrap gap-2">
                   <ToggleTema tema={tema} onChange={setTema} />
-                  <Botao variant={ativo === item.id ? "primary" : "secondary"} onClick={() => abrirModal(item.id)}>
+                  <Botao size="sm" variant={ativo === item.id ? "primary" : "secondary"} onClick={() => abrirModal(item.id)}>
                     {ativo === item.id ? <CheckCircle2 size={16} /> : null}
                     {ativo === item.id ? "Aberto" : "Configurar"}
                   </Botao>
