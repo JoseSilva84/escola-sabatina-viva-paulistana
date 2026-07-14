@@ -8,7 +8,7 @@ const anoAtual = new Date().getFullYear();
 const config = {
   alunos: {
     titulo: "Metas - Aluno",
-    subtitulo: "Acompanhamento administrativo das respostas dos alunos por regiao, distrito, igreja e Unidade de Acao.",
+    subtitulo: "Acompanhamento administrativo das respostas dos alunos por região, distrito, igreja e Unidade de Ação.",
     pessoaLabel: "alunos",
     respostasLabel: "respostas de alunos",
     getData: getAdminMetasAluno,
@@ -162,7 +162,7 @@ function Unidade({ tipo, unidade, onOpen }) {
       <button type="button" onClick={(event) => { event.stopPropagation(); setAberta((valor) => !valor); }} className="flex w-full items-center justify-between gap-3 rounded-lg border-0 bg-transparent p-3 text-left">
         <span className="min-w-0">
           <strong className="block truncate text-texto">{unidade.nome}</strong>
-          <small className="block truncate text-muted">{unidade.professor?.nome || unidade.diretor?.nome || "Responsavel nao vinculado"}</small>
+          <small className="block truncate text-muted">{unidade.professor?.nome || unidade.diretor?.nome || "Responsável nao vinculado"}</small>
         </span>
         <span className="flex shrink-0 items-center gap-2 text-sm font-bold text-marinho">
           {pct(unidade.progresso?.progressoGeral)}
@@ -381,7 +381,7 @@ export function AdminMetasDashboard({ tipo }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-6">
-        <Stat icon={Layers3} label="regioes" value={resumo.regioes || 0} />
+        <Stat icon={Layers3} label="regiões" value={resumo.regioes || 0} />
         <Stat icon={Building2} label="distritos" value={resumo.distritos || 0} />
         <Stat icon={Building2} label="igrejas" value={resumo.igrejas || 0} />
         <Stat icon={Users} label="unidades" value={resumo.unidades || 0} />
