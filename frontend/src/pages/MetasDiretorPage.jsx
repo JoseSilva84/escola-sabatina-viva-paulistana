@@ -3,6 +3,8 @@ import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "../components/Card";
 import { ModalInput } from "../components/ModalInput";
+import { AdminMetasDashboard } from "../components/AdminMetasDashboard";
+import { useAuth } from "../context/AuthContext";
 import { getDiretorCard, salvarCartaoDiretor } from "../api/services";
 
 const anoAtual = new Date().getFullYear();
@@ -24,6 +26,7 @@ function Pergunta({ numero, texto, children, larguraTotal = false }) {
 }
 
 export function MetasDiretorPage() {
+  const { usuario } = useAuth();
   const [ano, setAno] = useState(anoAtual);
   const [trimestre, setTrimestre] = useState(Math.floor(new Date().getMonth() / 3) + 1);
   const [dados, setDados] = useState(null);
@@ -45,9 +48,10 @@ export function MetasDiretorPage() {
   }
 
   useEffect(() => {
+    if (usuario?.papel === "ADMIN") return;
     setDados(null);
     carregar().catch(() => toast.error("Não foi possível carregar as metas do diretor."));
-  }, [ano, trimestre]);
+  }, [ano, trimestre, usuario?.papel]);
 
   async function salvar() {
     if (!dados?.cartao?.id) return;
@@ -64,6 +68,10 @@ export function MetasDiretorPage() {
     } finally {
       setSalvando(false);
     }
+  }
+
+  if (usuario?.papel === "ADMIN") {
+    return <AdminMetasDashboard tipo="diretores" />;
   }
 
   if (!dados) {

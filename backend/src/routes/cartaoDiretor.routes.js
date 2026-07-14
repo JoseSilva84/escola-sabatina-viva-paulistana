@@ -6,6 +6,7 @@ const { autenticar, autorizar } = require("../middleware/auth");
 const { cartoesDiretor, igrejas } = require("../data/store");
 const { completudeDiretor, completudeProfessor, progressoPorSemanas } = require("../services/progresso");
 const AppError = require("../utils/AppError");
+const { regiaoPorDistrito } = require("../utils/regioes");
 
 const routes = Router();
 routes.use(autenticar);
@@ -17,6 +18,42 @@ function expandir(cartao) {
 
 function podeVerIgreja(req, igrejaId) {
   return req.usuario.papel === "ADMIN" || req.usuario.igrejaId === igrejaId;
+}
+
+function nomeRegiao(distrito) {
+  return regiaoPorDistrito(distrito?.nome);
+}
+
+function montarHierarquia(igrejasLista) {
+  const regioes = new Map();
+
+  igrejasLista.forEach((igreja) => {
+    const distrito = igreja.distrito || { id: "sem-distrito", nome: "Sem distrito" };
+    const regiaoNome = nomeRegiao(distrito);
+    if (!regioes.has(regiaoNome)) regioes.set(regiaoNome, { nome: regiaoNome, distritos: new Map() });
+
+    const regiao = regioes.get(regiaoNome);
+    if (!regiao.distritos.has(distrito.id)) {
+      regiao.distritos.set(distrito.id, { id: distrito.id, nome: distrito.nome, igrejas: [] });
+    }
+
+    regiao.distritos.get(distrito.id).igrejas.push(igreja);
+  });
+
+  return Array.from(regioes.values()).map((regiao) => ({
+    ...regiao,
+    distritos: Array.from(regiao.distritos.values())
+  }));
+}
+
+function resumoHierarquia(regioes) {
+  const igrejasLista = regioes.flatMap((regiao) => regiao.distritos.flatMap((distrito) => distrito.igrejas));
+  const respostas = igrejasLista.filter((igreja) => igreja.cartao).length;
+  const progresso = igrejasLista.length
+    ? Math.round(igrejasLista.reduce((soma, igreja) => soma + (igreja.progresso?.progressoGeral || 0), 0) / igrejasLista.length)
+    : 0;
+
+  return { regioes: regioes.length, distritos: regioes.reduce((soma, regiao) => soma + regiao.distritos.length, 0), igrejas: igrejasLista.length, unidades: igrejasLista.reduce((soma, igreja) => soma + (igreja.totais?.unidades || 0), 0), pessoas: igrejasLista.length, respostas, progresso };
 }
 
 async function buscarOuCriarCartao(req, ano, trimestre) {
@@ -122,6 +159,60 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
     },
     unidades: unidadesResumo,
     pendencias: unidadesResumo.filter((item) => item.progressoProfessor < 100).length
+  });
+}));
+
+routes.get("/admin-dashboard", autorizar("ADMIN"), asyncHandler(async (req, res) => {
+  const params = z.object({
+    ano: z.coerce.number().int().default(new Date().getFullYear()),
+    trimestre: z.coerce.number().int().min(1).max(4).default(1)
+  }).parse(req.query);
+
+  const lista = await prisma.igreja.findMany({
+    include: {
+      distrito: true,
+      usuarios: {
+        where: { papel: "DIRETOR" },
+        select: { id: true, nome: true, email: true, whatsapp: true, fotoUrl: true },
+        take: 1
+      },
+      unidades: { where: { ativa: true }, select: { id: true } },
+      cartoesDiretor: {
+        where: { ano: params.ano, trimestre: params.trimestre },
+        take: 1
+      }
+    },
+    orderBy: { nome: "asc" }
+  });
+
+  const igrejasDetalhadas = lista.map((igreja) => {
+    const cartao = igreja.cartoesDiretor[0] || null;
+    return {
+      id: igreja.id,
+      nome: igreja.nome,
+      distrito: igreja.distrito,
+      diretor: igreja.usuarios[0] || null,
+      cartao,
+      progresso: { progressoGeral: cartao ? completudeDiretor(cartao) : 0 },
+      respostas: cartao ? [{
+        id: cartao.id,
+        nome: igreja.usuarios[0]?.nome || "Diretor nao vinculado",
+        cartao,
+        progresso: { progressoGeral: completudeDiretor(cartao) },
+        coletas: []
+      }] : [],
+      totais: { unidades: igreja.unidades.length, respostas: cartao ? 1 : 0 }
+    };
+  });
+
+  const arvore = montarHierarquia(igrejasDetalhadas);
+
+  res.json({
+    tipo: "diretores",
+    ano: params.ano,
+    trimestre: params.trimestre,
+    resumo: resumoHierarquia(arvore),
+    regioes: arvore
   });
 }));
 

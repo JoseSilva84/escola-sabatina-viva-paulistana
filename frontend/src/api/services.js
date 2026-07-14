@@ -81,6 +81,11 @@ export async function getAlunoCard(params = {}) {
   }
 }
 
+export async function getAdminMetasAluno(params = {}) {
+  const { data } = await api.get("/cartoes-aluno/admin-dashboard", { params });
+  return data;
+}
+
 export async function getProfessorCard(params = {}) {
   try {
     const { data } = await api.get("/cartoes-professor/acompanhamento", { params });
@@ -92,6 +97,11 @@ export async function getProfessorCard(params = {}) {
 
 export async function getCartoesProfessor(params = {}) {
   const { data } = await api.get("/cartoes-professor", { params });
+  return data;
+}
+
+export async function getAdminMetasProfessor(params = {}) {
+  const { data } = await api.get("/cartoes-professor/admin-dashboard", { params });
   return data;
 }
 
@@ -167,6 +177,11 @@ export async function getDiretorCard(params = {}) {
   } catch {
     return getDashboard(params);
   }
+}
+
+export async function getAdminMetasDiretor(params = {}) {
+  const { data } = await api.get("/cartoes-diretor/admin-dashboard", { params });
+  return data;
 }
 
 export async function salvarCartaoDiretor(id, payload) {

@@ -25,6 +25,7 @@ import { ProgressRing } from "../components/ProgressRing";
 import { StatusPill } from "../components/StatusPill";
 import { Card } from "../components/Card";
 import { ModalInput } from "../components/ModalInput";
+import { AdminMetasDashboard } from "../components/AdminMetasDashboard";
 import { useAuth } from "../context/AuthContext";
 
 const anoAtual = new Date().getFullYear();
@@ -220,6 +221,7 @@ export function ProfessorPage() {
   const [avaliacoesTrimestrais, setAvaliacoesTrimestrais] = useState([]);
 
   useEffect(() => {
+    if (usuario?.papel === "ADMIN") return;
     getUnidades({ igrejaAtual: true }).then((lista) => {
       setUnidades(lista);
       setUnidadeId((atual) => atual || lista[0]?.id || "");
@@ -227,7 +229,7 @@ export function ProfessorPage() {
       setUnidades([]);
       setErroMetas("Não foi possível consultar as classes desta igreja.");
     }).finally(() => setCarregandoUnidades(false));
-  }, []);
+  }, [usuario?.papel]);
 
   async function carregar() {
     const params = { ano, trimestre, ...(unidadeId ? { unidadeId } : {}) };
@@ -300,6 +302,7 @@ export function ProfessorPage() {
 
   
   useEffect(() => {
+    if (usuario?.papel === "ADMIN") return;
     if (!unidadeId) return;
     setCarregandoMetas(true);
     setErroMetas("");
@@ -309,11 +312,12 @@ export function ProfessorPage() {
         setErroMetas(error.response?.data?.message || "Não foi possível carregar as metas.");
       })
       .finally(() => setCarregandoMetas(false));
-  }, [ano, trimestre, unidadeId]);
+  }, [ano, trimestre, unidadeId, usuario?.papel]);
 
   useEffect(() => {
+    if (usuario?.papel === "ADMIN") return;
     carregarColeta().catch(() => setColeta(null));
-      }, [ano, semana, unidadeId]);
+      }, [ano, semana, unidadeId, usuario?.papel]);
 
   const semanas = useMemo(() => semanasDoTrimestre(ano, trimestre), [ano, trimestre]);
   const semanaSelecionada = useMemo(() => semanas.find((item) => item.numero === semana), [semanas, semana]);
@@ -329,9 +333,10 @@ export function ProfessorPage() {
   }, [semana, semanas]);
 
   useEffect(() => {
+    if (usuario?.papel === "ADMIN") return;
     if (aba !== "trimestrais") return;
     carregarAvaliacoesTrimestrais().catch(() => setAvaliacoesTrimestrais([]));
-  }, [aba, unidadeId]);
+  }, [aba, unidadeId, usuario?.papel]);
 
   async function carregarAvaliacoesTrimestrais() {
     const params = unidadeId ? { unidadeId } : {};
@@ -733,6 +738,10 @@ export function ProfessorPage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  if (usuario?.papel === "ADMIN") {
+    return <AdminMetasDashboard tipo={aba === "trimestrais" ? "professores" : "alunos"} />;
   }
 
   if (carregandoUnidades || carregandoMetas) {
