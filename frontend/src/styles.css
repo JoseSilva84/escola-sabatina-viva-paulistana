@@ -105,6 +105,26 @@
     scrollbar-width: thin;
   }
 
+  .conformidade-scroll {
+    max-width: 100%;
+    overscroll-behavior-x: contain;
+    scrollbar-color: rgba(23, 58, 106, 0.35) rgba(226, 232, 240, 0.65);
+  }
+
+  .conformidade-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .conformidade-scroll::-webkit-scrollbar-track {
+    background: rgba(226, 232, 240, 0.65);
+    border-radius: 999px;
+  }
+
+  .conformidade-scroll::-webkit-scrollbar-thumb {
+    background: rgba(23, 58, 106, 0.35);
+    border-radius: 999px;
+  }
+
   .table-scroll-hint {
     position: relative;
   }

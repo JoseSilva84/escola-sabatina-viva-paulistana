@@ -378,7 +378,7 @@ export function DiretorPage() {
       )}
 
       <div className="flex flex-col gap-4.5 mt-4.5">
-        <Card animated delay={0.5} className="mobile-full-bleed touch-scroll table-scroll-hint overflow-x-auto w-full">
+        <Card animated delay={0.5} className="mobile-full-bleed w-full overflow-hidden">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <h3 className="m-0 font-outfit text-lg">Conformidade das Classes - 10 Itens</h3>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -408,28 +408,29 @@ export function DiretorPage() {
               </div>
             </div>
           )}
-          <table className="w-full min-w-[640px] md:min-w-[680px] xl:min-w-[720px] border-collapse">
+          <div className="conformidade-scroll touch-scroll table-scroll-hint -mx-2 sm:-mx-3 overflow-x-auto overflow-y-hidden px-2 sm:px-3 pb-3" tabIndex={0} aria-label="Tabela de conformidade com rolagem horizontal">
+          <table className="w-[820px] min-w-full border-collapse">
             <thead>
               <tr>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Classes</th>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Professor</th>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
-                  <span className="inline-flex items-center gap-1 cursor-help" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Percentual de preenchimento do questionário trimestral do professor. Cada item concluído aumenta a conformidade da classe.">
+                <th className="w-[90px] px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Classes</th>
+                <th className="w-[160px] px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Professor</th>
+                <th className="w-[145px] px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
+                  <span className="inline-flex items-center gap-1 cursor-help whitespace-nowrap" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Percentual de preenchimento do questionário trimestral do professor. Cada item concluído aumenta a conformidade da classe.">
                     Questionario <Info size={13} />
                   </span>
                 </th>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
-                  <span className="inline-flex items-center gap-1 cursor-help" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Indica se a classe realizou planejamento e avaliação trimestral. O sinal vermelho mostra que ainda não foi marcado.">
+                <th className="w-[145px] px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
+                  <span className="inline-flex items-center gap-1 cursor-help whitespace-nowrap" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Indica se a classe realizou planejamento e avaliação trimestral. O sinal vermelho mostra que ainda não foi marcado.">
                     Planejamento <Info size={13} />
                   </span>
                 </th>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
-                  <span className="inline-flex items-center gap-1 cursor-help" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Média das coletas semanais dos alunos no trimestre, considerando estudo da lição e pontualidade.">
+                <th className="w-[130px] px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
+                  <span className="inline-flex items-center gap-1 cursor-help whitespace-nowrap" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Média das coletas semanais dos alunos no trimestre, considerando estudo da lição e pontualidade.">
                     Coletas <Info size={13} />
                   </span>
                 </th>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
-                  <span className="inline-flex items-center gap-1 cursor-help" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Classificação do acompanhamento da classe: Ótimo acima de 80%, Médio a partir de 50%, e Pendente abaixo disso.">
+                <th className="w-[150px] px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
+                  <span className="inline-flex items-center gap-1 cursor-help whitespace-nowrap" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Classificação do acompanhamento da classe: Ótimo acima de 80%, Médio a partir de 50%, e Pendente abaixo disso.">
                     Pastoreio <Info size={13} />
                   </span>
                 </th>
@@ -443,11 +444,12 @@ export function DiretorPage() {
                   <td className="px-2.5 py-3 border-b border-borda text-sm"><ProgressBar value={unidade.metodologia || 0} /></td>
                   <td className="px-2.5 py-3 border-b border-borda text-sm"><CheckIcon ok={unidade.avaliacoes} /></td>
                   <td className="px-2.5 py-3 border-b border-borda text-sm"><ProgressBar value={unidade.coletas?.progresso || 0} /></td>
-                  <td className="px-2.5 py-3 border-b border-borda text-sm"><span className="inline-flex items-center justify-center min-h-[28px] px-2.5 rounded-full font-bold text-[13px] text-[#173a6a] bg-[#e8f1ff]">{unidade.pastoreio}</span></td>
+                  <td className="px-2.5 py-3 border-b border-borda text-sm"><span className="inline-flex items-center justify-center min-h-[28px] whitespace-nowrap px-2.5 rounded-full font-bold text-[13px] text-[#173a6a] bg-[#e8f1ff]">{unidade.pastoreio}</span></td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </Card>
 
         <Card
