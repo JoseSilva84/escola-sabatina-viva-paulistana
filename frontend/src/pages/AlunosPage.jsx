@@ -402,9 +402,9 @@ export function AlunosPage() {
               <p className="m-0 mt-1 text-sm text-muted">Atualize cadastro, dados de contato e foto.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[120px_1fr] gap-4">
-              <label className="grid justify-items-center gap-2 text-sm font-bold text-marinho">
-                <span className="grid h-24 w-24 place-items-center overflow-hidden rounded-full bg-marinho/10 text-marinho">
+            <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] gap-5">
+              <label className="group grid cursor-pointer justify-items-center gap-3 rounded-2xl border-2 border-dashed border-marinho/20 bg-gradient-to-b from-[#f8fbff] to-white p-4 text-center text-sm font-bold text-marinho transition-all hover:border-marinho/45 hover:bg-marinho/[0.03]">
+                <span className="grid h-24 w-24 place-items-center overflow-hidden rounded-full bg-white text-marinho shadow-md ring-4 ring-marinho/10 transition-transform group-hover:scale-105">
                   {alunoForm.foto ? (
                     <img src={URL.createObjectURL(alunoForm.foto)} alt="Prévia" className="h-full w-full object-cover" />
                   ) : alunoEditando.fotoUrl ? (
@@ -413,7 +413,17 @@ export function AlunosPage() {
                     <Camera size={28} />
                   )}
                 </span>
-                <span className="inline-flex min-h-[34px] items-center justify-center gap-1 rounded-lg border border-borda px-3 text-xs">Foto</span>
+                <span className="inline-flex min-h-[34px] items-center justify-center gap-2 rounded-full bg-marinho px-3 text-xs font-extrabold text-white shadow-sm">
+                  <Camera size={14} /> Escolher foto
+                </span>
+                <span className="text-[11px] font-medium leading-snug text-muted">
+                  JPG ou PNG. Clique para enviar uma nova imagem.
+                </span>
+                {alunoForm.foto && (
+                  <span className="max-w-full truncate rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-700">
+                    {alunoForm.foto.name}
+                  </span>
+                )}
                 <input type="file" accept="image/*" className="sr-only" onChange={(event) => setAlunoForm({ ...alunoForm, foto: event.target.files?.[0] || null })} />
               </label>
 
