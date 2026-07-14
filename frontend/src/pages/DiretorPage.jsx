@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowDown, ArrowUp, Check, Info, Minus, Pencil, Plus, Save, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { criarUnidade, getDiretorCard, getProfessorCard, getProfessores, getUnidades, salvarCartaoDiretor, atualizarAluno, criarAluno } from "../api/services";
@@ -380,14 +381,22 @@ export function DiretorPage() {
         <Card animated delay={0.5} className="mobile-full-bleed touch-scroll table-scroll-hint overflow-x-auto w-full">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <h3 className="m-0 font-outfit text-lg">Conformidade das Classes - 10 Itens</h3>
-            <button
-              type="button"
-              onClick={() => setMostrarRegrasConformidade((atual) => !atual)}
-              className="inline-flex items-center justify-center gap-2 min-h-[40px] px-3 rounded-full border border-borda bg-white text-marinho font-bold text-sm cursor-pointer hover:bg-marinho hover:text-white transition-colors"
-              aria-expanded={mostrarRegrasConformidade}
-            >
-              <Info size={16} /> Regras
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Link
+                to="/alunos"
+                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-3 rounded-full border border-borda bg-white text-marinho font-bold text-sm no-underline hover:bg-marinho hover:text-white transition-colors"
+              >
+                <Users size={16} /> Todos os alunos
+              </Link>
+              <button
+                type="button"
+                onClick={() => setMostrarRegrasConformidade((atual) => !atual)}
+                className="inline-flex items-center justify-center gap-2 min-h-[40px] px-3 rounded-full border border-borda bg-white text-marinho font-bold text-sm cursor-pointer hover:bg-marinho hover:text-white transition-colors"
+                aria-expanded={mostrarRegrasConformidade}
+              >
+                <Info size={16} /> Regras
+              </button>
+            </div>
           </div>
           {mostrarRegrasConformidade && (
             <div className="mb-4 rounded-lg border border-borda bg-[#f8fbff] px-4 py-3">
@@ -404,10 +413,26 @@ export function DiretorPage() {
               <tr>
                 <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Classes</th>
                 <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Professor</th>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Questionario</th>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Planejamento</th>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Coletas</th>
-                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Pastoreio</th>
+                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
+                  <span className="inline-flex items-center gap-1 cursor-help" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Percentual de preenchimento do questionário trimestral do professor. Cada item concluído aumenta a conformidade da classe.">
+                    Questionario <Info size={13} />
+                  </span>
+                </th>
+                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
+                  <span className="inline-flex items-center gap-1 cursor-help" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Indica se a classe realizou planejamento e avaliação trimestral. O sinal vermelho mostra que ainda não foi marcado.">
+                    Planejamento <Info size={13} />
+                  </span>
+                </th>
+                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
+                  <span className="inline-flex items-center gap-1 cursor-help" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Média das coletas semanais dos alunos no trimestre, considerando estudo da lição e pontualidade.">
+                    Coletas <Info size={13} />
+                  </span>
+                </th>
+                <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">
+                  <span className="inline-flex items-center gap-1 cursor-help" data-tooltip-id="diretor-indicators-tooltip" data-tooltip-content="Classificação do acompanhamento da classe: Ótimo acima de 80%, Médio a partir de 50%, e Pendente abaixo disso.">
+                    Pastoreio <Info size={13} />
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>

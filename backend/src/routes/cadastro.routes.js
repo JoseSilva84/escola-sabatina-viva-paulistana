@@ -346,7 +346,19 @@ routes.get("/alunos", asyncHandler(async (req, res) => {
 
     const lista = await prisma.aluno.findMany({
       where,
-      include: { unidade: true },
+      include: {
+        unidade: true,
+        usuario: {
+          select: {
+            id: true,
+            codigoAcesso: true,
+            email: true,
+            ativo: true,
+            senhaTemporaria: true,
+            deveTrocarSenha: true
+          }
+        }
+      },
       orderBy: { nome: "asc" }
     });
     return res.json(lista);
@@ -467,6 +479,79 @@ routes.put("/alunos/:id", autorizar("ADMIN", "DIRETOR", "PROFESSOR"), uploadFoto
     include: { unidade: true }
   });
   res.json(alunoAtualizado);
+}));
+
+routes.post("/alunos/:id/acesso", autorizar("ADMIN", "DIRETOR", "PROFESSOR"), asyncHandler(async (req, res) => {
+  const dados = z.object({
+    codigoAcesso: z.string().trim().min(3),
+    senha: z.string().min(6),
+    ativo: z.boolean().optional().default(true)
+  }).parse(req.body);
+
+  const aluno = await prisma.aluno.findFirst({
+    where: {
+      id: req.params.id,
+      unidade: {
+        igrejaId: req.usuario.igrejaId,
+        ...(req.usuario.papel === "PROFESSOR" ? { professorId: req.usuario.id } : {})
+      }
+    },
+    include: { unidade: true, usuario: true }
+  });
+
+  if (!aluno) throw new AppError("Aluno nao encontrado ou sem permissao", 404);
+
+  const codigoEmUso = await prisma.usuario.findFirst({
+    where: {
+      codigoAcesso: { equals: dados.codigoAcesso, mode: "insensitive" },
+      ...(aluno.usuarioId ? { id: { not: aluno.usuarioId } } : {})
+    },
+    select: { id: true }
+  });
+  if (codigoEmUso) throw new AppError("Este login ja esta em uso", 409);
+
+  const senhaHash = await bcrypt.hash(dados.senha, 12);
+  const emailAcesso = `aluno.${aluno.id}@aluno.nota10.local`;
+
+  let usuario;
+  if (aluno.usuarioId) {
+    usuario = await prisma.usuario.update({
+      where: { id: aluno.usuarioId },
+      data: {
+        nome: aluno.nome,
+        codigoAcesso: dados.codigoAcesso,
+        senhaHash,
+        senhaTemporaria: dados.senha,
+        deveTrocarSenha: true,
+        ativo: dados.ativo,
+        fotoUrl: aluno.fotoUrl || aluno.usuario?.fotoUrl || null,
+        sexoPerfil: aluno.sexo
+      },
+      select: { id: true, codigoAcesso: true, email: true, ativo: true, senhaTemporaria: true, deveTrocarSenha: true }
+    });
+  } else {
+    usuario = await prisma.usuario.create({
+      data: {
+        nome: aluno.nome,
+        email: emailAcesso,
+        codigoAcesso: dados.codigoAcesso,
+        whatsapp: aluno.whatsapp || null,
+        fotoUrl: aluno.fotoUrl || null,
+        sexoPerfil: aluno.sexo,
+        senhaHash,
+        senhaTemporaria: dados.senha,
+        papel: "ALUNO",
+        igrejaId: aluno.unidade.igrejaId,
+        distritoId: req.usuario.distritoId || null,
+        ativo: dados.ativo,
+        deveTrocarSenha: true,
+        aluno: { connect: { id: aluno.id } }
+      },
+      select: { id: true, codigoAcesso: true, email: true, ativo: true, senhaTemporaria: true, deveTrocarSenha: true }
+    });
+  }
+
+  res.json({ usuario });
 }));
 
 module.exports = routes;

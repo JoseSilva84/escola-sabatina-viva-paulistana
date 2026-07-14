@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BarChart3, TrendingUp, Users, BookOpen, Star, Trophy } from "lucide-react";
+import { BarChart3, Users, BookOpen, Star, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "../components/Card";
 import { ProgressRing } from "../components/ProgressRing";
@@ -136,9 +136,9 @@ export function RelatorioPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted mb-1">Média de Presença</p>
-                  <h4 className="text-3xl font-extrabold text-marinho">{(card?.progresso ? Math.min(card.progresso + 12, 100) : 0)}%</h4>
+                  <h4 className="text-3xl font-extrabold text-marinho">{card?.progressoAlunos?.pontualidadePercentual ?? 0}%</h4>
                   <p className="text-xs text-green-600 font-medium mt-2 flex items-center gap-1">
-                    <TrendingUp size={12} /> +2.4% que o trimestre passado
+                    <Users size={12} /> Pontualidade registrada nas coletas
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
@@ -151,7 +151,7 @@ export function RelatorioPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted mb-1">Estudo Diário</p>
-                  <h4 className="text-3xl font-extrabold text-marinho">{(card?.progresso ? Math.min(card.progresso - 5, 100) : 0)}%</h4>
+                  <h4 className="text-3xl font-extrabold text-marinho">{card?.progressoAlunos?.estudoPercentual ?? 0}%</h4>
                   <p className="text-xs text-blue-600 font-medium mt-2 flex items-center gap-1">
                     <BookOpen size={12} /> Consistência na lição
                   </p>
@@ -167,10 +167,10 @@ export function RelatorioPage() {
                 <div>
                   <p className="text-sm font-medium text-muted mb-1">Ações Solidárias & Pequenos Grupos</p>
                   <div className="flex items-end gap-3 mt-1">
-                    <h4 className="text-3xl font-extrabold text-marinho">Ativo</h4>
+                    <h4 className="text-3xl font-extrabold text-marinho">{(card?.progressoAlunos?.progressoGeral ?? 0) > 0 ? "Ativo" : "Sem registros"}</h4>
                   </div>
                   <p className="text-xs text-laranja font-medium mt-2 flex items-center gap-1">
-                    <Star size={12} /> Ótimo engajamento da classe
+                    <Star size={12} /> {(card?.progressoAlunos?.progressoGeral ?? 0) > 0 ? "Engajamento registrado na classe" : "Aguardando preenchimento das coletas"}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-laranja">

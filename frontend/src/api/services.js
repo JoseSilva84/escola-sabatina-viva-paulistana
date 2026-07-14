@@ -224,7 +224,17 @@ export async function criarAluno(payload) {
   return data;
 }
 
+export async function getAlunos(params = {}) {
+  const { data } = await api.get("/cadastros/alunos", { params });
+  return data;
+}
+
 export async function atualizarAluno(id, payload) {
   const { data } = await api.put(`/cadastros/alunos/${id}`, payload);
+  return data;
+}
+
+export async function salvarAcessoAluno(id, payload) {
+  const { data } = await api.post(`/cadastros/alunos/${id}/acesso`, payload);
   return data;
 }
