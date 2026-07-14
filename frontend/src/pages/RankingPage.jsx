@@ -304,7 +304,10 @@ function FiltroSelect({ value, onChange, children, ariaLabel }) {
 }
 
 function fotoAluno(aluno) {
-  return aluno?.fotoUrl || `https://i.pravatar.cc/150?u=${aluno.nome.replace(/\s+/g, '')}`;
+  if (aluno?.fotoUrl) return aluno.fotoUrl;
+  return aluno?.sexo === "FEMININO"
+    ? "https://randomuser.me/api/portraits/women/44.jpg"
+    : "https://randomuser.me/api/portraits/men/32.jpg";
 }
 
 function conquistasTitulo(aluno) {

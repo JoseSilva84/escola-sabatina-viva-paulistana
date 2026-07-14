@@ -446,6 +446,8 @@ routes.put("/alunos/:id", autorizar("ADMIN", "DIRETOR", "PROFESSOR"), uploadFoto
     const resultado = await enviarFotoAluno(req.file.buffer, publicId);
     fotoUrl = resultado.secure_url;
     fotoPublicId = resultado.public_id;
+  } else if (dados.sexo && dados.sexo !== alunoExistente.sexo && !alunoExistente.fotoPublicId) {
+    fotoUrl = fotoPadraoPorSexo(dados.sexo);
   }
 
   const alunoAtualizado = await prisma.aluno.update({

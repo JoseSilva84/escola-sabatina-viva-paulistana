@@ -720,6 +720,7 @@ export function ProfessorPage() {
     try {
       const dados = new FormData();
       dados.append("nome", nome);
+      dados.append("sexo", novoAluno.sexo);
       dados.append("whatsapp", novoAluno.whatsapp.trim());
       dados.append("unidadeId", unidadeId);
 
@@ -809,6 +810,12 @@ export function ProfessorPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="grid gap-1 text-sm font-bold text-marinho">Nome *
                   <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.nome} onChange={(e) => setNovoAluno((atual) => ({ ...atual, nome: e.target.value }))} placeholder="Digite o nome..." />
+                </label>
+                <label className="grid gap-1 text-sm font-bold text-marinho">Sexo *
+                  <select className="min-h-[42px] rounded-lg border border-borda bg-white px-3 font-normal text-texto" value={novoAluno.sexo} onChange={(e) => setNovoAluno((atual) => ({ ...atual, sexo: e.target.value }))}>
+                    <option value="MASCULINO">M - Masculino</option>
+                    <option value="FEMININO">F - Feminino</option>
+                  </select>
                 </label>
                 <label className="grid gap-1 text-sm font-bold text-marinho">WhatsApp
                   <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.whatsapp} onChange={(e) => setNovoAluno((atual) => ({ ...atual, whatsapp: e.target.value }))} placeholder="(00) 00000-0000" />
