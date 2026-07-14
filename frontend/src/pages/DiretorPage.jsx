@@ -7,15 +7,28 @@ import { Card } from "../components/Card";
 import { ModalInput } from "../components/ModalInput";
 import { useAuth } from "../context/AuthContext";
 import { RelatorioPage } from "./RelatorioPage";
+import { Tooltip } from "react-tooltip";
+import "react-tooltip/dist/react-tooltip.css";
 
 const anoAtual = new Date().getFullYear();
 
-function Indicator({ title, value, subtitle, trend, index = 0 }) {
+function Indicator({ title, value, subtitle, trend, index = 0, tooltip }) {
   const Icon = trend === "down" ? ArrowDown : ArrowUp;
   return (
-    <Card animated delay={0.1 + (index * 0.1)} className="flex justify-between p-4.5">
+    <Card
+      animated
+      delay={0.1 + (index * 0.1)}
+      className="flex justify-between p-4.5 cursor-help outline-none focus:ring-2 focus:ring-marinho/20"
+      data-tooltip-id="diretor-indicators-tooltip"
+      data-tooltip-content={tooltip}
+      data-tooltip-place="top"
+      tabIndex={0}
+    >
       <div>
-        <span className="text-muted">{title}</span>
+        <span className="inline-flex items-center gap-1.5 text-muted">
+          {title}
+          <Info size={14} className="text-marinho/55" />
+        </span>
         <strong className="block my-1.5 text-[28px]">{value}</strong>
         <small className="text-muted">{subtitle}</small>
       </div>
@@ -172,6 +185,22 @@ export function DiretorPage() {
 
   return (
     <>
+    <Tooltip
+      id="diretor-indicators-tooltip"
+      opacity={1}
+      style={{
+        maxWidth: "280px",
+        borderRadius: "14px",
+        background: "linear-gradient(135deg, #173a6a 0%, #10294f 100%)",
+        color: "#fff",
+        padding: "10px 13px",
+        fontSize: "13px",
+        lineHeight: "1.45",
+        fontWeight: 600,
+        boxShadow: "0 18px 45px rgba(23, 58, 106, 0.28), 0 4px 12px rgba(15, 23, 42, 0.18)",
+        zIndex: 80
+      }}
+    />
     <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-4 lg:gap-6 items-start">
       <Card className="p-3 sm:p-4 grid gap-2 lg:gap-3 lg:sticky lg:top-4">
         <h3 className="m-0 font-outfit text-lg border-b border-borda pb-2">Unidades de Ação</h3>
@@ -209,10 +238,35 @@ export function DiretorPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4.5">
-        <Indicator index={0} title="Taxa de Desempenho" value={`${data.indicadores.taxaAprovacao}%`} subtitle="Desempenho das classes" />
-        <Indicator index={1} title="Presença de Alunos" value={`${data.indicadores.presencaAlunos}%`} subtitle="Coletas registradas" />
-        <Indicator index={2} title="Pendências" value={data.pendencias ?? data.indicadores.evasao} subtitle="Classes com itens abertos" trend="down" />
-        <Indicator index={3} title="Questionário" value={`${data.indicadores.desempenhoEscola}%`} subtitle="Cartao do diretor" />
+        <Indicator
+          index={0}
+          title="Taxa de Desempenho"
+          value={`${data.indicadores.taxaAprovacao}%`}
+          subtitle="Desempenho das classes"
+          tooltip="Percentual médio de conformidade das classes no período selecionado, considerando respostas e metas preenchidas."
+        />
+        <Indicator
+          index={1}
+          title="Presença de Alunos"
+          value={`${data.indicadores.presencaAlunos}%`}
+          subtitle="Coletas registradas"
+          tooltip="Mostra quanto da coleta semanal dos alunos já foi registrada pelas classes neste período."
+        />
+        <Indicator
+          index={2}
+          title="Pendências"
+          value={data.pendencias ?? data.indicadores.evasao}
+          subtitle="Classes com itens abertos"
+          trend="down"
+          tooltip="Quantidade de classes com itens em aberto que ainda precisam de atenção."
+        />
+        <Indicator
+          index={3}
+          title="Questionário"
+          value={`${data.indicadores.desempenhoEscola}%`}
+          subtitle="Cartao do diretor"
+          tooltip="Completude do cartão do diretor no trimestre selecionado."
+        />
       </div>
 
       {false && isDiretorOuAdmin && (

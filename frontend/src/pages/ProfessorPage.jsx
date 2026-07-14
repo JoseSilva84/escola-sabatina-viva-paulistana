@@ -807,17 +807,17 @@ export function ProfessorPage() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <label className="grid gap-1 text-sm font-bold text-marinho">Nome *
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                <label className="grid gap-1 text-sm font-bold text-marinho md:col-span-5">Nome *
                   <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.nome} onChange={(e) => setNovoAluno((atual) => ({ ...atual, nome: e.target.value }))} placeholder="Digite o nome..." />
                 </label>
-                <label className="grid gap-1 text-sm font-bold text-marinho">Sexo *
+                <label className="grid gap-1 text-sm font-bold text-marinho md:col-span-2">Sexo *
                   <select className="min-h-[42px] rounded-lg border border-borda bg-white px-3 font-normal text-texto" value={novoAluno.sexo} onChange={(e) => setNovoAluno((atual) => ({ ...atual, sexo: e.target.value }))}>
-                    <option value="MASCULINO">M - Masculino</option>
-                    <option value="FEMININO">F - Feminino</option>
+                    <option value="MASCULINO">M</option>
+                    <option value="FEMININO">F</option>
                   </select>
                 </label>
-                <label className="grid gap-1 text-sm font-bold text-marinho">WhatsApp
+                <label className="grid gap-1 text-sm font-bold text-marinho md:col-span-5">WhatsApp
                   <input className="min-h-[42px] rounded-lg border border-borda px-3 font-normal text-texto" value={novoAluno.whatsapp} onChange={(e) => setNovoAluno((atual) => ({ ...atual, whatsapp: e.target.value }))} placeholder="(00) 00000-0000" />
                 </label>
             </div>
