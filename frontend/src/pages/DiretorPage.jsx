@@ -371,7 +371,12 @@ export function DiretorPage() {
           </table>
         </Card>
 
-        <Card animated delay={0.6} className="grid justify-items-center gap-4 text-center">
+        <Card
+          animated
+          delay={0.6}
+          className="grid justify-items-center gap-4 text-center"
+          title="Este percentual mostra a completude do questionário do diretor neste período."
+        >
           <h3 className="m-0 font-outfit text-lg">Desempenho Geral</h3>
           <ProgressRing value={data.indicadores.desempenhoEscola} size={260} label="Total" />
         </Card>
