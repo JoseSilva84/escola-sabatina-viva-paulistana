@@ -202,8 +202,8 @@ export function DiretorPage() {
         zIndex: 80
       }}
     />
-    <div className="grid grid-cols-1 lg:grid-cols-[250px_1fr] gap-4 lg:gap-6 items-start">
-      <Card className="p-3 sm:p-4 grid gap-2 lg:gap-3 lg:sticky lg:top-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[250px_minmax(0,1fr)] gap-4 xl:gap-6 items-start">
+      <Card className="p-3 sm:p-4 grid gap-2 lg:gap-3 lg:sticky lg:top-4 min-w-0">
         <h3 className="m-0 font-outfit text-lg border-b border-borda pb-2">Unidades de Ação</h3>
         <button 
           className={`min-h-[40px] text-left px-3 py-2 rounded-lg transition-colors cursor-pointer ${!unidadeSelecionada ? "bg-marinho text-white font-bold" : "hover:bg-black/5"}`}
@@ -222,7 +222,7 @@ export function DiretorPage() {
         ))}
       </Card>
 
-      <section>
+      <section className="min-w-0">
         {!unidadeSelecionada ? (
           <>
             <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center mb-4.5">
@@ -238,7 +238,7 @@ export function DiretorPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4.5">
+      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4.5">
         <Indicator
           index={0}
           title="Taxa de Desempenho"
@@ -400,7 +400,7 @@ export function DiretorPage() {
           </div>
           {mostrarRegrasConformidade && (
             <div className="mb-4 rounded-lg border border-borda bg-[#f8fbff] px-4 py-3">
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 text-sm">
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-2 text-sm">
                 <RegraConformidade titulo="Questionario" detalhe="Percentual de preenchimento dos 10 itens do questionario do professor. Cada item cumprido vale 10%." />
                 <RegraConformidade titulo="Planejamento" detalhe="Check verde quando o planejamento trimestral foi marcado; traco vermelho quando nao foi marcado." />
                 <RegraConformidade titulo="Coletas" detalhe="Media do progresso dos alunos nas coletas semanais do trimestre, considerando estudo da licao e pontualidade." />
@@ -408,7 +408,7 @@ export function DiretorPage() {
               </div>
             </div>
           )}
-          <table className="w-full min-w-[680px] md:min-w-[720px] border-collapse">
+          <table className="w-full min-w-[640px] md:min-w-[680px] xl:min-w-[720px] border-collapse">
             <thead>
               <tr>
                 <th className="px-2.5 py-3 text-left text-muted text-xs border-b border-borda">Classes</th>
