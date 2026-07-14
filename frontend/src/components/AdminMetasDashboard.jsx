@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { BookOpenCheck, Building2, ChevronDown, ChevronRight, ClipboardCheck, GraduationCap, Layers3, Search, Users } from "lucide-react";
+import { BookOpenCheck, Building2, ChevronDown, ChevronRight, ClipboardCheck, GraduationCap, Layers3, Search, Users, X } from "lucide-react";
 import { Card } from "./Card";
 import { getAdminMetasAluno, getAdminMetasDiretor, getAdminMetasProfessor } from "../api/services";
 
@@ -45,6 +45,8 @@ function dataCurta(valor) {
   return valor ? String(valor).slice(0, 10).split("-").reverse().join("/") : "-";
 }
 
+const interactiveCard = "cursor-pointer transition-all duration-200 ease-out hover:-translate-y-1 hover:border-marinho/35 hover:bg-white hover:shadow-[0_18px_45px_rgba(23,58,106,0.13),0_3px_10px_rgba(15,23,42,0.06)] focus:outline-none focus:ring-2 focus:ring-marinho/20";
+
 function Stat({ icon: Icon, label, value }) {
   return (
     <Card hoverable={false} className="flex items-center gap-3 p-4">
@@ -62,14 +64,14 @@ function Stat({ icon: Icon, label, value }) {
 function EmptyState() {
   return (
     <div className="rounded-lg border border-dashed border-borda bg-white/70 p-8 text-center text-muted">
-      Nenhuma resposta encontrada para o periodo selecionado.
+      Nenhuma resposta encontrada para o período selecionado.
     </div>
   );
 }
 
-function RespostaAluno({ item }) {
+function RespostaAluno({ item, onOpen }) {
   return (
-    <div className="rounded-lg border border-borda bg-white p-3">
+    <div role="button" tabIndex={0} onClick={() => onOpen?.({ tipo: "resposta", item })} onKeyDown={(event) => event.key === "Enter" && onOpen?.({ tipo: "resposta", item })} className={`rounded-lg border border-borda bg-white p-3 ${interactiveCard}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <strong className="text-texto">{item.nome}</strong>
         <span className="rounded-full bg-marinho/10 px-2.5 py-1 text-xs font-bold text-marinho">{pct(item.progresso?.progressoGeral)}</span>
@@ -95,10 +97,10 @@ function RespostaAluno({ item }) {
   );
 }
 
-function RespostaProfessor({ item }) {
+function RespostaProfessor({ item, onOpen }) {
   const cartao = item.cartao;
   return (
-    <div className="rounded-lg border border-borda bg-white p-3">
+    <div role="button" tabIndex={0} onClick={() => onOpen?.({ tipo: "resposta", item })} onKeyDown={(event) => event.key === "Enter" && onOpen?.({ tipo: "resposta", item })} className={`rounded-lg border border-borda bg-white p-3 ${interactiveCard}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <strong className="text-texto">{item.nome}</strong>
         <span className="rounded-full bg-marinho/10 px-2.5 py-1 text-xs font-bold text-marinho">{pct(item.progresso?.progressoGeral)}</span>
@@ -124,10 +126,10 @@ function RespostaProfessor({ item }) {
   );
 }
 
-function RespostaDiretor({ item }) {
+function RespostaDiretor({ item, onOpen }) {
   const cartao = item.cartao;
   return (
-    <div className="rounded-lg border border-borda bg-white p-3">
+    <div role="button" tabIndex={0} onClick={() => onOpen?.({ tipo: "resposta", item })} onKeyDown={(event) => event.key === "Enter" && onOpen?.({ tipo: "resposta", item })} className={`rounded-lg border border-borda bg-white p-3 ${interactiveCard}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <strong className="text-texto">{item.nome}</strong>
         <span className="rounded-full bg-marinho/10 px-2.5 py-1 text-xs font-bold text-marinho">{pct(item.progresso?.progressoGeral)}</span>
@@ -147,17 +149,17 @@ function RespostaDiretor({ item }) {
   );
 }
 
-function Resposta({ tipo, item }) {
-  if (tipo === "alunos") return <RespostaAluno item={item} />;
-  if (tipo === "professores") return <RespostaProfessor item={item} />;
-  return <RespostaDiretor item={item} />;
+function Resposta({ tipo, item, onOpen }) {
+  if (tipo === "alunos") return <RespostaAluno item={item} onOpen={onOpen} />;
+  if (tipo === "professores") return <RespostaProfessor item={item} onOpen={onOpen} />;
+  return <RespostaDiretor item={item} onOpen={onOpen} />;
 }
 
-function Unidade({ tipo, unidade }) {
+function Unidade({ tipo, unidade, onOpen }) {
   const [aberta, setAberta] = useState(false);
   return (
-    <div className="rounded-lg border border-borda bg-white/75">
-      <button type="button" onClick={() => setAberta((valor) => !valor)} className="flex w-full items-center justify-between gap-3 rounded-lg border-0 bg-transparent p-3 text-left">
+    <div role="button" tabIndex={0} onClick={() => onOpen?.({ tipo: "unidade", item: unidade })} onKeyDown={(event) => event.key === "Enter" && onOpen?.({ tipo: "unidade", item: unidade })} className={`rounded-lg border border-borda bg-white/75 ${interactiveCard}`}>
+      <button type="button" onClick={(event) => { event.stopPropagation(); setAberta((valor) => !valor); }} className="flex w-full items-center justify-between gap-3 rounded-lg border-0 bg-transparent p-3 text-left">
         <span className="min-w-0">
           <strong className="block truncate text-texto">{unidade.nome}</strong>
           <small className="block truncate text-muted">{unidade.professor?.nome || unidade.diretor?.nome || "Responsavel nao vinculado"}</small>
@@ -169,18 +171,18 @@ function Unidade({ tipo, unidade }) {
       </button>
       {aberta && (
         <div className="grid gap-2 border-t border-borda p-3">
-          {unidade.respostas?.length ? unidade.respostas.map((item) => <Resposta key={item.id} tipo={tipo} item={item} />) : <EmptyState />}
+          {unidade.respostas?.length ? unidade.respostas.map((item) => <Resposta key={item.id} tipo={tipo} item={item} onOpen={onOpen} />) : <EmptyState />}
         </div>
       )}
     </div>
   );
 }
 
-function Igreja({ tipo, igreja }) {
+function Igreja({ tipo, igreja, onOpen }) {
   const unidades = igreja.unidades || [];
   const respostas = igreja.respostas || [];
   return (
-    <div className="rounded-lg border border-borda bg-white/70 p-3">
+    <div role="button" tabIndex={0} onClick={() => onOpen?.({ tipo: "igreja", item: igreja })} onKeyDown={(event) => event.key === "Enter" && onOpen?.({ tipo: "igreja", item: igreja })} className={`rounded-lg border border-borda bg-white/70 p-3 ${interactiveCard}`}>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <strong className="block text-marinho">{igreja.nome}</strong>
@@ -190,8 +192,132 @@ function Igreja({ tipo, igreja }) {
       </div>
       <div className="grid gap-2">
         {tipo === "diretores"
-          ? (respostas.length ? respostas.map((item) => <Resposta key={item.id} tipo={tipo} item={item} />) : <EmptyState />)
-          : unidades.map((unidade) => <Unidade key={unidade.id} tipo={tipo} unidade={unidade} />)}
+          ? (respostas.length ? respostas.map((item) => <Resposta key={item.id} tipo={tipo} item={item} onOpen={onOpen} />) : <EmptyState />)
+          : unidades.map((unidade) => <Unidade key={unidade.id} tipo={tipo} unidade={unidade} onOpen={onOpen} />)}
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, value }) {
+  return (
+    <div className="rounded-lg border border-borda bg-slate-50 px-3 py-2">
+      <span className="block text-xs font-bold uppercase text-muted">{label}</span>
+      <strong className="mt-1 block text-sm text-texto">{value ?? "-"}</strong>
+    </div>
+  );
+}
+
+function RespostaCompleta({ tipo, item }) {
+  const cartao = item.cartao || {};
+  return (
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="m-0 font-outfit text-2xl text-texto">{item.nome}</h3>
+          <p className="m-0 mt-1 text-sm text-muted">Detalhamento completo da resposta selecionada.</p>
+        </div>
+        <span className="rounded-full bg-marinho px-3 py-1 text-sm font-bold text-white">{pct(item.progresso?.progressoGeral)}</span>
+      </div>
+      {tipo === "alunos" && (
+        <div className="grid gap-3 md:grid-cols-3">
+          <Field label="Estudo" value={pct(item.progresso?.estudoPercentual)} />
+          <Field label="Pontualidade" value={pct(item.progresso?.pontualidadePercentual)} />
+          <Field label="Pequeno grupo" value={simNao(cartao.pequenoGrupo)} />
+          <Field label="Acao solidaria" value={simNao(cartao.acaoSolidaria)} />
+          <Field label="Tipo da acao" value={cartao.acaoSolidariaTipo || "-"} />
+          <Field label="Estudo biblico" value={simNao(cartao.ministrouEstudoBiblico)} />
+        </div>
+      )}
+      {tipo === "professores" && (
+        <div className="grid gap-3 md:grid-cols-3">
+          <Field label="Incentivo ao estudo" value={simNao(cartao.incentivaEstudo)} />
+          <Field label="Incentivo pontualidade" value={simNao(cartao.incentivaPontualidade)} />
+          <Field label="Visitou alunos" value={simNao(cartao.visitouAlunos)} />
+          <Field label="Pequeno grupo" value={cartao.pequenoGrupoResponsavel || "-"} />
+          <Field label="Acao social" value={cartao.acaoSocialDescricao || "-"} />
+          <Field label="Batismos" value={cartao.batismos ?? 0} />
+          <Field label="Primeira visita" value={dataCurta(cartao.primeiraVisita)} />
+          <Field label="Ultima visita" value={dataCurta(cartao.ultimaVisita)} />
+          <Field label="Planejamento" value={simNao(cartao.planejamentoTrimestral)} />
+        </div>
+      )}
+      {tipo === "diretores" && (
+        <div className="grid gap-3 md:grid-cols-3">
+          <Field label="Classes cumprem itens" value={cartao.cumprimentoClasses || "-"} />
+          <Field label="Classe professores" value={cartao.classeProfessoresFrequencia || "-"} />
+          <Field label="Participantes" value={cartao.classeProfessoresParticipantes || "-"} />
+          <Field label="Classe interessados" value={simNao(cartao.classeInteressadosImplantada)} />
+          <Field label="Qtd. interessados" value={cartao.classeInteressadosQuantidade ?? 0} />
+          <Field label="Primeira visita" value={dataCurta(cartao.primeiraVisitaProfessores)} />
+          <Field label="Ultima visita" value={dataCurta(cartao.ultimaVisitaProfessores)} />
+        </div>
+      )}
+      {!!item.coletas?.length && (
+        <div>
+          <h4 className="m-0 mb-2 font-outfit text-lg text-marinho">Registros semanais</h4>
+          <div className="grid gap-2 md:grid-cols-2">
+            {item.coletas.map((coleta) => (
+              <div key={coleta.id} className="rounded-lg border border-borda bg-white px-3 py-2 text-sm text-texto">
+                <strong>Semana {coleta.semana}</strong>
+                <pre className="m-0 mt-2 whitespace-pre-wrap font-outfit text-xs text-muted">{JSON.stringify(coleta, null, 2)}</pre>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetalheModal({ tipo, detalhe, onClose }) {
+  if (!detalhe) return null;
+  const item = detalhe.item;
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm" onMouseDown={onClose}>
+      <div className="max-h-[88vh] w-full max-w-5xl overflow-y-auto rounded-xl border border-white/80 bg-white p-5 shadow-2xl shadow-marinho/20" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-borda pb-3">
+          <div>
+            <span className="text-xs font-bold uppercase text-muted">{detalhe.tipo}</span>
+            <h2 className="m-0 font-outfit text-2xl text-marinho">{item.nome}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-lg border border-borda bg-white text-muted hover:bg-marinho hover:text-white" aria-label="Fechar">
+            <X size={20} />
+          </button>
+        </div>
+
+        {detalhe.tipo === "resposta" && <RespostaCompleta tipo={tipo} item={item} />}
+        {detalhe.tipo === "unidade" && (
+          <div className="grid gap-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <Field label="Responsavel" value={item.professor?.nome || item.diretor?.nome || "-"} />
+              <Field label="Progresso" value={pct(item.progresso?.progressoGeral)} />
+              <Field label="Respostas" value={item.totais?.respostas || item.respostas?.length || 0} />
+              <Field label="Pessoas" value={item.totais?.alunos || item.totais?.professores || item.respostas?.length || 0} />
+            </div>
+            <div className="grid gap-3">
+              {item.respostas?.length ? item.respostas.map((resposta) => <RespostaCompleta key={resposta.id} tipo={tipo} item={resposta} />) : <EmptyState />}
+            </div>
+          </div>
+        )}
+        {detalhe.tipo === "igreja" && (
+          <div className="grid gap-4">
+            <div className="grid gap-3 md:grid-cols-4">
+              <Field label="Unidades" value={item.unidades?.length || item.totais?.unidades || 0} />
+              <Field label="Respostas" value={item.totais?.respostas || item.respostas?.length || 0} />
+              <Field label="Progresso" value={item.progresso ? pct(item.progresso.progressoGeral) : "-"} />
+              <Field label="Tipo" value={tipo} />
+            </div>
+            {tipo === "diretores"
+              ? (item.respostas?.length ? item.respostas.map((resposta) => <RespostaCompleta key={resposta.id} tipo={tipo} item={resposta} />) : <EmptyState />)
+              : item.unidades?.map((unidade) => (
+                <div key={unidade.id} className="rounded-lg border border-borda bg-slate-50 p-3">
+                  <h3 className="m-0 mb-3 font-outfit text-lg text-marinho">{unidade.nome}</h3>
+                  <div className="grid gap-3">{unidade.respostas?.length ? unidade.respostas.map((resposta) => <RespostaCompleta key={resposta.id} tipo={tipo} item={resposta} />) : <EmptyState />}</div>
+                </div>
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -221,6 +347,7 @@ export function AdminMetasDashboard({ tipo }) {
   const [busca, setBusca] = useState("");
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(false);
+  const [detalhe, setDetalhe] = useState(null);
 
   useEffect(() => {
     setCarregando(true);
@@ -282,7 +409,7 @@ export function AdminMetasDashboard({ tipo }) {
                   <div key={distrito.id} className="grid gap-3 rounded-lg bg-slate-50 p-3">
                     <div className="flex items-center gap-2 text-sm font-bold text-texto"><Building2 size={16} /> {distrito.nome}</div>
                     <div className="grid gap-3 xl:grid-cols-2">
-                      {distrito.igrejas.map((igreja) => <Igreja key={igreja.id} tipo={tipo} igreja={igreja} />)}
+                      {distrito.igrejas.map((igreja) => <Igreja key={igreja.id} tipo={tipo} igreja={igreja} onOpen={setDetalhe} />)}
                     </div>
                   </div>
                 ))}
@@ -291,6 +418,7 @@ export function AdminMetasDashboard({ tipo }) {
           </div>
         ) : <EmptyState />}
       </Card>
+      <DetalheModal tipo={tipo} detalhe={detalhe} onClose={() => setDetalhe(null)} />
     </section>
   );
 }

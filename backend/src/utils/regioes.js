@@ -46,7 +46,7 @@ function carregarMapa() {
 }
 
 function regiaoPorDistrito(nomeDistrito) {
-  return carregarMapa().get(normalizar(nomeDistrito)) || "Regiao geral";
+  return carregarMapa().get(normalizar(nomeDistrito)) || "Região geral";
 }
 
 module.exports = { regiaoPorDistrito };
