@@ -193,6 +193,7 @@ function separarNomes(valor) {
 
 export function ProfessorPage() {
   const { aba } = useParams();
+  const { usuario } = useAuth();
   const [ano, setAno] = useState(anoAtual);
   const [trimestre, setTrimestre] = useState(1);
   const [semana, setSemana] = useState(1);
