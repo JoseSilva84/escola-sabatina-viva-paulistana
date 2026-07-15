@@ -452,41 +452,51 @@ export function Shell({ children }) {
         )}
       </AnimatePresence>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#0f284d] text-white shadow-[0_-12px_40px_rgba(0,0,0,0.4)] lg:hidden border-t border-white/5" aria-label="Navegação principal">
-        <div className="flex items-center justify-between px-5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
+      <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#0f284d]/90 backdrop-blur-xl text-white shadow-[0_-12px_40px_rgba(0,0,0,0.3)] lg:hidden border-t border-white/10" aria-label="Navegação principal">
+        <div className="flex items-center justify-between px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
           
-          <NavLink
-            to={visibleLinks[0]?.to || "/"}
-            className={({ isActive }) => `flex flex-col items-center justify-center gap-1 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
-          >
-            {React.createElement(visibleLinks[0]?.icon || Home, { size: 22, className: "opacity-80" })}
-            <span className="text-[10px] font-semibold tracking-wide">Início</span>
-          </NavLink>
+          <div className="flex flex-1 items-center justify-center gap-1 sm:gap-4">
+            <NavLink
+              to={visibleLinks[0]?.to || "/"}
+              className={({ isActive }) => `flex flex-col items-center justify-center gap-1 w-16 h-14 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${isActive ? "text-white bg-white/15 shadow-sm" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
+            >
+              {({ isActive }) => (
+                <>
+                  {React.createElement(visibleLinks[0]?.icon || Home, { size: 22, className: `transition-transform duration-300 ${isActive ? 'scale-110 drop-shadow-md' : ''}` })}
+                  <span className="text-[10px] font-semibold tracking-wide">Início</span>
+                </>
+              )}
+            </NavLink>
 
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className={`flex flex-col items-center justify-center gap-1 transition-all duration-200 ${isMobileMenuOpen ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
-          >
-            <Menu size={22} className={isMobileMenuOpen ? "opacity-100" : "opacity-80"} />
-            <span className="text-[10px] font-semibold tracking-wide">Menu</span>
-          </button>
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className={`flex flex-col items-center justify-center gap-1 w-16 h-14 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${isMobileMenuOpen ? "text-white bg-white/15 shadow-sm" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
+            >
+              <Menu size={22} className={`transition-transform duration-300 ${isMobileMenuOpen ? 'scale-110 drop-shadow-md' : ''}`} />
+              <span className="text-[10px] font-semibold tracking-wide">Menu</span>
+            </button>
 
-          <NavLink
-            to="/configuracoes"
-            className={({ isActive }) => `flex flex-col items-center justify-center gap-1 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
-          >
-            <Settings size={22} className="opacity-80" />
-            <span className="text-[10px] font-semibold tracking-wide">Ajustes</span>
-          </NavLink>
+            <NavLink
+              to="/configuracoes"
+              className={({ isActive }) => `flex flex-col items-center justify-center gap-1 w-16 h-14 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] active:scale-90 ${isActive ? "text-white bg-white/15 shadow-sm" : "text-white/60 hover:bg-white/10 hover:text-white"}`}
+            >
+              {({ isActive }) => (
+                <>
+                  <Settings size={22} className={`transition-transform duration-300 ${isActive ? 'scale-110 drop-shadow-md' : ''}`} />
+                  <span className="text-[10px] font-semibold tracking-wide">Ajustes</span>
+                </>
+              )}
+            </NavLink>
+          </div>
 
-          <div className="w-px h-8 bg-white/10 rounded-full mx-0.5"></div>
+          <div className="w-px h-10 bg-gradient-to-b from-transparent via-white/20 to-transparent mx-2 rounded-full"></div>
 
           <button
             onClick={sair}
-            className="flex flex-col items-center justify-center gap-1 transition-all duration-200 text-[#ffa3a3] hover:text-white active:scale-95 group"
+            className="flex flex-col items-center justify-center gap-1 w-16 h-14 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] text-[#ffa3a3] hover:text-white active:scale-90 group shrink-0 rounded-2xl hover:bg-red-500/10"
           >
-            <div className="bg-red-500/20 border border-red-500/30 p-1.5 rounded-xl group-hover:bg-red-500/40 transition-colors shadow-sm shadow-red-500/10 flex items-center justify-center">
-              <LogOut size={18} className="translate-x-[1px]" />
+            <div className="bg-red-500/20 border border-red-500/30 p-1.5 rounded-[10px] group-hover:bg-red-500/40 transition-colors shadow-sm flex items-center justify-center">
+              <LogOut size={16} className="translate-x-[1px]" />
             </div>
             <span className="text-[10px] font-bold tracking-wide">Sair</span>
           </button>
