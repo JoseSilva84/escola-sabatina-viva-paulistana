@@ -35,6 +35,25 @@ function trimestresDoPeriodo(periodo, trimestre) {
   return [trimestre];
 }
 
+function intervaloPeriodo(ano, periodo, mes, trimestre) {
+  if (periodo === "mensal") {
+    return {
+      inicio: new Date(ano, mes - 1, 1, 0, 0, 0),
+      fim: new Date(ano, mes, 1, 0, 0, 0)
+    };
+  }
+  if (periodo === "trimestral") {
+    return {
+      inicio: new Date(ano, (trimestre - 1) * 3, 1, 0, 0, 0),
+      fim: new Date(ano, trimestre * 3, 1, 0, 0, 0)
+    };
+  }
+  return {
+    inicio: new Date(ano, 0, 1, 0, 0, 0),
+    fim: new Date(ano + 1, 0, 1, 0, 0, 0)
+  };
+}
+
 function normalizarNome(nome) {
   return String(nome || "")
     .normalize("NFD")
@@ -83,7 +102,9 @@ routes.get("/", asyncHandler(async (req, res) => {
     orderBy: { numeroSemana: "desc" }
   });
   const semanaCorte = ultimaColetaPeriodo?.numeroSemana || 0;
-  const semanas = semanasPeriodo.filter((semana) => semana <= semanaCorte);
+  const semanas = semanaCorte
+    ? semanasPeriodo.filter((semana) => semana <= semanaCorte)
+    : semanasPeriodo;
   const trimestreCorte = semanaCorte ? Math.ceil(semanaCorte / 13) : trimestre;
   const trimestres = periodo === "anual"
     ? Array.from({ length: trimestreCorte }, (_, index) => index + 1)
@@ -112,8 +133,19 @@ routes.get("/", asyncHandler(async (req, res) => {
         where: { igrejaId_trimestre_ano: { igrejaId: req.usuario.igrejaId, trimestre, ano } }
       }).catch(() => null);
 
+  const periodoDatas = intervaloPeriodo(ano, periodo, mes, trimestre);
   const coletas = await prisma.coletaSemanalAluno.findMany({
-    where: { ...escopoUsuario, ano, numeroSemana: { in: semanas } }
+    where: {
+      ...escopoUsuario,
+      ano,
+      OR: [
+        { numeroSemana: { in: semanas } },
+        {
+          numeroSemana: { gte: 1, lte: 13 },
+          preenchidoEm: { gte: periodoDatas.inicio, lt: periodoDatas.fim }
+        }
+      ]
+    }
   });
   const coletasPorUnidade = coletas.reduce((acc, item) => {
     acc[item.unidadeId] = acc[item.unidadeId] || [];

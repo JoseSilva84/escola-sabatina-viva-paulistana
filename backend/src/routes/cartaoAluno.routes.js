@@ -112,6 +112,35 @@ function proximoSabadoCalendario(referencia = new Date()) {
   };
 }
 
+function intervaloTrimestre(ano, trimestre) {
+  return {
+    inicio: new Date(ano, (trimestre - 1) * 3, 1, 0, 0, 0),
+    fim: new Date(ano, trimestre * 3, 1, 0, 0, 0)
+  };
+}
+
+function filtroColetasTrimestre(ano, trimestre, semanas, extra = {}) {
+  const periodo = intervaloTrimestre(ano, trimestre);
+  return {
+    ...extra,
+    ano,
+    OR: [
+      { numeroSemana: { in: semanas } },
+      {
+        numeroSemana: { gte: 1, lte: 13 },
+        preenchidoEm: { gte: periodo.inicio, lt: periodo.fim }
+      }
+    ]
+  };
+}
+
+function numeroSabadoNoTrimestre(numeroSemana, semanas) {
+  const indice = semanas.indexOf(numeroSemana);
+  if (indice >= 0) return indice + 1;
+  if (numeroSemana >= 1 && numeroSemana <= 13) return numeroSemana;
+  return null;
+}
+
 routes.get("/", asyncHandler(async (req, res) => {
   try {
     const where = {};
@@ -161,10 +190,16 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
 
   const semanas = semanasDoTrimestre(params.trimestre);
   const coletas = await prisma.coletaSemanalAluno.findMany({
-    where: { alunoId: aluno.id, ano: params.ano, numeroSemana: { in: semanas } },
+    where: filtroColetasTrimestre(params.ano, params.trimestre, semanas, { alunoId: aluno.id }),
     orderBy: { numeroSemana: "asc" }
   });
-  const coletaPorSemana = new Map(coletas.map((item) => [item.numeroSemana, item]));
+  const coletaPorSemana = new Map();
+  coletas.forEach((item) => {
+    coletaPorSemana.set(item.numeroSemana, item);
+    if (!semanas.includes(item.numeroSemana) && item.numeroSemana >= 1 && item.numeroSemana <= 13) {
+      coletaPorSemana.set(semanas[item.numeroSemana - 1], item);
+    }
+  });
 
   const cartao = await prisma.cartaoAluno.findUnique({
     where: {
@@ -194,7 +229,7 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
     .map((coleta) => {
       const pontos = pontosDaColeta(coleta);
       return {
-        numeroSabado: semanas.indexOf(coleta.numeroSemana) + 1,
+        numeroSabado: numeroSabadoNoTrimestre(coleta.numeroSemana, semanas),
         numeroSemana: coleta.numeroSemana,
         data: dataISO(dataSabado(coleta.ano, coleta.numeroSemana)),
         total: pontos.total,

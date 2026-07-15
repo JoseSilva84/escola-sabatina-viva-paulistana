@@ -99,6 +99,28 @@ function dataOpcional(valor) {
   return valor ? new Date(valor) : null;
 }
 
+function intervaloTrimestre(ano, trimestre) {
+  return {
+    inicio: new Date(ano, (trimestre - 1) * 3, 1, 0, 0, 0),
+    fim: new Date(ano, trimestre * 3, 1, 0, 0, 0)
+  };
+}
+
+function filtroColetasTrimestre(ano, trimestre, semanas, extra = {}) {
+  const periodo = intervaloTrimestre(ano, trimestre);
+  return {
+    ...extra,
+    ano,
+    OR: [
+      { numeroSemana: { in: semanas } },
+      {
+        numeroSemana: { gte: 1, lte: 13 },
+        preenchidoEm: { gte: periodo.inicio, lt: periodo.fim }
+      }
+    ]
+  };
+}
+
 async function buscarCartaoPorContexto(req, ano, trimestre, unidadeId) {
   const unidade = await prisma.unidadeAcao.findFirst({
     where: {
@@ -188,7 +210,7 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
   const semanaInicio = ((params.trimestre - 1) * 13) + 1;
   const semanas = Array.from({ length: 13 }, (_, index) => semanaInicio + index);
   const coletas = await prisma.coletaSemanalAluno.findMany({
-    where: { unidadeId, ano: params.ano, numeroSemana: { in: semanas } }
+    where: filtroColetasTrimestre(params.ano, params.trimestre, semanas, { unidadeId })
   });
   const progressoAlunos = progressoPorSemanas(coletas, Math.max(1, unidade.alunos.length * 13));
 
@@ -229,7 +251,7 @@ routes.get("/admin-dashboard", autorizar("ADMIN"), asyncHandler(async (req, res)
         }
       },
       coletasProfessor: {
-        where: { ano: params.ano, numeroSemana: { in: semanas } },
+        where: filtroColetasTrimestre(params.ano, params.trimestre, semanas),
         orderBy: { numeroSemana: "asc" }
       }
     },

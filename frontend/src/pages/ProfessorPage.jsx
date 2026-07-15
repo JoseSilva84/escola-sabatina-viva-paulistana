@@ -321,15 +321,15 @@ export function ProfessorPage() {
       }, [ano, semana, unidadeId, usuario?.papel]);
 
   const semanas = useMemo(() => semanasDoTrimestre(ano, trimestre), [ano, trimestre]);
-  const semanaSelecionada = useMemo(() => semanas.find((item) => item.numero === semana), [semanas, semana]);
+  const semanaSelecionada = useMemo(() => semanas.find((item) => item.semanaAno === semana), [semanas, semana]);
   const dataSemanaSelecionada = semanaSelecionada?.data || calcularDataSabado(ano, semana);
   const trimestreAtualPeriodo = useMemo(() => periodoTrimestre(ano, trimestre), [ano, trimestre]);
   const nomesBatismos = useMemo(() => separarNomes(form.batismosNomes), [form.batismosNomes]);
 
   useEffect(() => {
     if (!semanas.length) return;
-    if (!semanas.some((item) => item.numero === semana)) {
-      setSemana(semanas[0].numero);
+    if (!semanas.some((item) => item.semanaAno === semana)) {
+      setSemana(semanas[0].semanaAno);
     }
   }, [semana, semanas]);
 
@@ -349,7 +349,7 @@ export function ProfessorPage() {
     if (avaliacao.unidadeId) setUnidadeId(avaliacao.unidadeId);
     setAno(avaliacao.ano);
     setTrimestre(avaliacao.trimestre);
-    setSemana(semanasDoTrimestre(avaliacao.ano, avaliacao.trimestre)[0]?.numero || 1);
+    setSemana(semanasDoTrimestre(avaliacao.ano, avaliacao.trimestre)[0]?.semanaAno || 1);
     setEtapaTrimestral(1);
     setMostrarAvaliacoes(false);
   }
@@ -850,7 +850,7 @@ export function ProfessorPage() {
             </label>
             <label className="grid gap-1 text-sm font-bold">Semana
               <select key={`${ano}-${trimestre}`} className="min-h-[42px] rounded-lg border border-borda px-3 bg-white" value={semana} onChange={(e) => setSemana(Number(e.target.value))}>
-                {semanas.map((item) => <option key={`${ano}-${trimestre}-${item.numero}`} value={item.numero}>{item.rotulo}</option>)}
+                {semanas.map((item) => <option key={`${ano}-${trimestre}-${item.semanaAno}`} value={item.semanaAno}>{item.rotulo}</option>)}
               </select>
             </label>
           </Card>

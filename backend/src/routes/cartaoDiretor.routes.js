@@ -72,6 +72,28 @@ async function buscarOuCriarCartao(req, ano, trimestre) {
   return cartao;
 }
 
+function intervaloTrimestre(ano, trimestre) {
+  return {
+    inicio: new Date(ano, (trimestre - 1) * 3, 1, 0, 0, 0),
+    fim: new Date(ano, trimestre * 3, 1, 0, 0, 0)
+  };
+}
+
+function filtroColetasTrimestre(ano, trimestre, semanas, extra = {}) {
+  const periodo = intervaloTrimestre(ano, trimestre);
+  return {
+    ...extra,
+    ano,
+    OR: [
+      { numeroSemana: { in: semanas } },
+      {
+        numeroSemana: { gte: 1, lte: 13 },
+        preenchidoEm: { gte: periodo.inicio, lt: periodo.fim }
+      }
+    ]
+  };
+}
+
 routes.get("/", asyncHandler(async (req, res) => {
   try {
     const where = {};
@@ -113,7 +135,7 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
   const semanaInicio = ((params.trimestre - 1) * 13) + 1;
   const semanas = Array.from({ length: 13 }, (_, index) => semanaInicio + index);
   const coletas = await prisma.coletaSemanalAluno.findMany({
-    where: { igrejaId: req.usuario.igrejaId, ano: params.ano, numeroSemana: { in: semanas } }
+    where: filtroColetasTrimestre(params.ano, params.trimestre, semanas, { igrejaId: req.usuario.igrejaId })
   });
   const coletasPorUnidade = coletas.reduce((acc, item) => {
     acc[item.unidadeId] = acc[item.unidadeId] || [];
