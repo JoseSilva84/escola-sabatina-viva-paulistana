@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Bell, BookOpen, Building2, Calendar, CalendarClock, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star, Menu, X } from "lucide-react";
+import { Bell, BookOpen, Building2, Calendar, CalendarClock, ClipboardList, Download, HelpCircle, Home, IdCard, Image, LogOut, Palette, Settings, ShieldCheck, SlidersHorizontal, Trophy, UploadCloud, UserCog, Users, ChevronDown, ChevronUp, Star } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -150,7 +150,6 @@ export function Shell({ children }) {
   const location = useLocation();
   const visibleLinks = links.filter((link) => link.papeis.includes(usuario.papel));
   const [openMenus, setOpenMenus] = useState({ Ranking: true });
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmacaoSenha, setConfirmacaoSenha] = useState("");
@@ -387,109 +386,45 @@ export function Shell({ children }) {
           </button>
         </div>
       </aside>
-      {/* Menu Mobile Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: "100%" }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[60] bg-gradient-to-br from-[#173a6a] to-[#0f284d] text-white lg:hidden flex flex-col"
-          >
-            <div className="flex items-center justify-between p-6 border-b border-white/10 bg-[#0f284d]/50 backdrop-blur-sm">
-              <h2 className="text-2xl font-bold font-outfit m-0">Menu</h2>
-              <button 
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                aria-label="Fechar menu"
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/15 bg-[#102d55] px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] text-white shadow-[0_-12px_28px_rgba(16,45,85,0.22)] lg:hidden" aria-label="Navegacao principal">
+        <div className="mx-auto grid max-w-md grid-cols-6 gap-1">
+          {visibleLinks.map((link) => {
+            const { to, label, icon: Icon, subItems } = link;
+            const mobileTo = subItems?.[0]?.to || to;
+            const isSubActive = subItems && location.pathname.startsWith(mobileTo.split("?")[0]);
+
+            return (
+              <NavLink
+                key={`mobile-${mobileTo}-${label}`}
+                to={mobileTo}
+                className={({ isActive }) => `group flex min-h-[48px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg border-0 px-1 text-[10px] font-semibold leading-none text-white/75 transition-all duration-200 hover:bg-white/15 hover:text-white active:scale-95 ${(isActive || isSubActive) ? "bg-white/15 text-white shadow-inner shadow-black/10" : ""}`}
+                title={label}
+                aria-label={label}
               >
-                <X size={24} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 pb-24 space-y-3">
-              {visibleLinks.map((link) => {
-                const { to, label, icon: Icon, subItems } = link;
-                
-                if (subItems) {
-                   return (
-                     <div key={label} className="bg-white/5 rounded-2xl p-2 mb-3 border border-white/5">
-                       <div className="flex items-center gap-3 p-3 text-white/90 font-semibold text-lg">
-                         <Icon size={22} className="text-white/70" />
-                         {label}
-                       </div>
-                       <div className="flex flex-col gap-1 px-3 pb-2 pl-[46px]">
-                         {subItems.map(sub => (
-                           <NavLink
-                             key={sub.label}
-                             to={sub.to}
-                             onClick={() => setIsMobileMenuOpen(false)}
-                             className={({ isActive }) => `flex items-center min-h-[44px] px-4 rounded-xl transition-colors ${isActive ? "bg-white/15 text-white font-bold" : "text-white/70 hover:text-white hover:bg-white/10"}`}
-                           >
-                             {sub.label}
-                           </NavLink>
-                         ))}
-                       </div>
-                     </div>
-                   );
-                }
-
-                return (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={({ isActive }) => `flex items-center gap-4 p-4 rounded-2xl transition-colors ${isActive ? "bg-white/15 text-white font-bold border border-white/10" : "text-white/80 hover:bg-white/10 hover:text-white font-medium"}`}
-                  >
-                    <Icon size={24} className={isActive ? "text-white" : "text-white/60"} />
-                    <span className="text-[17px]">{label}</span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#0f284d] text-white shadow-[0_-12px_40px_rgba(0,0,0,0.4)] lg:hidden border-t border-white/5 rounded-t-[24px]" aria-label="Navegação principal">
-        <div className="flex items-center justify-between px-6 pb-[calc(1.2rem+env(safe-area-inset-bottom))] pt-4">
-          
-          <NavLink
-            to={visibleLinks[0]?.to || "/"}
-            className={({ isActive }) => `flex flex-col items-center justify-center gap-1.5 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
-          >
-            {React.createElement(visibleLinks[0]?.icon || Home, { size: 24, className: isActive ? "opacity-100" : "opacity-80" })}
-            <span className="text-[11px] font-semibold tracking-wide">Início</span>
-          </NavLink>
-
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-200 ${isMobileMenuOpen ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
-          >
-            <Menu size={24} className={isMobileMenuOpen ? "opacity-100" : "opacity-80"} />
-            <span className="text-[11px] font-semibold tracking-wide">Menu</span>
-          </button>
-
+                <Icon size={18} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                <span className="block w-full truncate text-center">{label}</span>
+              </NavLink>
+            );
+          })}
           <NavLink
             to="/configuracoes"
-            className={({ isActive }) => `flex flex-col items-center justify-center gap-1.5 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
+            className={({ isActive }) => `group flex min-h-[48px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg border-0 px-1 text-[10px] font-semibold leading-none text-white/75 transition-all duration-200 hover:bg-white/15 hover:text-white active:scale-95 ${isActive ? "bg-white/15 text-white shadow-inner shadow-black/10" : ""}`}
+            title="Configuracoes"
+            aria-label="Configuracoes"
           >
-            <Settings size={24} className={isActive ? "opacity-100" : "opacity-80"} />
-            <span className="text-[11px] font-semibold tracking-wide">Ajustes</span>
+            <Settings size={18} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />
+            <span className="block w-full truncate text-center">Config.</span>
           </NavLink>
-
-          <div className="w-px h-10 bg-white/10 rounded-full mx-1"></div>
-
           <button
+            className="group flex min-h-[48px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg border border-red-200/20 bg-red-500/15 px-1 text-[10px] font-semibold leading-none text-red-50 transition-all duration-200 hover:bg-red-500/25 active:scale-95"
             onClick={sair}
-            className="flex flex-col items-center justify-center gap-1.5 transition-all duration-200 text-[#ffa3a3] hover:text-white active:scale-95 group"
+            type="button"
+            title="Sair"
+            aria-label="Sair"
           >
-            <div className="bg-red-500/20 border border-red-500/30 p-2.5 rounded-2xl group-hover:bg-red-500/40 transition-colors shadow-sm shadow-red-500/10 flex items-center justify-center">
-              <LogOut size={20} className="translate-x-[1px]" />
-            </div>
-            <span className="text-[11px] font-bold tracking-wide">Sair</span>
+            <LogOut size={18} className="shrink-0 transition-transform duration-200 group-hover:scale-110" />
+            <span className="block w-full truncate text-center">Sair</span>
           </button>
-          
         </div>
       </nav>
       <main className="min-w-0 px-3.5 sm:px-5 lg:col-start-2 lg:px-[30px] pb-36 lg:pb-10">
