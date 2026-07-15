@@ -5,7 +5,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const { autenticar, autorizar } = require("../middleware/auth");
 const { cartoesAluno, alunos } = require("../data/store");
 const { progressoAluno, progressoPorSemanas } = require("../services/progresso");
-const { semanasDoTrimestre } = require("./coletaSemanal.routes");
+const { semanasDoTrimestre, dataSabado, dataISO } = require("./coletaSemanal.routes");
 const AppError = require("../utils/AppError");
 const { regiaoPorDistrito } = require("../utils/regioes");
 
@@ -72,6 +72,19 @@ function resumoHierarquia(regioes, chave) {
     : 0;
 
   return { regioes: regioes.length, distritos: regioes.reduce((soma, regiao) => soma + regiao.distritos.length, 0), igrejas: igrejas.length, unidades: unidades.length, pessoas, respostas, progresso };
+}
+
+function pontosDaColeta(coleta) {
+  const itens = [];
+  if (coleta.estudouLicao) itens.push({ label: "Estudo da licao", pontos: 10 });
+  if (coleta.foiPontual) itens.push({ label: "Pontualidade", pontos: 10 });
+  if (coleta.pequenoGrupo) itens.push({ label: "Pequeno Grupo", pontos: 20 });
+  if (coleta.acaoSolidaria) itens.push({ label: "Acao solidaria", pontos: 20 });
+  if (coleta.estudosBiblicos) itens.push({ label: "Estudos biblicos", pontos: coleta.estudosBiblicos * 50 });
+  return {
+    total: itens.reduce((soma, item) => soma + item.pontos, 0),
+    itens
+  };
 }
 
 routes.get("/", asyncHandler(async (req, res) => {
@@ -149,6 +162,22 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
       observacao: coleta?.observacao || ""
     };
   });
+  const proximoNumeroSemana = semanas.find((numeroSemana) => !coletaPorSemana.has(numeroSemana));
+  const proximoIndice = proximoNumeroSemana ? semanas.indexOf(proximoNumeroSemana) : -1;
+  const ultimasPontuacoes = coletas
+    .map((coleta) => {
+      const pontos = pontosDaColeta(coleta);
+      return {
+        numeroSabado: semanas.indexOf(coleta.numeroSemana) + 1,
+        numeroSemana: coleta.numeroSemana,
+        data: dataISO(dataSabado(coleta.ano, coleta.numeroSemana)),
+        total: pontos.total,
+        itens: pontos.itens
+      };
+    })
+    .filter((item) => item.total > 0)
+    .sort((a, b) => b.numeroSemana - a.numeroSemana)
+    .slice(0, 3);
 
   const progresso = coletas.length
     ? progressoPorSemanas(coletas, 13)
@@ -160,12 +189,22 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
     aluno,
     ano: params.ano,
     trimestre: params.trimestre,
+    proximoSabado: proximoNumeroSemana
+      ? {
+          numeroSabado: proximoIndice + 1,
+          numeroSemana: proximoNumeroSemana,
+          data: dataISO(dataSabado(params.ano, proximoNumeroSemana)),
+          titulo: `Sabado ${proximoIndice + 1} da licao`,
+          descricao: "Registrar presenca e estudo da licao"
+        }
+      : null,
+    ultimasPontuacoes,
     progresso,
     sabados: linhasSemana,
     perguntas: [
       { texto: "Participou do Pequeno Grupo?", resposta: Boolean(cartao?.pequenoGrupo) },
-      { texto: "Realizou uma acao solidaria?", resposta: Boolean(cartao?.acaoSolidaria), detalhe: cartao?.acaoSolidariaDescricao || "" },
-      { texto: "Ministrou estudo biblico neste trimestre?", resposta: Boolean(cartao?.ministrouEstudoBiblico) }
+      { texto: "Realizou uma ação solidária?", resposta: Boolean(cartao?.acaoSolidaria), detalhe: cartao?.acaoSolidariaDescricao || "" },
+      { texto: "Ministrou estudo bíblico neste trimestre?", resposta: Boolean(cartao?.ministrouEstudoBiblico) }
     ]
   });
 }));

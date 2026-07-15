@@ -25,6 +25,26 @@ export const alunoCard = {
     estudo: index < 11,
     pontualidade: index < 13
   })),
+  proximoSabado: {
+    numeroSabado: 12,
+    numeroSemana: 12,
+    data: "2026-03-21",
+    titulo: "Sabado 12 da licao",
+    descricao: "Registrar presenca e estudo da licao"
+  },
+  ultimasPontuacoes: [
+    {
+      numeroSabado: 11,
+      numeroSemana: 11,
+      data: "2026-03-14",
+      total: 40,
+      itens: [
+        { label: "Estudo da licao", pontos: 10 },
+        { label: "Pontualidade", pontos: 10 },
+        { label: "Pequeno Grupo", pontos: 20 }
+      ]
+    }
+  ],
   perguntas: [
     { texto: "Participou do Pequeno Grupo?", resposta: true },
     { texto: "Realizou uma ação solidária?", resposta: true },

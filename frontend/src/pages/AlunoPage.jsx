@@ -17,6 +17,14 @@ function alunoDistrito(aluno) {
   return alunoIgreja(aluno)?.distrito || aluno.distrito || null;
 }
 
+function dataCurta(valor) {
+  if (!valor) return "";
+  return new Date(`${valor}T12:00:00`).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit"
+  });
+}
+
 function agruparAdmin(alunos) {
   const regioes = new Map();
 
@@ -241,7 +249,7 @@ function CartaoAluno({ card, alunoSelecionado, onBack, podeVoltar }) {
       </Card>
 
       <Card animated delay={0.3} className="lg:col-start-1 lg:col-end-3">
-        <h3 className="m-0 font-outfit text-lg mb-2">Questionarios Rapidos</h3>
+        <h3 className="m-0 font-outfit text-lg mb-2">Questionários Rápidos</h3>
         <div className="flex flex-col">
           {card.perguntas.map((item, index) => (
             <div className="flex justify-between gap-3 py-3.5 border-b border-borda last:border-0" key={item.texto}>
@@ -256,15 +264,33 @@ function CartaoAluno({ card, alunoSelecionado, onBack, podeVoltar }) {
         <Card animated delay={0.4} className="flex items-center gap-3.5 !p-5">
           <BookMarked className="text-verde" />
           <div>
-            <h3 className="m-0 font-outfit text-base">Proximas Entregas</h3>
-            <p className="m-0 mt-1 text-muted text-sm">Historia - 10/10, 14:00</p>
+            <h3 className="m-0 font-outfit text-base">Proximo Sabado</h3>
+            {card.proximoSabado ? (
+              <p className="m-0 mt-1 text-muted text-sm">
+                {card.proximoSabado.titulo} - {dataCurta(card.proximoSabado.data)}
+                <span className="block text-xs">Presenca e estudo da licao</span>
+              </p>
+            ) : (
+              <p className="m-0 mt-1 text-muted text-sm">Trimestre concluido</p>
+            )}
           </div>
         </Card>
         <Card animated delay={0.5} className="flex items-center gap-3.5 !p-5">
           <CalendarClock className="text-verde" />
           <div>
-            <h3 className="m-0 font-outfit text-base">Ultimas Notas</h3>
-            <p className="m-0 mt-1 text-muted text-sm">Matematica 9.5</p>
+            <h3 className="m-0 font-outfit text-base">Ultimas Pontuacoes</h3>
+            {card.ultimasPontuacoes?.length ? (
+              <div className="mt-1 grid gap-1">
+                {card.ultimasPontuacoes.map((item) => (
+                  <p key={`${item.numeroSemana}-${item.total}`} className="m-0 text-sm text-muted">
+                    Sabado {item.numeroSabado}: <strong className="text-texto">{item.total} pts</strong>
+                    <span className="block text-xs">{item.itens.map((ponto) => `${ponto.label} +${ponto.pontos}`).join(", ")}</span>
+                  </p>
+                ))}
+              </div>
+            ) : (
+              <p className="m-0 mt-1 text-muted text-sm">Sem pontuacao registrada</p>
+            )}
           </div>
         </Card>
       </div>

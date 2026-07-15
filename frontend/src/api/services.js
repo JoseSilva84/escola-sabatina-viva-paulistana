@@ -74,7 +74,9 @@ export async function getAlunoCard(params = {}) {
         { rotulo: "Brinde", valor: data.progresso.elegivelBrinde ? "Sim" : "Nao" }
       ],
       sabados: data.sabados,
-      perguntas: data.perguntas
+      perguntas: data.perguntas,
+      proximoSabado: data.proximoSabado,
+      ultimasPontuacoes: data.ultimasPontuacoes || []
     };
   } catch (error) {
     if (params.alunoId) throw error;

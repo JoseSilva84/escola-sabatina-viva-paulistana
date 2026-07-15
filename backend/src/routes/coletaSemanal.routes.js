@@ -434,4 +434,4 @@ routes.get("/resumo", asyncHandler(async (req, res) => {
   });
 }));
 
-module.exports = { routes, semanasDoTrimestre, trimestreDaSemana };
+module.exports = { routes, semanasDoTrimestre, trimestreDaSemana, dataSabado, dataISO };
