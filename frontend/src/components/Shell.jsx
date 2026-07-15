@@ -442,7 +442,7 @@ export function Shell({ children }) {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={({ isActive }) => `flex items-center gap-4 p-4 rounded-2xl transition-colors ${isActive ? "bg-white/15 text-white font-bold border border-white/10" : "text-white/80 hover:bg-white/10 hover:text-white font-medium"}`}
                   >
-                    <Icon size={24} className={isActive ? "text-white" : "text-white/60"} />
+                    <Icon size={24} className="text-white/60" />
                     <span className="text-[17px]">{label}</span>
                   </NavLink>
                 );
@@ -459,7 +459,7 @@ export function Shell({ children }) {
             to={visibleLinks[0]?.to || "/"}
             className={({ isActive }) => `flex flex-col items-center justify-center gap-1.5 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
           >
-            {React.createElement(visibleLinks[0]?.icon || Home, { size: 24, className: isActive ? "opacity-100" : "opacity-80" })}
+            {React.createElement(visibleLinks[0]?.icon || Home, { size: 24, className: "opacity-80" })}
             <span className="text-[11px] font-semibold tracking-wide">Início</span>
           </NavLink>
 
@@ -475,7 +475,7 @@ export function Shell({ children }) {
             to="/configuracoes"
             className={({ isActive }) => `flex flex-col items-center justify-center gap-1.5 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
           >
-            <Settings size={24} className={isActive ? "opacity-100" : "opacity-80"} />
+            <Settings size={24} className="opacity-80" />
             <span className="text-[11px] font-semibold tracking-wide">Ajustes</span>
           </NavLink>
 
