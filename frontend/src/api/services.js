@@ -76,7 +76,8 @@ export async function getAlunoCard(params = {}) {
       sabados: data.sabados,
       perguntas: data.perguntas
     };
-  } catch {
+  } catch (error) {
+    if (params.alunoId) throw error;
     return alunoCard;
   }
 }

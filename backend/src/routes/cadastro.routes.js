@@ -9,6 +9,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const { autenticar, autorizar } = require("../middleware/auth");
 const { igrejas, unidades, alunos } = require("../data/store");
 const AppError = require("../utils/AppError");
+const { regiaoPorDistrito } = require("../utils/regioes");
 
 const routes = Router();
 routes.use(autenticar);
@@ -258,7 +259,25 @@ routes.get("/unidades", asyncHandler(async (req, res) => {
       },
       orderBy: { nome: "asc" }
     });
-    return res.json(lista);
+    return res.json(lista.map((aluno) => ({
+      ...aluno,
+      unidade: aluno.unidade
+        ? {
+            ...aluno.unidade,
+            igreja: aluno.unidade.igreja
+              ? {
+                  ...aluno.unidade.igreja,
+                  distrito: aluno.unidade.igreja.distrito
+                    ? {
+                        ...aluno.unidade.igreja.distrito,
+                        regiao: regiaoPorDistrito(aluno.unidade.igreja.distrito.nome)
+                      }
+                    : aluno.unidade.igreja.distrito
+                }
+              : aluno.unidade.igreja
+          }
+        : aluno.unidade
+    })));
   } catch {
     return res.json(unidades);
   }
@@ -340,6 +359,10 @@ routes.get("/alunos", asyncHandler(async (req, res) => {
     const where = {};
     if (req.usuario.papel === "ALUNO") {
       where.usuarioId = req.usuario.id;
+    } else if (req.usuario.papel === "PROFESSOR") {
+      where.unidade = { professorId: req.usuario.id };
+    } else if (req.usuario.papel === "DIRETOR") {
+      where.unidade = { igrejaId: req.usuario.igrejaId };
     } else if (req.query.unidadeId) {
       where.unidadeId = req.query.unidadeId;
     }
@@ -347,7 +370,12 @@ routes.get("/alunos", asyncHandler(async (req, res) => {
     const lista = await prisma.aluno.findMany({
       where,
       include: {
-        unidade: true,
+        unidade: {
+          include: {
+            igreja: { include: { distrito: true } },
+            professor: { select: { id: true, nome: true, email: true } }
+          }
+        },
         usuario: {
           select: {
             id: true,
@@ -361,7 +389,26 @@ routes.get("/alunos", asyncHandler(async (req, res) => {
       },
       orderBy: { nome: "asc" }
     });
-    return res.json(lista);
+    const listaComRegiao = lista.map((aluno) => ({
+      ...aluno,
+      unidade: aluno.unidade
+        ? {
+            ...aluno.unidade,
+            igreja: aluno.unidade.igreja
+              ? {
+                  ...aluno.unidade.igreja,
+                  distrito: aluno.unidade.igreja.distrito
+                    ? {
+                        ...aluno.unidade.igreja.distrito,
+                        regiao: regiaoPorDistrito(aluno.unidade.igreja.distrito.nome)
+                      }
+                    : aluno.unidade.igreja.distrito
+                }
+              : aluno.unidade.igreja
+          }
+        : aluno.unidade
+    }));
+    return res.json(listaComRegiao);
   } catch {
     return res.json(alunos);
   }
