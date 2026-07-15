@@ -12,6 +12,7 @@ import { Tooltip } from "react-tooltip";
 import "react-tooltip/dist/react-tooltip.css";
 
 const anoAtual = new Date().getFullYear();
+const trimestreAtual = Math.floor(new Date().getMonth() / 3) + 1;
 
 function Indicator({ title, value, subtitle, trend, index = 0, tooltip }) {
   const Icon = trend === "down" ? ArrowDown : ArrowUp;
@@ -53,7 +54,7 @@ function dateValue(value) {
 
 export function DiretorPage() {
   const [ano, setAno] = useState(anoAtual);
-  const [trimestre, setTrimestre] = useState(1);
+  const [trimestre, setTrimestre] = useState(trimestreAtual);
   const [data, setData] = useState(null);
   const [form, setForm] = useState({});
   const [professores, setProfessores] = useState([]);
@@ -94,10 +95,10 @@ export function DiretorPage() {
       setNovaUnidade((atual) => ({ ...atual, professorId: atual.professorId || lista[0]?.id || "" }));
     }).catch(() => setProfessores([]));
 
-    getUnidades({ igrejaAtual: true }).then((lista) => {
+    getUnidades(usuario?.papel === "ADMIN" ? {} : { igrejaAtual: true }).then((lista) => {
       setUnidades(lista);
     }).catch(() => setUnidades([]));
-  }, []);
+  }, [usuario?.papel]);
 
   useEffect(() => {
     if (!unidadeSelecionada) {

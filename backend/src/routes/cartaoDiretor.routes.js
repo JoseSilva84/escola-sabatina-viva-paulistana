@@ -117,10 +117,11 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
     ano: z.coerce.number().int().default(new Date().getFullYear()),
     trimestre: z.coerce.number().int().min(1).max(4).default(1)
   }).parse(req.query);
+  const isAdmin = req.usuario.papel === "ADMIN";
 
-  const cartao = await buscarOuCriarCartao(req, params.ano, params.trimestre);
+  const cartao = isAdmin ? null : await buscarOuCriarCartao(req, params.ano, params.trimestre);
   const unidades = await prisma.unidadeAcao.findMany({
-    where: { igrejaId: req.usuario.igrejaId, ativa: true },
+    where: isAdmin ? { ativa: true } : { igrejaId: req.usuario.igrejaId, ativa: true },
     include: {
       professor: { select: { id: true, nome: true, email: true } },
       alunos: true,
@@ -135,7 +136,7 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
   const semanaInicio = ((params.trimestre - 1) * 13) + 1;
   const semanas = Array.from({ length: 13 }, (_, index) => semanaInicio + index);
   const coletas = await prisma.coletaSemanalAluno.findMany({
-    where: filtroColetasTrimestre(params.ano, params.trimestre, semanas, { igrejaId: req.usuario.igrejaId })
+    where: filtroColetasTrimestre(params.ano, params.trimestre, semanas, isAdmin ? {} : { igrejaId: req.usuario.igrejaId })
   });
   const coletasPorUnidade = coletas.reduce((acc, item) => {
     acc[item.unidadeId] = acc[item.unidadeId] || [];
@@ -169,15 +170,23 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
     ? Math.round(unidadesResumo.reduce((soma, item) => soma + item.progressoProfessor, 0) / unidadesResumo.length)
     : 0;
   const progressoAlunos = progressoPorSemanas(coletas, Math.max(1, unidades.reduce((soma, unidade) => soma + unidade.alunos.length, 0) * 13));
+  const cartoesDiretorPeriodo = isAdmin
+    ? await prisma.cartaoDiretor.findMany({ where: { ano: params.ano, trimestre: params.trimestre } })
+    : [];
+  const desempenhoDiretor = isAdmin
+    ? (cartoesDiretorPeriodo.length
+        ? Math.round(cartoesDiretorPeriodo.reduce((soma, item) => soma + completudeDiretor(item), 0) / cartoesDiretorPeriodo.length)
+        : desempenhoUnidades)
+    : completudeDiretor(cartao);
 
   res.json({
     cartao,
-    igreja: cartao.igreja,
+    igreja: cartao?.igreja || { nome: isAdmin ? "Todas as igrejas" : "" },
     indicadores: {
       taxaAprovacao: desempenhoUnidades,
       presencaAlunos: progressoAlunos.pontualidadePercentual,
       evasao: Math.max(0, 100 - progressoAlunos.progressoGeral),
-      desempenhoEscola: completudeDiretor(cartao)
+      desempenhoEscola: desempenhoDiretor
     },
     unidades: unidadesResumo,
     pendencias: unidadesResumo.filter((item) => item.progressoProfessor < 100).length
