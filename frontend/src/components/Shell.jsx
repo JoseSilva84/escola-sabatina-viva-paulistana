@@ -452,43 +452,43 @@ export function Shell({ children }) {
         )}
       </AnimatePresence>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#0f284d] text-white shadow-[0_-12px_40px_rgba(0,0,0,0.4)] lg:hidden border-t border-white/5 rounded-t-[24px]" aria-label="Navegação principal">
-        <div className="flex items-center justify-between px-6 pb-[calc(1.2rem+env(safe-area-inset-bottom))] pt-4">
+      <nav className="fixed inset-x-0 bottom-0 z-50 bg-[#0f284d] text-white shadow-[0_-12px_40px_rgba(0,0,0,0.4)] lg:hidden border-t border-white/5" aria-label="Navegação principal">
+        <div className="flex items-center justify-between px-5 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2">
           
           <NavLink
             to={visibleLinks[0]?.to || "/"}
-            className={({ isActive }) => `flex flex-col items-center justify-center gap-1.5 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center gap-1 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
           >
-            {React.createElement(visibleLinks[0]?.icon || Home, { size: 24, className: "opacity-80" })}
-            <span className="text-[11px] font-semibold tracking-wide">Início</span>
+            {React.createElement(visibleLinks[0]?.icon || Home, { size: 22, className: "opacity-80" })}
+            <span className="text-[10px] font-semibold tracking-wide">Início</span>
           </NavLink>
 
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-200 ${isMobileMenuOpen ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
+            className={`flex flex-col items-center justify-center gap-1 transition-all duration-200 ${isMobileMenuOpen ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
           >
-            <Menu size={24} className={isMobileMenuOpen ? "opacity-100" : "opacity-80"} />
-            <span className="text-[11px] font-semibold tracking-wide">Menu</span>
+            <Menu size={22} className={isMobileMenuOpen ? "opacity-100" : "opacity-80"} />
+            <span className="text-[10px] font-semibold tracking-wide">Menu</span>
           </button>
 
           <NavLink
             to="/configuracoes"
-            className={({ isActive }) => `flex flex-col items-center justify-center gap-1.5 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center gap-1 transition-all duration-200 ${isActive ? "text-white scale-105" : "text-white/50 hover:text-white/80"}`}
           >
-            <Settings size={24} className="opacity-80" />
-            <span className="text-[11px] font-semibold tracking-wide">Ajustes</span>
+            <Settings size={22} className="opacity-80" />
+            <span className="text-[10px] font-semibold tracking-wide">Ajustes</span>
           </NavLink>
 
-          <div className="w-px h-10 bg-white/10 rounded-full mx-1"></div>
+          <div className="w-px h-8 bg-white/10 rounded-full mx-0.5"></div>
 
           <button
             onClick={sair}
-            className="flex flex-col items-center justify-center gap-1.5 transition-all duration-200 text-[#ffa3a3] hover:text-white active:scale-95 group"
+            className="flex flex-col items-center justify-center gap-1 transition-all duration-200 text-[#ffa3a3] hover:text-white active:scale-95 group"
           >
-            <div className="bg-red-500/20 border border-red-500/30 p-2.5 rounded-2xl group-hover:bg-red-500/40 transition-colors shadow-sm shadow-red-500/10 flex items-center justify-center">
-              <LogOut size={20} className="translate-x-[1px]" />
+            <div className="bg-red-500/20 border border-red-500/30 p-1.5 rounded-xl group-hover:bg-red-500/40 transition-colors shadow-sm shadow-red-500/10 flex items-center justify-center">
+              <LogOut size={18} className="translate-x-[1px]" />
             </div>
-            <span className="text-[11px] font-bold tracking-wide">Sair</span>
+            <span className="text-[10px] font-bold tracking-wide">Sair</span>
           </button>
           
         </div>
