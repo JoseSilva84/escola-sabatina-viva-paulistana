@@ -7,8 +7,6 @@ import { ProgressRing } from "../components/ProgressRing";
 import { StatusPill } from "../components/StatusPill";
 import { Card } from "../components/Card";
 
-const anoAtual = new Date().getFullYear();
-
 function alunoIgreja(aluno) {
   return aluno.unidade?.igreja || aluno.igreja || null;
 }
@@ -264,11 +262,11 @@ function CartaoAluno({ card, alunoSelecionado, onBack, podeVoltar }) {
         <Card animated delay={0.4} className="flex items-center gap-3.5 !p-5">
           <BookMarked className="text-verde" />
           <div>
-            <h3 className="m-0 font-outfit text-base">Proximo Sabado</h3>
+            <h3 className="m-0 font-outfit text-base">Próximo Sábado</h3>
             {card.proximoSabado ? (
               <p className="m-0 mt-1 text-muted text-sm">
                 {card.proximoSabado.titulo} - {dataCurta(card.proximoSabado.data)}
-                <span className="block text-xs">Presenca e estudo da licao</span>
+                <span className="block text-xs">Presença e estudo da lição</span>
               </p>
             ) : (
               <p className="m-0 mt-1 text-muted text-sm">Trimestre concluido</p>
@@ -322,7 +320,7 @@ export function AlunoPage() {
   useEffect(() => {
     if (!isAluno) return;
     setLoadingCard(true);
-    getAlunoCard({ ano: anoAtual })
+    getAlunoCard()
       .then(setCard)
       .finally(() => setLoadingCard(false));
   }, [isAluno]);
@@ -332,7 +330,7 @@ export function AlunoPage() {
     setCard(null);
     setLoadingCard(true);
     try {
-      const data = await getAlunoCard({ alunoId: aluno.id, ano: anoAtual });
+      const data = await getAlunoCard({ alunoId: aluno.id });
       setCard(data);
     } catch (error) {
       toast.error(error.response?.data?.message || "Nao foi possivel abrir o cartao do aluno.");

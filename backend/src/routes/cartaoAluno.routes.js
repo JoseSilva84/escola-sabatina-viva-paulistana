@@ -5,7 +5,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const { autenticar, autorizar } = require("../middleware/auth");
 const { cartoesAluno, alunos } = require("../data/store");
 const { progressoAluno, progressoPorSemanas } = require("../services/progresso");
-const { semanasDoTrimestre, dataSabado, dataISO } = require("./coletaSemanal.routes");
+const { semanasDoTrimestre, trimestreDaSemana, dataSabado, dataISO } = require("./coletaSemanal.routes");
 const AppError = require("../utils/AppError");
 const { regiaoPorDistrito } = require("../utils/regioes");
 
@@ -76,14 +76,39 @@ function resumoHierarquia(regioes, chave) {
 
 function pontosDaColeta(coleta) {
   const itens = [];
-  if (coleta.estudouLicao) itens.push({ label: "Estudo da licao", pontos: 10 });
+  if (coleta.estudouLicao) itens.push({ label: "Estudo da lição", pontos: 10 });
   if (coleta.foiPontual) itens.push({ label: "Pontualidade", pontos: 10 });
   if (coleta.pequenoGrupo) itens.push({ label: "Pequeno Grupo", pontos: 20 });
-  if (coleta.acaoSolidaria) itens.push({ label: "Acao solidaria", pontos: 20 });
-  if (coleta.estudosBiblicos) itens.push({ label: "Estudos biblicos", pontos: coleta.estudosBiblicos * 50 });
+  if (coleta.acaoSolidaria) itens.push({ label: "Ação solidária", pontos: 20 });
+  if (coleta.estudosBiblicos) itens.push({ label: "Estudos bíblicos", pontos: coleta.estudosBiblicos * 50 });
   return {
     total: itens.reduce((soma, item) => soma + item.pontos, 0),
     itens
+  };
+}
+
+function proximoSabadoCalendario(referencia = new Date()) {
+  const data = new Date(referencia);
+  data.setHours(12, 0, 0, 0);
+  const diasAteSabado = (6 - data.getDay() + 7) % 7 || 7;
+  data.setDate(data.getDate() + diasAteSabado);
+
+  const ano = data.getFullYear();
+  const alvo = dataISO(data);
+  let numeroSemana = null;
+
+  for (let semana = 1; semana <= 53; semana += 1) {
+    if (dataISO(dataSabado(ano, semana)) === alvo) {
+      numeroSemana = semana;
+      break;
+    }
+  }
+
+  return {
+    dataISO: alvo,
+    ano,
+    numeroSemana,
+    trimestre: numeroSemana ? trimestreDaSemana(numeroSemana) : null
   };
 }
 
@@ -119,10 +144,11 @@ routes.get("/", asyncHandler(async (req, res) => {
 }));
 
 routes.get("/acompanhamento", asyncHandler(async (req, res) => {
+  const proximoSabado = proximoSabadoCalendario();
   const schema = z.object({
     alunoId: z.string().optional(),
-    ano: z.coerce.number().int().default(new Date().getFullYear()),
-    trimestre: z.coerce.number().int().min(1).max(4).default(1)
+    ano: z.coerce.number().int().default(proximoSabado.ano),
+    trimestre: z.coerce.number().int().min(1).max(4).default(proximoSabado.trimestre || 1)
   });
   const params = schema.parse(req.query);
   const alunoId = params.alunoId || req.usuario.alunoId;
@@ -162,7 +188,7 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
       observacao: coleta?.observacao || ""
     };
   });
-  const proximoNumeroSemana = semanas.find((numeroSemana) => !coletaPorSemana.has(numeroSemana));
+  const proximoNumeroSemana = proximoSabado.ano === params.ano ? proximoSabado.numeroSemana : null;
   const proximoIndice = proximoNumeroSemana ? semanas.indexOf(proximoNumeroSemana) : -1;
   const ultimasPontuacoes = coletas
     .map((coleta) => {
@@ -189,13 +215,13 @@ routes.get("/acompanhamento", asyncHandler(async (req, res) => {
     aluno,
     ano: params.ano,
     trimestre: params.trimestre,
-    proximoSabado: proximoNumeroSemana
+    proximoSabado: proximoNumeroSemana && proximoIndice >= 0
       ? {
           numeroSabado: proximoIndice + 1,
           numeroSemana: proximoNumeroSemana,
-          data: dataISO(dataSabado(params.ano, proximoNumeroSemana)),
-          titulo: `Sabado ${proximoIndice + 1} da licao`,
-          descricao: "Registrar presenca e estudo da licao"
+          data: proximoSabado.dataISO,
+          titulo: `Sábado ${proximoIndice + 1} da lição`,
+          descricao: "Registrar presença e estudo da lição"
         }
       : null,
     ultimasPontuacoes,

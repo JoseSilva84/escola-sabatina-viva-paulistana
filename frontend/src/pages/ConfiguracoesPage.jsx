@@ -981,11 +981,11 @@ export function ConfiguracoesPage() {
           <h3 className="m-0 font-outfit text-xl text-marinho">Criterios de pontuacao</h3>
           <div className="grid gap-3">
             {[
-              ["estudo", "Estudo da licao"],
+              ["estudo", "Estudo da lição"],
               ["pontualidade", "Pontualidade"],
               ["pequenoGrupo", "Pequeno grupo"],
-              ["acaoSolidaria", "Acao solidaria"],
-              ["estudoBiblico", "Estudo biblico"]
+              ["acaoSolidaria", "Ação solidária"],
+              ["estudoBiblico", "Estudo bíblico"]
             ].map(([campo, label]) => (
               <label key={campo} className="grid gap-1 text-sm font-bold text-marinho">
                 <span className="flex justify-between"><span>{label}</span><span>{pontuacao[campo]} pts</span></span>

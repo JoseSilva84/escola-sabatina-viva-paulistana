@@ -401,10 +401,10 @@ export function DiretorPage() {
           {mostrarRegrasConformidade && (
             <div className="mb-4 rounded-lg border border-borda bg-[#f8fbff] px-4 py-3">
               <div className="grid grid-cols-1 xl:grid-cols-4 gap-2 text-sm">
-                <RegraConformidade titulo="Questionario" detalhe="Percentual de preenchimento dos 10 itens do questionario do professor. Cada item cumprido vale 10%." />
-                <RegraConformidade titulo="Planejamento" detalhe="Check verde quando o planejamento trimestral foi marcado; traco vermelho quando nao foi marcado." />
-                <RegraConformidade titulo="Coletas" detalhe="Media do progresso dos alunos nas coletas semanais do trimestre, considerando estudo da licao e pontualidade." />
-                <RegraConformidade titulo="Pastoreio" detalhe="Classificacao pelo questionario: 80%+ Otimo, 50% a 79% Medio, abaixo de 50% Pendente." />
+                <RegraConformidade titulo="Questionário" detalhe="Percentual de preenchimento dos 10 itens do questionário do professor. Cada item cumprido vale 10%." />
+                <RegraConformidade titulo="Planejamento" detalhe="Check verde quando o planejamento trimestral foi marcado; traço vermelho quando não foi marcado." />
+                <RegraConformidade titulo="Coletas" detalhe="Média do progresso dos alunos nas coletas semanais do trimestre, considerando estudo da lição e pontualidade." />
+                <RegraConformidade titulo="Pastoreio" detalhe="Classificacao pelo questionário: 80% + Ótimo, 50% a 79% Médio, abaixo de 50% Pendente." />
               </div>
             </div>
           )}

@@ -29,8 +29,8 @@ export const alunoCard = {
     numeroSabado: 12,
     numeroSemana: 12,
     data: "2026-03-21",
-    titulo: "Sabado 12 da licao",
-    descricao: "Registrar presenca e estudo da licao"
+    titulo: "Sábado 12 da lição",
+    descricao: "Registrar presença e estudo da lição"
   },
   ultimasPontuacoes: [
     {
@@ -39,7 +39,7 @@ export const alunoCard = {
       data: "2026-03-14",
       total: 40,
       itens: [
-        { label: "Estudo da licao", pontos: 10 },
+        { label: "Estudo da lição", pontos: 10 },
         { label: "Pontualidade", pontos: 10 },
         { label: "Pequeno Grupo", pontos: 20 }
       ]
