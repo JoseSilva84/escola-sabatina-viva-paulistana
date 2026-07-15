@@ -276,7 +276,7 @@ function CartaoAluno({ card, alunoSelecionado, onBack, podeVoltar }) {
         <Card animated delay={0.5} className="flex items-center gap-3.5 !p-5">
           <CalendarClock className="text-verde" />
           <div>
-            <h3 className="m-0 font-outfit text-base">Ultimas Pontuacoes</h3>
+            <h3 className="m-0 font-outfit text-base">Últimas Pontuações</h3>
             {card.ultimasPontuacoes?.length ? (
               <div className="mt-1 grid gap-1">
                 {card.ultimasPontuacoes.map((item) => (
