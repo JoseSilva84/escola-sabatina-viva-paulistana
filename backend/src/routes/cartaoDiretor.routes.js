@@ -6,7 +6,7 @@ const { autenticar, autorizar } = require("../middleware/auth");
 const { cartoesDiretor, igrejas } = require("../data/store");
 const { completudeDiretor, completudeProfessor, progressoPorSemanas } = require("../services/progresso");
 const AppError = require("../utils/AppError");
-const { regiaoPorDistrito } = require("../utils/regioes");
+const { regiaoPorDistrito, regioesConhecidas } = require("../utils/regioes");
 
 const routes = Router();
 routes.use(autenticar);
@@ -53,7 +53,7 @@ function resumoHierarquia(regioes) {
     ? Math.round(igrejasLista.reduce((soma, igreja) => soma + (igreja.progresso?.progressoGeral || 0), 0) / igrejasLista.length)
     : 0;
 
-  return { regioes: regioes.length, distritos: regioes.reduce((soma, regiao) => soma + regiao.distritos.length, 0), igrejas: igrejasLista.length, unidades: igrejasLista.reduce((soma, igreja) => soma + (igreja.totais?.unidades || 0), 0), pessoas: igrejasLista.length, respostas, progresso };
+  return { regioes: Math.max(regioes.length, regioesConhecidas().length), distritos: regioes.reduce((soma, regiao) => soma + regiao.distritos.length, 0), igrejas: igrejasLista.length, unidades: igrejasLista.reduce((soma, igreja) => soma + (igreja.totais?.unidades || 0), 0), pessoas: igrejasLista.length, respostas, progresso };
 }
 
 async function buscarOuCriarCartao(req, ano, trimestre) {

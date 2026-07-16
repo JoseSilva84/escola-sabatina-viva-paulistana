@@ -7,7 +7,7 @@ const { cartoesAluno, alunos } = require("../data/store");
 const { progressoAluno, progressoPorSemanas } = require("../services/progresso");
 const { semanasDoTrimestre, trimestreDaSemana, dataSabado, dataISO } = require("./coletaSemanal.routes");
 const AppError = require("../utils/AppError");
-const { regiaoPorDistrito } = require("../utils/regioes");
+const { regiaoPorDistrito, regioesConhecidas } = require("../utils/regioes");
 
 const routes = Router();
 routes.use(autenticar);
@@ -71,7 +71,7 @@ function resumoHierarquia(regioes, chave) {
     ? Math.round(unidades.reduce((soma, unidade) => soma + (unidade.progresso?.progressoGeral || 0), 0) / unidades.length)
     : 0;
 
-  return { regioes: regioes.length, distritos: regioes.reduce((soma, regiao) => soma + regiao.distritos.length, 0), igrejas: igrejas.length, unidades: unidades.length, pessoas, respostas, progresso };
+  return { regioes: Math.max(regioes.length, regioesConhecidas().length), distritos: regioes.reduce((soma, regiao) => soma + regiao.distritos.length, 0), igrejas: igrejas.length, unidades: unidades.length, pessoas, respostas, progresso };
 }
 
 function pontosDaColeta(coleta) {

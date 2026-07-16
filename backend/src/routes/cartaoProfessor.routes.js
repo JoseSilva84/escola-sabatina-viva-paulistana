@@ -6,7 +6,7 @@ const { autenticar, autorizar } = require("../middleware/auth");
 const { cartoesProfessor, unidades } = require("../data/store");
 const { completudeProfessor, progressoPorSemanas } = require("../services/progresso");
 const AppError = require("../utils/AppError");
-const { regiaoPorDistrito } = require("../utils/regioes");
+const { regiaoPorDistrito, regioesConhecidas } = require("../utils/regioes");
 
 const routes = Router();
 routes.use(autenticar);
@@ -92,7 +92,7 @@ function resumoHierarquia(regioes) {
     ? Math.round(unidades.reduce((soma, unidade) => soma + (unidade.progresso?.progressoGeral || 0), 0) / unidades.length)
     : 0;
 
-  return { regioes: regioes.length, distritos: regioes.reduce((soma, regiao) => soma + regiao.distritos.length, 0), igrejas: igrejas.length, unidades: unidades.length, pessoas: unidades.length, respostas, progresso };
+  return { regioes: Math.max(regioes.length, regioesConhecidas().length), distritos: regioes.reduce((soma, regiao) => soma + regiao.distritos.length, 0), igrejas: igrejas.length, unidades: unidades.length, pessoas: unidades.length, respostas, progresso };
 }
 
 function dataOpcional(valor) {

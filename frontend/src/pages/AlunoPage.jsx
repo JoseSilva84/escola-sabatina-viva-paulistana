@@ -23,6 +23,20 @@ function dataCurta(valor) {
   });
 }
 
+function periodoVigente() {
+  const hoje = new Date();
+  return {
+    ano: hoje.getFullYear(),
+    trimestre: Math.floor(hoje.getMonth() / 3) + 1
+  };
+}
+
+function anosDisponiveis(anoSelecionado) {
+  const { ano: anoVigente } = periodoVigente();
+  return Array.from(new Set([anoVigente - 2, anoVigente - 1, anoVigente, anoVigente + 1, anoSelecionado]))
+    .sort((a, b) => b - a);
+}
+
 function agruparAdmin(alunos) {
   const regioes = new Map();
 
@@ -184,7 +198,7 @@ function SeletorAluno({ usuario, alunos, loading, onSelect }) {
   );
 }
 
-function CartaoAluno({ card, alunoSelecionado, onBack, podeVoltar }) {
+function CartaoAluno({ card, alunoSelecionado, onBack, podeVoltar, ano, trimestre, onAnoChange, onTrimestreChange }) {
   if (!card) {
     return <div className="p-10 bg-white rounded-xl shadow-sm text-muted text-center max-w-sm mx-auto mt-10">Carregando cartao...</div>;
   }
@@ -217,7 +231,31 @@ function CartaoAluno({ card, alunoSelecionado, onBack, podeVoltar }) {
       </Card>
 
       <Card animated delay={0.2} className="lg:col-span-2 overflow-hidden">
-        <h3 className="m-0 font-outfit text-lg mb-4">Acompanhamento Semanal (13 semanas)</h3>
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h3 className="m-0 font-outfit text-lg">Acompanhamento Semanal (13 semanas)</h3>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label className="grid gap-1 text-xs font-bold uppercase tracking-wide text-muted">
+              Ano
+              <select
+                className="min-h-[38px] w-full rounded-lg border border-borda bg-white px-3 text-sm font-bold normal-case tracking-normal text-texto sm:w-[100px]"
+                value={ano}
+                onChange={(event) => onAnoChange(Number(event.target.value))}
+              >
+                {anosDisponiveis(ano).map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1 text-xs font-bold uppercase tracking-wide text-muted">
+              Trimestre
+              <select
+                className="min-h-[38px] w-full rounded-lg border border-borda bg-white px-3 text-sm font-bold normal-case tracking-normal text-texto sm:w-[150px]"
+                value={trimestre}
+                onChange={(event) => onTrimestreChange(Number(event.target.value))}
+              >
+                {[1, 2, 3, 4].map((item) => <option key={item} value={item}>{item}º trimestre</option>)}
+              </select>
+            </label>
+          </div>
+        </div>
         <div className="grid grid-cols-[110px_repeat(13,minmax(32px,1fr))] overflow-x-auto border border-borda rounded-lg">
           <span className="grid place-items-center min-h-[44px] border-r border-b border-borda bg-[#f7f9fc]" />
           {card.sabados.map((item) => (
@@ -298,9 +336,12 @@ function CartaoAluno({ card, alunoSelecionado, onBack, podeVoltar }) {
 
 export function AlunoPage() {
   const { usuario } = useAuth();
+  const periodoInicial = useMemo(periodoVigente, []);
   const [alunos, setAlunos] = useState([]);
   const [alunoSelecionado, setAlunoSelecionado] = useState(null);
   const [card, setCard] = useState(null);
+  const [ano, setAno] = useState(periodoInicial.ano);
+  const [trimestre, setTrimestre] = useState(periodoInicial.trimestre);
   const [loadingAlunos, setLoadingAlunos] = useState(false);
   const [loadingCard, setLoadingCard] = useState(false);
   const isAluno = usuario.papel === "ALUNO";
@@ -320,24 +361,31 @@ export function AlunoPage() {
   useEffect(() => {
     if (!isAluno) return;
     setLoadingCard(true);
-    getAlunoCard()
+    getAlunoCard({ ano, trimestre })
       .then(setCard)
+      .catch((error) => {
+        toast.error(error.response?.data?.message || "Nao foi possivel carregar o cartao do aluno.");
+        setCard(null);
+      })
       .finally(() => setLoadingCard(false));
-  }, [isAluno]);
+  }, [isAluno, ano, trimestre]);
 
-  async function abrirCartao(aluno) {
-    setAlunoSelecionado(aluno);
+  useEffect(() => {
+    if (isAluno || !alunoSelecionado) return;
     setCard(null);
     setLoadingCard(true);
-    try {
-      const data = await getAlunoCard({ alunoId: aluno.id });
-      setCard(data);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Nao foi possivel abrir o cartao do aluno.");
-      setAlunoSelecionado(null);
-    } finally {
-      setLoadingCard(false);
-    }
+    getAlunoCard({ alunoId: alunoSelecionado.id, ano, trimestre })
+      .then(setCard)
+      .catch((error) => {
+        toast.error(error.response?.data?.message || "Nao foi possivel abrir o cartao do aluno.");
+        setAlunoSelecionado(null);
+      })
+      .finally(() => setLoadingCard(false));
+  }, [isAluno, alunoSelecionado, ano, trimestre]);
+
+  function abrirCartao(aluno) {
+    setAlunoSelecionado(aluno);
+    setCard(null);
   }
 
   if (!isAluno && !alunoSelecionado) {
@@ -348,6 +396,10 @@ export function AlunoPage() {
     <CartaoAluno
       card={loadingCard ? null : card}
       alunoSelecionado={alunoSelecionado}
+      ano={ano}
+      trimestre={trimestre}
+      onAnoChange={setAno}
+      onTrimestreChange={setTrimestre}
       podeVoltar={!isAluno}
       onBack={() => {
         setAlunoSelecionado(null);
