@@ -114,6 +114,67 @@ routes.get("/professores", asyncHandler(async (req, res) => {
   res.json(lista);
 }));
 
+function localizacaoConta(usuario) {
+  const igreja = usuario.igreja || usuario.aluno?.unidade?.igreja || null;
+  const distrito = igreja?.distrito || null;
+  return {
+    igrejaId: igreja?.id || usuario.igrejaId || null,
+    igrejaNome: igreja?.nome || "Igreja nao informada",
+    distritoId: distrito?.id || usuario.distritoId || null,
+    distritoNome: distrito?.nome || "Distrito nao informado",
+    regiao: regiaoPorDistrito(distrito?.nome)
+  };
+}
+
+function contaPublica(usuario) {
+  return {
+    id: usuario.id,
+    nome: usuario.nome,
+    email: usuario.email,
+    codigoAcesso: usuario.codigoAcesso,
+    papel: usuario.papel,
+    ativo: usuario.ativo,
+    deveTrocarSenha: usuario.deveTrocarSenha,
+    criadoEm: usuario.criadoEm,
+    alunoId: usuario.aluno?.id || null,
+    unidadeNome: usuario.aluno?.unidade?.nome || null,
+    unidadesProfessor: usuario._count?.unidadesProfessor || 0,
+    ...localizacaoConta(usuario)
+  };
+}
+
+const includeLocalizacaoUsuario = {
+  igreja: { include: { distrito: true } },
+  aluno: {
+    include: {
+      unidade: {
+        include: {
+          igreja: { include: { distrito: true } }
+        }
+      }
+    }
+  },
+  _count: { select: { unidadesProfessor: true } }
+};
+
+routes.get("/professores/todos", autorizar("ADMIN"), asyncHandler(async (_req, res) => {
+  const lista = await prisma.usuario.findMany({
+    where: { papel: "PROFESSOR" },
+    include: includeLocalizacaoUsuario,
+    orderBy: [{ igreja: { nome: "asc" } }, { nome: "asc" }]
+  });
+  res.json(lista.map(contaPublica));
+}));
+
+routes.get("/usuarios-contas", autorizar("ADMIN"), asyncHandler(async (_req, res) => {
+  const lista = await prisma.usuario.findMany({
+    where: { papel: { in: ["DIRETOR", "PROFESSOR", "ALUNO"] } },
+    include: includeLocalizacaoUsuario,
+    orderBy: [{ papel: "asc" }, { nome: "asc" }]
+  });
+  res.json(lista.map(contaPublica));
+}));
+
 function gerarSenhaTemporaria() {
   const letras = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
   const numeros = "23456789";

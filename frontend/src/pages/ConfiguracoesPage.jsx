@@ -5,6 +5,7 @@ import {
   CalendarClock,
   CheckCircle2,
   Download,
+  Eye,
   HelpCircle,
   Image,
   KeyRound,
@@ -33,6 +34,7 @@ import {
   criarUnidade,
   getIgrejas,
   getProfessores,
+  getUsuariosContas,
   getUnidades,
   redefinirSenhaProfessor,
   trocarSenha
@@ -272,6 +274,89 @@ function Botao({ children, variant = "primary", type = "button", size = "md", cl
   );
 }
 
+const papelContaLabels = {
+  DIRETOR: "Diretores",
+  PROFESSOR: "Professores",
+  ALUNO: "Alunos"
+};
+
+function agruparContasPorLocalizacao(contas) {
+  return contas.reduce((regioes, conta) => {
+    const regiaoNome = conta.regiao || "Regiao geral";
+    const distritoNome = conta.distritoNome || "Distrito nao informado";
+    const igrejaNome = conta.igrejaNome || "Igreja nao informada";
+    const papel = conta.papel || "OUTROS";
+
+    if (!regioes[regiaoNome]) regioes[regiaoNome] = {};
+    if (!regioes[regiaoNome][distritoNome]) regioes[regiaoNome][distritoNome] = {};
+    if (!regioes[regiaoNome][distritoNome][igrejaNome]) regioes[regiaoNome][distritoNome][igrejaNome] = {};
+    if (!regioes[regiaoNome][distritoNome][igrejaNome][papel]) regioes[regiaoNome][distritoNome][igrejaNome][papel] = [];
+    regioes[regiaoNome][distritoNome][igrejaNome][papel].push(conta);
+    return regioes;
+  }, {});
+}
+
+function StatusConta({ ativo }) {
+  return (
+    <span className={`inline-flex min-h-[24px] items-center rounded-full px-2 text-xs font-bold ${ativo ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+      {ativo ? "Ativo" : "Bloqueado"}
+    </span>
+  );
+}
+
+function ListaAgrupadaContas({ contas }) {
+  const grupos = useMemo(() => agruparContasPorLocalizacao(contas), [contas]);
+  const regioes = Object.keys(grupos).sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }));
+
+  if (!contas.length) return <p className="m-0 text-muted">Nenhuma conta encontrada.</p>;
+
+  return (
+    <div className="grid gap-4">
+      {regioes.map((regiao) => (
+        <Card key={regiao} hoverable={false} className="grid gap-3 border-marinho/15">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="m-0 font-outfit text-xl text-marinho">{regiao}</h3>
+            <span className="text-sm font-bold text-muted">{Object.values(grupos[regiao]).flatMap((distrito) => Object.values(distrito).flatMap((igreja) => Object.values(igreja).flat())).length} conta(s)</span>
+          </div>
+          {Object.keys(grupos[regiao]).sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true })).map((distrito) => (
+            <div key={distrito} className="grid gap-2 rounded-lg border border-borda bg-slate-50 p-3">
+              <strong className="text-sm text-texto">Distrito: {distrito}</strong>
+              {Object.keys(grupos[regiao][distrito]).sort((a, b) => a.localeCompare(b, "pt-BR")).map((igreja) => (
+                <div key={igreja} className="grid gap-3 rounded-lg border border-borda bg-white p-3">
+                  <div className="flex items-center gap-2 text-sm font-bold text-marinho">
+                    <Building2 size={16} /> {igreja}
+                  </div>
+                  {["DIRETOR", "PROFESSOR", "ALUNO"].map((papel) => {
+                    const contasPapel = grupos[regiao][distrito][igreja][papel] || [];
+                    if (!contasPapel.length) return null;
+                    return (
+                      <div key={papel} className="grid gap-2">
+                        <strong className="text-xs uppercase tracking-normal text-muted">{papelContaLabels[papel]}</strong>
+                        {contasPapel.map((conta) => (
+                          <div key={conta.id} className="grid gap-2 rounded-md bg-slate-50 px-3 py-2 md:grid-cols-[1fr_auto] md:items-center">
+                            <div className="min-w-0">
+                              <strong className="block truncate text-sm text-texto">{conta.nome}</strong>
+                              <p className="m-0 mt-0.5 break-all text-xs text-muted">
+                                Login: {conta.codigoAcesso || conta.email || "acesso nao informado"}
+                                {conta.unidadeNome ? ` | Unidade: ${conta.unidadeNome}` : ""}
+                              </p>
+                            </div>
+                            <StatusConta ativo={conta.ativo} />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          ))}
+        </Card>
+      ))}
+    </div>
+  );
+}
+
 function ToggleTema({ tema, onChange }) {
   return (
     <div className="inline-flex items-center gap-2 rounded-lg border border-borda bg-white p-1">
@@ -416,6 +501,8 @@ export function ConfiguracoesPage() {
   const [igrejaNome, setIgrejaNome] = useState(usuario?.igrejaNome || "");
   const [unidades, setUnidades] = useState([]);
   const [professores, setProfessores] = useState([]);
+  const [contasUsuarios, setContasUsuarios] = useState([]);
+  const [mostrarContasUsuarios, setMostrarContasUsuarios] = useState(false);
   const [novaUnidade, setNovaUnidade] = useState({ nome: "", professorId: "" });
   const [novoProfessor, setNovoProfessor] = useState({ nome: "", senha: "" });
   const [acessoCriado, setAcessoCriado] = useState(null);
@@ -508,6 +595,20 @@ export function ConfiguracoesPage() {
     } catch {
       setProfessores([]);
       toast.error("Não foi possível carregar os professores.");
+    }
+  }
+
+  async function carregarContasUsuarios() {
+    if (!isAdmin) return;
+    setSalvando("contas-usuarios");
+    try {
+      setContasUsuarios(await getUsuariosContas());
+      setMostrarContasUsuarios(true);
+    } catch {
+      setContasUsuarios([]);
+      toast.error("Nao foi possivel carregar as contas.");
+    } finally {
+      setSalvando("");
     }
   }
 
@@ -642,6 +743,7 @@ export function ConfiguracoesPage() {
       });
       setNovoProfessor({ nome: "", senha: "" });
       await carregarProfessores();
+      if (mostrarContasUsuarios && isAdmin) await carregarContasUsuarios();
       toast.success("Conta do professor criada.");
     } catch (error) {
       toast.error(error.response?.data?.message || "Não foi possível criar o professor.");
@@ -905,6 +1007,22 @@ export function ConfiguracoesPage() {
               </Botao>
             </form>
           </Card>
+          {isAdmin && (
+            <div className="grid gap-3">
+              <Card hoverable={false}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="m-0 font-outfit text-xl text-marinho">Contas existentes</h3>
+                    <p className="m-0 mt-1 text-sm text-muted">Diretores, professores e alunos por regiao, distrito e igreja.</p>
+                  </div>
+                  <Botao variant="secondary" onClick={carregarContasUsuarios} disabled={salvando === "contas-usuarios"}>
+                    <Eye size={16} /> {salvando === "contas-usuarios" ? "Carregando..." : "Ver as contas"}
+                  </Botao>
+                </div>
+              </Card>
+              {mostrarContasUsuarios && <ListaAgrupadaContas contas={contasUsuarios} />}
+            </div>
+          )}
           <div className="grid gap-3">
             {professores.map((professorItem) => (
               <Card key={professorItem.id} hoverable={false} className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

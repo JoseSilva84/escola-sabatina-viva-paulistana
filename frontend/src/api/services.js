@@ -217,6 +217,16 @@ export async function getProfessores() {
   return data;
 }
 
+export async function getTodosProfessores() {
+  const { data } = await api.get("/cadastros/professores/todos");
+  return data;
+}
+
+export async function getUsuariosContas() {
+  const { data } = await api.get("/cadastros/usuarios-contas");
+  return data;
+}
+
 export async function criarProfessor(payload) {
   const { data } = await api.post("/cadastros/professores", payload);
   return data;
