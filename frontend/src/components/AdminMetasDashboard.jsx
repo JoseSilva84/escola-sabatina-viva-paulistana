@@ -49,13 +49,14 @@ const interactiveCard = "cursor-pointer transition-all duration-200 ease-out hov
 
 function Stat({ icon: Icon, label, value }) {
   return (
-    <Card hoverable={false} className="flex items-center gap-3 p-4">
-      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-marinho/10 text-marinho">
+    <Card hoverable={false} className="relative flex items-center gap-3 overflow-hidden p-4 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-marinho/25 hover:bg-white hover:shadow-[0_20px_44px_rgba(23,58,106,0.14),0_4px_12px_rgba(15,23,42,0.05)]">
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-1 origin-left scale-x-0 bg-marinho transition-transform duration-300 ease-out group-hover:scale-x-100" />
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-marinho/10 text-marinho transition-all duration-300 ease-out group-hover:scale-105 group-hover:bg-marinho group-hover:text-white group-hover:shadow-[0_10px_22px_rgba(23,58,106,0.22)]">
         <Icon size={20} />
       </span>
       <span className="min-w-0">
-        <strong className="block text-xl leading-tight text-texto">{value}</strong>
-        <small className="block truncate text-muted">{label}</small>
+        <strong className="block text-xl leading-tight text-texto transition-colors duration-300 group-hover:text-marinho">{value}</strong>
+        <small className="block truncate text-muted transition-colors duration-300 group-hover:text-texto">{label}</small>
       </span>
     </Card>
   );
